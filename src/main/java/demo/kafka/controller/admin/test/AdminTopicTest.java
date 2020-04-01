@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 
-public class AdminTest {
+public class AdminTopicTest {
 
     private static AdminClient adminClient;
 

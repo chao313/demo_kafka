@@ -7,8 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class AdminTopicUtil {
-
-
+    
     /**
      * 获取全部的 topics 原始状态的
      * 包含内部的topic
