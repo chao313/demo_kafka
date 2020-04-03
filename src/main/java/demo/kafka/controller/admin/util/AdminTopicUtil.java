@@ -6,8 +6,11 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * topic相关
+ */
 public class AdminTopicUtil {
-    
+
     /**
      * 获取全部的 topics 原始状态的
      * 包含内部的topic
@@ -70,7 +73,7 @@ public class AdminTopicUtil {
     /**
      * 删除topic 这里会创建完成之后查询是否存topic
      *
-     * @return <p></p>
+     * @return ：
      * true -> 创建成果
      * false -> 创建失败
      */

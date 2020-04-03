@@ -22,7 +22,7 @@ public class AdminTopicTest {
     @BeforeAll
     public static void BeforeAll() {
         Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "10.200.126.163:9092");
+        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.MY.getIp());
         adminClient = AdminClient.create(properties);
     }
 

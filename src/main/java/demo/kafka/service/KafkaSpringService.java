@@ -22,10 +22,11 @@ public class KafkaSpringService {
      * @param msg
      */
 
-    @KafkaListener(topics = {"TP_01009411"})
+    @KafkaListener(topics = {"TP_010094051111"})
     public void consumerFromKafkaServer(String msg) {
         //JSONObject jsonObject = JSONObject.parseObject(msg).getJSONObject("Data").getJSONObject("ContentData").getJSONObject("tzrw.html");
-        this.sendToKafkaServer("TP_BDG_OSCORP_PERSON_BISSTRUCT", msg);
+        log.info("转发:{}", msg);
+        this.sendToKafkaServer("TP_01009404", msg);
     }
 
     /**
