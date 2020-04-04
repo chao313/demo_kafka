@@ -26,7 +26,7 @@ public class AdminConfigsUtilTest {
     public static void BeforeAll() {
         Properties properties = new Properties();
 //        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "10.200.126.163:9092");
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "10.202.16.136:9092");
+        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
         adminClient = AdminClient.create(properties);
     }
 
@@ -288,7 +288,21 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("unclean.leader.election.enable", "false");
 
-        AdminConfigsUtil.incrementalAlterTopicConfigs(adminClient, "TP_010094051111", Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
+        AdminConfigsUtil.incrementalAlterTopicConfigs(adminClient, "Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
+
+    }
+
+    /**
+     * 确实可以修改
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @Test
+    public void incrementalAlterBrokerConfigs() throws ExecutionException, InterruptedException {
+
+        ConfigEntry configEntry = new ConfigEntry("listeners", "PLAINTEXT://10.202.16.136:9092");
+
+        AdminConfigsUtil.incrementalAlterBrokerConfigs(adminClient, 0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
 
     }
 

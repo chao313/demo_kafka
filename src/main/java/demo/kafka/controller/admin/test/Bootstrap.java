@@ -1,7 +1,7 @@
 package demo.kafka.controller.admin.test;
 
 public enum Bootstrap {
-    MY("10.202.16.136:9092"), WIND("10.200.126.163:9092");
+    MY("10.202.16.136:9092"), WIND("10.200.126.163:9092"),HONE("192.168.0.105:9092");
 
     private String ip;
 

@@ -22,7 +22,7 @@ public class AdminTopicTest {
     @BeforeAll
     public static void BeforeAll() {
         Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.MY.getIp());
+        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
         adminClient = AdminClient.create(properties);
     }
 

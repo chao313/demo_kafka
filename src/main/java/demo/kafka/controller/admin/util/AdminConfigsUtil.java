@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * kafka 配置相关
+ * <p>
+ * !!!! 这里的配置存放在 Zookeeper里面(必须请求zk里面的数据才能恢复，不然每次启动都会读取里面的配置!!!)
  */
 public class AdminConfigsUtil {
 
@@ -280,7 +282,6 @@ public class AdminConfigsUtil {
         return configResourceConfigMap.get(configResource);
     }
 
-
     /**
      * 修改配置的底层函数
      *
@@ -346,6 +347,8 @@ public class AdminConfigsUtil {
 
     /**
      * 统一修改 topic的配置
+     *
+     * @throws InvalidRequestException : Config value append is not allowed for config key: unclean.leader.election.enable
      */
     public static void incrementalAlterTopicConfigs(AdminClient client, String topic, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
 
