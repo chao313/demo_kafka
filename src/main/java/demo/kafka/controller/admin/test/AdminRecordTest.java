@@ -1,11 +1,9 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminClusterUtil;
 import demo.kafka.controller.admin.util.AdminRecordsUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,7 +34,7 @@ public class AdminRecordTest {
         AdminRecordsUtil.deleteRecordsBeforeOffset(
                 adminClient,
                 new TopicPartition("Test11", 0),
-                RecordsToDelete.beforeOffset(41));
+                RecordsToDelete.beforeOffset(10));
         log.info("record删除结束:{}");
 
     }

@@ -24,7 +24,7 @@ public class AdminClusterTest {
     @BeforeAll
     public static void BeforeAll() {
         Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.MY.getIp());
+        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
         adminClient = AdminClient.create(properties);
     }
 
@@ -38,7 +38,9 @@ public class AdminClusterTest {
     public void describeCluster() throws ExecutionException, InterruptedException {
         DescribeClusterResult describeClusterResult = AdminClusterUtil.describeCluster(adminClient);
         log.info("describeClusterResult:{}", describeClusterResult);
-        log.info("describeClusterResult:{}", describeClusterResult.nodes());
+        log.info("describeClusterResult.nodes:{}", describeClusterResult.nodes());
+        log.info("describeClusterResult.clusterId:{}", describeClusterResult.clusterId());
+        log.info("describeClusterResult.controller:{}", describeClusterResult.controller());
 
     }
 
