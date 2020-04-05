@@ -33,8 +33,8 @@ import java.util.concurrent.Future;
 @RestController
 public class ProduceController {
 
-    @Autowired
-    private KafkaProduceService kafkaProduceService;
+//    @Autowired
+//    private KafkaProduceService kafkaProduceService;
 
 
     /**
@@ -262,8 +262,8 @@ public class ProduceController {
 //         */
 //        kafkaProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "transactionId2");
 //        kafkaProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
-//        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-//        KafkaProduceService.kafkaProducer = kafkaProducer;
+//        KafkaProducer kafkaConsumer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
+//        KafkaProduceService.kafkaConsumer = kafkaConsumer;
 //    }
 
 }

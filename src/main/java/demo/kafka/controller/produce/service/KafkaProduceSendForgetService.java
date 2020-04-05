@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutionException;
  */
 
 @Slf4j
-@Service
 public class KafkaProduceSendForgetService<K, V> extends KafkaProduceService {
 
     public KafkaProducer getKafkaProducer() {

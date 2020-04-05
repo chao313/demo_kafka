@@ -36,7 +36,7 @@ public class KafkaProduceServiceSendSyncTest extends BeforeTest {
      */
     @Test
     public void sendTopic_Key_Value() throws InterruptedException, ExecutionException {
-        RecordMetadataResponse recordMetadataResponse = kafkaProduceService.sendSync("Test", "1", "1");
+        RecordMetadataResponse recordMetadataResponse = kafkaProduceService.sendSync("Test11", "1", "1");
         log.info("recordMetadataResponse:{}", recordMetadataResponse);
         log.info("当前 Msg 的偏移量:{}", recordMetadataResponse.getOffset());
         log.info("当前 Msg 的Partition:{}", recordMetadataResponse.getPartition());

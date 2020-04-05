@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutionException;
  */
 
 @Slf4j
-@Service
 public class KafkaProduceSendAsyncService<K, V> extends KafkaProduceService {
 
     /**
