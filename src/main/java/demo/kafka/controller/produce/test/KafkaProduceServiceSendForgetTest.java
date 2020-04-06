@@ -1,6 +1,8 @@
 package demo.kafka.controller.produce.test;
 
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendForgetService;
+import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
 import demo.kafka.controller.produce.service.KafkaProduceService;
 import demo.kafka.controller.produce.vo.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +18,10 @@ import java.util.concurrent.ExecutionException;
  * 专门测试 send 发送就忘记
  */
 @Slf4j
-public class KafkaProduceServiceSendForgetTest extends BeforeTest {
+public class KafkaProduceServiceSendForgetTest {
 
 
-    KafkaProduceSendForgetService<String, String> kafkaProduceService = new KafkaProduceSendForgetService<>();
+    KafkaProduceSendForgetService<String, String> kafkaProduceService = KafkaProduceSendForgetService.getInstance(KafkaProduceSendForgetService.getInstance(Bootstrap.HONE.getIp()));
 
     /**
      * 测试 发送 value

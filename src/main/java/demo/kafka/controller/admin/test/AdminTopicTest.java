@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -41,6 +42,20 @@ public class AdminTopicTest {
         });
     }
 
+    /**
+     * 测试获取全部的 topics
+     *
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @Test
+    public void listTopicNames() throws ExecutionException, InterruptedException {
+        Set<String> topicNames = AdminTopicUtil.listTopicNames(adminClient);
+        topicNames.forEach(name -> {
+            log.info("name:{}", name);
+        });
+    }
+
 
     /**
      * 测试创建 topics
@@ -65,6 +80,23 @@ public class AdminTopicTest {
     public void deleteTopics() throws ExecutionException, InterruptedException {
         boolean bool = AdminTopicUtil.deleteTopics(adminClient, "Test11");
         log.info("删除topic:{}", bool);
+    }
+
+    /**
+     * 测试删除 All topics
+     */
+    @Test
+    public void deleteAllTopics() throws ExecutionException, InterruptedException {
+        Set<String> topicNames = AdminTopicUtil.listTopicNames(adminClient);
+        for (String topic : topicNames) {
+            if (!topic.startsWith("_")) {
+                /**
+                 * 不删除 系统的 topic
+                 */
+                boolean bool = AdminTopicUtil.deleteTopics(adminClient, topic);
+                log.info("删除topic:{}", bool);
+            }
+        }
     }
 
     /**

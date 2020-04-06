@@ -14,23 +14,82 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
- * 增强版
+ * 增强版(使用组合模式)
  *
  * @param <K>
  * @param <V>
  */
 @Slf4j
-public class KafkaConsumerSupService<K, V> extends KafkaConsumerService<K, V> {
+public class KafkaConsumerSupService<K, V> {
+
+    /**
+     * 构造函数(直接注入 kafkaConsumer)
+     */
+    public static <K, V> KafkaConsumerSupService<K, V> getInstance(KafkaConsumerService kvKafkaConsumerService) {
+        return new KafkaConsumerSupService(kvKafkaConsumerService);
+    }
+
+    private KafkaConsumerService<K, V> kvKafkaConsumerService;
+
+
+    private KafkaConsumerSupService() {
+    }
+
+    private KafkaConsumerSupService(KafkaConsumerService<K, V> kvKafkaConsumerService) {
+        this.kvKafkaConsumerService = kvKafkaConsumerService;
+    }
+
 
     /**
      * 普通的监听函数
      */
-    public void listener(Collection<String> topics, Consumer<ConsumerRecords<K, V>> consumer) {
-        super.subscribe(topics);
+    public void listener(Collection<String> topics, Consumer<ConsumerRecord<K, V>> consumer) {
+        this.kvKafkaConsumerService.subscribe(topics);
         while (true) {
-            ConsumerRecords<K, V> records = super.poll(100);
-            consumer.accept(records);
+            ConsumerRecords<K, V> records = kvKafkaConsumerService.poll(Duration.ofMillis(100));
+            records.forEach(record -> {
+                consumer.accept(record);
+            });
         }
+    }
+
+    /**
+     * 普通的监听函数(只一次)
+     */
+    public void listenerOnce(Collection<String> topics, Consumer<ConsumerRecord<K, V>> consumer) {
+        this.kvKafkaConsumerService.subscribe(topics);
+        ConsumerRecords<K, V> records;
+        records = this.kvKafkaConsumerService.poll(Duration.ofMillis(1000));
+        records.forEach(record -> {
+            consumer.accept(record);
+        });
+        log.info("尝试获取一批数据...:{}", records.count());
+        this.kvKafkaConsumerService.wakeup();
+    }
+
+    /**
+     * 根据 Topic 来获取 Partition
+     *
+     * @return
+     */
+    public Collection<PartitionInfo> getPartitionInfosByTopic(String topic) {
+        return this.kvKafkaConsumerService.partitionsFor(topic);
+    }
+
+
+    /**
+     * 根据 Topic 来获取 TopicPartition
+     *
+     * @return
+     */
+    public Collection<TopicPartition> getTopicPartitionsByTopic(String topic) {
+        List<PartitionInfo> partitionInfos = this.kvKafkaConsumerService.partitionsFor(topic);
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        partitionInfos.forEach(partitionInfo -> {
+            TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());
+            topicPartitions.add(topicPartition);
+        });
+        return topicPartitions;
     }
 
 }

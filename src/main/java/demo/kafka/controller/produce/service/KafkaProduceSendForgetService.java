@@ -1,18 +1,10 @@
 package demo.kafka.controller.produce.service;
 
-import demo.kafka.controller.produce.vo.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.Metric;
-import org.apache.kafka.common.MetricName;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.header.Header;
-import org.springframework.stereotype.Service;
 
-import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 
@@ -24,6 +16,18 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class KafkaProduceSendForgetService<K, V> extends KafkaProduceService {
+
+    /**
+     * 构造函数(直接注入 kafkaProducer)
+     */
+    public static <K, V> KafkaProduceSendForgetService<K, V> getInstance(KafkaProducer kafkaProducer) {
+        return new KafkaProduceSendForgetService(kafkaProducer);
+    }
+
+
+    private KafkaProduceSendForgetService(KafkaProducer kafkaProducer) {
+        super(kafkaProducer);
+    }
 
     public KafkaProducer getKafkaProducer() {
         return super.kafkaProducer;

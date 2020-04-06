@@ -1,6 +1,8 @@
 package demo.kafka.controller.produce.test;
 
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendAsyncService;
+import demo.kafka.controller.produce.service.KafkaProduceSendForgetService;
 import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
 import demo.kafka.controller.produce.vo.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,10 @@ import java.util.concurrent.ExecutionException;
  * 专门测试 send 同步
  */
 @Slf4j
-public class KafkaProduceServiceSendAsyncTest extends BeforeTest {
+public class KafkaProduceServiceSendAsyncTest {
+
+    KafkaProduceSendAsyncService<String, String> kafkaProduceService
+            = KafkaProduceSendAsyncService.getInstance(KafkaProduceSendAsyncService.getInstance(Bootstrap.HONE.getIp()));
 
     public static boolean flag = false;
 
@@ -44,7 +49,6 @@ public class KafkaProduceServiceSendAsyncTest extends BeforeTest {
         }
     }
 
-    KafkaProduceSendAsyncService<String, String> kafkaProduceService = new KafkaProduceSendAsyncService<>();
 
     /**
      * 测试 发送 value

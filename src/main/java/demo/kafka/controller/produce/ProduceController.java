@@ -167,7 +167,7 @@ public class ProduceController {
             kafkaProps.put("buffer.bytes", buffer_bytes);
         }
         KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-        KafkaProduceService.kafkaProducer = kafkaProducer;
+//        KafkaProduceService.kafkaProducer = kafkaProducer;
         return "kafkaProducer初始化成功";
     }
 
@@ -265,6 +265,8 @@ public class ProduceController {
 //        KafkaProducer kafkaConsumer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
 //        KafkaProduceService.kafkaConsumer = kafkaConsumer;
 //    }
+
+
 
 }
 

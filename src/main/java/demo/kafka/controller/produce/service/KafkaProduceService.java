@@ -2,6 +2,7 @@ package demo.kafka.controller.produce.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -13,10 +14,53 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public abstract class KafkaProduceService<K, V> {
 
+
+    /**
+     * 构造函数(直接注入 properties)
+     */
+    public static <K, V> KafkaProducer<K, V> getInstance(Properties properties) {
+        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(properties);//创建生产者
+        return kafkaProducer;
+    }
+
+    /**
+     * 构造函数(使用默认的方式 除了 bootstrap_servers)
+     */
+    public static <K, V> KafkaProducer<K, V> getInstance(String bootstrap_servers) {
+        Properties kafkaProps = new Properties(); //新建一个Properties对象
+        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
+        kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
+        kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
+        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
+        return kafkaProducer;
+    }
+
+    /**
+     * 构造函数(使用默认的方式 除了 bootstrap_servers)(这里添加了覆盖属性的方式)
+     */
+    public static <K, V> KafkaProducer<K, V> getInstance(String bootstrap_servers, Map<String, String> mapOver) {
+        Properties kafkaProps = new Properties(); //新建一个Properties对象
+        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
+        kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
+        kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
+        kafkaProps.putAll(mapOver);
+        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
+        return kafkaProducer;
+    }
+
+
+    private KafkaProduceService() {
+
+    }
+
+    KafkaProduceService(KafkaProducer kafkaProducer) {
+        this.kafkaProducer = kafkaProducer;
+    }
+
     /**
      * 用于设置kafka的produce
      */
-    public static KafkaProducer kafkaProducer;
+    KafkaProducer kafkaProducer;
 
 
     /**
@@ -32,8 +76,8 @@ public abstract class KafkaProduceService<K, V> {
      * @param topic
      * @return
      */
-    public static List<PartitionInfo> partitionsFor(String topic) {
-        List<PartitionInfo> list = KafkaProduceService.kafkaProducer.partitionsFor(topic);
+    public List<PartitionInfo> partitionsFor(String topic) {
+        List<PartitionInfo> list = this.kafkaProducer.partitionsFor(topic);
         return list;
     }
 
@@ -43,15 +87,15 @@ public abstract class KafkaProduceService<K, V> {
      */
     public void transactionSend(List<ProducerRecord<K, V>> recordList) {
         try {
-            KafkaProduceService.kafkaProducer.initTransactions();
-            KafkaProduceService.kafkaProducer.beginTransaction();
+            this.kafkaProducer.initTransactions();
+            this.kafkaProducer.beginTransaction();
             for (ProducerRecord<K, V> record : recordList) {
                 this.sendProducerRecord(record);
             }
-            KafkaProduceService.kafkaProducer.commitTransaction();
+            this.kafkaProducer.commitTransaction();
         } catch (Exception e) {
             log.info("事务异常，回滚:{}", e.toString(), e);
-            KafkaProduceService.kafkaProducer.abortTransaction();
+            this.kafkaProducer.abortTransaction();
         }
     }
 
@@ -151,8 +195,8 @@ public abstract class KafkaProduceService<K, V> {
      * groupName:producer-node-metrics -> metricName:outgoing-byte-total -> value:55.0
      * groupName:producer-node-metrics -> metricName:incoming-byte-rate -> value:11.239582110576
      */
-    public static Map<String, List<Metric>> metricGroupNameMap() {
-        Map<MetricName, ? extends Metric> metricNameMap = KafkaProduceService.kafkaProducer.metrics();
+    public Map<String, List<Metric>> metricGroupNameMap() {
+        Map<MetricName, ? extends Metric> metricNameMap = this.kafkaProducer.metrics();
         Map<String, List<Metric>> metricGroupNameMap = new HashMap<>();
         metricNameMap.forEach((name, metric) -> {
             String groupName = metric.metricName().group();

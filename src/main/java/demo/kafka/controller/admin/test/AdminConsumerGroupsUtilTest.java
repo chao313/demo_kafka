@@ -73,6 +73,27 @@ public class AdminConsumerGroupsUtilTest {
         log.info("groupId是否被删除:{}", isDeletedGroupId);
     }
 
+
+    /**
+     * 测试 删除所有的消费者
+     */
+    @Test
+    public void deleteAllConsumerGroups() throws ExecutionException, InterruptedException {
+        Collection<String> groups = AdminConsumerGroupsUtil.listConsumerGroupIds(adminClient);
+        for (String group : groups) {
+            if (!group.contains("Offset")) {
+                try {
+                    boolean isDeletedGroupId = AdminConsumerGroupsUtil.deleteConsumerGroups(adminClient, group);
+                    log.info("groupId是否被删除:{}", isDeletedGroupId);
+                } catch (Exception e) {
+                    log.error("e:{}", group, e);
+                }
+
+            }
+        }
+
+    }
+
     /**
      * 测试获取 groupId 的描述
      */

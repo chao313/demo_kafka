@@ -1,5 +1,6 @@
 package demo.kafka.controller.produce.test;
 
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
 import demo.kafka.controller.produce.vo.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +13,9 @@ import java.util.concurrent.ExecutionException;
  * 专门测试 send 同步
  */
 @Slf4j
-public class KafkaProduceServiceSendSyncTest extends BeforeTest {
+public class KafkaProduceServiceSendSyncTest {
 
-    KafkaProduceSendSyncService<String, String> kafkaProduceService = new KafkaProduceSendSyncService<>();
+    KafkaProduceSendSyncService<String, String> kafkaProduceService = KafkaProduceSendSyncService.getInstance(KafkaProduceSendSyncService.getInstance(Bootstrap.HONE.getIp()));
 
     /**
      * 测试 发送 value

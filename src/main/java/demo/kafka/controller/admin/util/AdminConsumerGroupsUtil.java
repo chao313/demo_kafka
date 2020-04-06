@@ -58,6 +58,8 @@ public class AdminConsumerGroupsUtil {
     /**
      * 根据 groupid 来删除这个消费者
      * 最后会查询一次是否包含
+     * <p>
+     * -> 删除之后(kafkaManager重新配置就会发现消费者deleted了，再次使用就是新的偏移量)
      *
      * @param client
      * @return

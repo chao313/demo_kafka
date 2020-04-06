@@ -29,11 +29,11 @@ public class KafkaSpringService {
      * @param msg
      */
 
-    @KafkaListener(topics = {"Test11"})
+//    @KafkaListener(topics = {"Test"})
     public void consumerFromKafkaServer(String msg) {
         //JSONObject jsonObject = JSONObject.parseObject(msg).getJSONObject("Data").getJSONObject("ContentData").getJSONObject("tzrw.html");
         log.info("获取:{}", msg);
-//        this.sendToKafkaServer("TP_01009404", msg);
+//        this.sendToKafkaServer("Test", msg);
     }
 
     /**
@@ -43,12 +43,12 @@ public class KafkaSpringService {
         kafkaTemplate.send(topic, msg);
     }
 
-    //    @PostConstruct
+    @PostConstruct
     public void init() throws IOException {
         File file = AwareUtil.resourceLoader.getResource("classpath:琵琶行").getFile();
         FileUtils.readLines(file, "UTF-8").forEach(line -> {
             log.info("转发:{}", line);
-            ListenableFuture listenableFuture = kafkaTemplate.send("Test11", line, line);
+            ListenableFuture listenableFuture = kafkaTemplate.send("Test", line, line);
             listenableFuture.addCallback(new ListenableFutureCallback() {
                 @Override
                 public void onFailure(Throwable throwable) {

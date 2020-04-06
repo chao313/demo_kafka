@@ -1,5 +1,7 @@
 package demo.kafka.controller.produce.test;
 
+import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.produce.service.KafkaProduceDefaultService;
 import demo.kafka.controller.produce.service.KafkaProduceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.Metric;
@@ -13,14 +15,14 @@ import java.util.Map;
  * 专门测试 send
  */
 @Slf4j
-public class KafkaProduceServiceTest extends BeforeTest {
+public class KafkaProduceServiceTest {
 
     /**
      * 测试 获取分区信息 partitionsFor
      */
     @Test
     public void partitionsFor() {
-        List<PartitionInfo> list = KafkaProduceService.partitionsFor("Test");
+        List<PartitionInfo> list = KafkaProduceService.getInstance(Bootstrap.HONE.getIp()).partitionsFor("Test");
 
         list.forEach(partitionInfo -> {
             log.info("首领分区在的节点  : partitionInfo.leader:{}", partitionInfo.leader());
@@ -37,7 +39,8 @@ public class KafkaProduceServiceTest extends BeforeTest {
      */
     @Test
     public void metricGroupNameMap() {
-        Map<String, List<Metric>> metricNameMap = KafkaProduceService.metricGroupNameMap();
+        Map<String, List<Metric>> metricNameMap = KafkaProduceDefaultService.getInstance(KafkaProduceDefaultService.getInstance(Bootstrap.HONE.getIp())).metricGroupNameMap();
+
         metricNameMap.forEach((groupName, metrics) -> {
             log.info("groupName:{}", groupName);
             metrics.forEach(metric -> {

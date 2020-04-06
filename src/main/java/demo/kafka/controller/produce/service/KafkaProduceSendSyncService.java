@@ -2,10 +2,10 @@ package demo.kafka.controller.produce.service;
 
 import demo.kafka.controller.produce.vo.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.header.Header;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutionException;
 
@@ -18,6 +18,19 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class KafkaProduceSendSyncService<K, V> extends KafkaProduceService {
+
+
+    /**
+     * 构造函数(直接注入 kafkaProducer)
+     */
+    public static <K, V> KafkaProduceSendSyncService<K, V> getInstance(KafkaProducer kafkaProducer) {
+        return new KafkaProduceSendSyncService(kafkaProducer);
+    }
+
+
+    private KafkaProduceSendSyncService(KafkaProducer kafkaProducer) {
+        super(kafkaProducer);
+    }
 
     /**
      * 同步 - 底层()

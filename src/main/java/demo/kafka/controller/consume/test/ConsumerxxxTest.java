@@ -1,25 +1,29 @@
 package demo.kafka.controller.consume.test;
 
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.consume.service.KafkaConsumerSupService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class ConsumerxxxTest extends BeforeTest {
+public class ConsumerxxxTest {
 
-    public KafkaConsumerService<String, String> consumerService = new KafkaConsumerService<>();
+    public KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
+
+    public KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
 
     /**
      * 测试 订阅 topic
@@ -30,6 +34,85 @@ public class ConsumerxxxTest extends BeforeTest {
         consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
         Set<String> topics = consumerService.subscription();
         log.info("已经订阅的 topic:{}", topics);
+    }
+
+
+    /**
+     * 测试 获取 topic 的 PartitionInfo
+     */
+    @Test
+    public void getPartitionInfosByTopic() {
+        Collection<PartitionInfo> partitionInfos = kafkaConsumerSupService.getPartitionInfosByTopic("Test11");
+        partitionInfos.forEach(partitionInfo -> {
+            log.info("partitionInfo:{}", partitionInfo);
+        });
+
+    }
+
+    /**
+     * 测试 获取 topic 的 PartitionInfo
+     */
+    @Test
+    public void getTopicPartitionsByTopic() {
+        Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test11");
+        topicPartitions.forEach(topicPartition -> {
+            log.info("partitionInfo:{}", topicPartition);
+        });
+
+    }
+
+    /**
+     * 测试 seekToBeginning
+     */
+    @Test
+    public void seekToBeginning() {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
+        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+        Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test");
+        topicPartitions.forEach(topicPartition -> {
+            log.info("partitionInfo:{}", topicPartition);
+        });
+        consumerService.subscribe(Arrays.asList("Test"));
+        consumerService.poll(0);
+        Set<TopicPartition> assignment = consumerService.assignment();
+        consumerService.seekToBeginning(assignment);
+        consumerService.commitSync();
+    }
+
+
+    /**
+     * 测试 seekToBeginning
+     */
+    @Test
+    public void seekToBeginning_Assign() {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
+        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+        Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test");
+        topicPartitions.forEach(topicPartition -> {
+            log.info("partitionInfo:{}", topicPartition);
+        });
+        consumerService.assign(topicPartitions);
+        Set<TopicPartition> assignment = consumerService.assignment();
+        consumerService.seekToBeginning(assignment);
+        consumerService.commitSync();
+    }
+
+    /**
+     * 测试 获取 topic 的 PartitionInfo
+     */
+    @Test
+    public void assignment() {
+        Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test11");
+        topicPartitions.forEach(topicPartition -> {
+            log.info("partitionInfo:{}", topicPartition);
+        });
+        consumerService.assign(topicPartitions);
+        consumerService.poll(0);
+        topicPartitions.forEach(topicPartition -> {
+            OffsetAndMetadata offsetAndMetadata = consumerService.committed(topicPartition);
+            log.info("offsetAndMetadata:{}", offsetAndMetadata);
+        });
+
     }
 
     /**
@@ -58,25 +141,26 @@ public class ConsumerxxxTest extends BeforeTest {
      */
     @Test
     public void listener() {
-        KafkaConsumerSupService<String, String> kafkaConsumerSupService = new KafkaConsumerSupService<>();
-        kafkaConsumerSupService.listener(Arrays.asList("Test11"), new Consumer<ConsumerRecords<String, String>>() {
-            @Override
-            public void accept(ConsumerRecords<String, String> consumerRecords) {
-                consumerRecords.forEach(record -> {
-                    log.info("record 的 topic:{}", record.topic());
-                    log.info("record 的 key:{}", record.key());
-                    log.info("record 的 value:{}", record.value());
-                    log.info("record 的 offset:{}", record.offset());
-                    log.info("record 的 partition:{}", record.partition());
-                    log.info("record 的 serializedKeySize:{}", record.serializedKeySize());
-                    log.info("record 的 serializedValueSize:{}", record.serializedValueSize());
-                    log.info("record 的 timestamp:{}", record.timestamp());
-                    log.info("record 的 timestampType:{}", record.timestampType());
-                    log.info("record 的 headers:{}", record.headers());
-                    log.info("record 的 leaderEpoch:{}", record.leaderEpoch());
-                });
-            }
-        });
+
+//        kafkaConsumerSupService.listener(Arrays.asList("Test11"), new Consumer<ConsumerRecords<String, String>>() {
+//            @Override
+//            public void accept(ConsumerRecords<String, String> consumerRecords) {
+//                consumerService.subscribe(Arrays.asList("Test11"));
+//                consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
+//                Set<TopicPartition> assignments = consumerService.assignment();
+//                assignments.forEach(assignment -> {
+//                    OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
+//                    log.info("offsetAndMetadata:{}", offsetAndMetadata);
+//                });
+//                consumerRecords.forEach(record -> {
+//                    log.info("record 的 offset:{},record:{}", record.offset(), record);
+//                });
+//                assignments.forEach(assignment -> {
+//                    OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
+//                    log.info("offsetAndMetadata:{}", offsetAndMetadata);
+//                });
+//            }
+//        });
     }
 
     /**
@@ -84,13 +168,31 @@ public class ConsumerxxxTest extends BeforeTest {
      */
     @Test
     public void subscribexx() {
-        consumerService.subscribe(Pattern.compile(".*"));
+        consumerService.subscribe(Arrays.asList("Test11"));
         consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-        Set<TopicPartition> assignment = consumerService.assignment();
-        log.info("已经订阅的 assignment:{}", assignment);
-        consumerService.seekToBeginning(assignment);
-        consumerService.poll(0);
+        Set<TopicPartition> assignments = consumerService.assignment();
+        log.info("已经订阅的 assignment:{}", assignments);
+        assignments.forEach(assignment -> {
+            OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
+            log.info("offsetAndMetadata:{}", offsetAndMetadata);
+        });
+
+        consumerService.seekToBeginning(assignments);
+        ConsumerRecords<String, String> consumerRecords = consumerService.poll(0);
+        this.listener();
+
     }
+//                    log.info("record 的 topic:{}", record.topic());
+//                    log.info("record 的 key:{}", record.key());
+//                    log.info("record 的 value:{}", record.value());
+//                    log.info("record 的 offset:{}", record.offset());
+//                    log.info("record 的 partition:{}", record.partition());
+//                    log.info("record 的 serializedKeySize:{}", record.serializedKeySize());
+//                    log.info("record 的 serializedValueSize:{}", record.serializedValueSize());
+//                    log.info("record 的 timestamp:{}", record.timestamp());
+//                    log.info("record 的 timestampType:{}", record.timestampType());
+//                    log.info("record 的 headers:{}", record.headers());
+//                    log.info("record 的 leaderEpoch:{}", record.leaderEpoch());
 
 
 }
