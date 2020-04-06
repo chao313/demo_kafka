@@ -1,6 +1,7 @@
 package demo.kafka.controller.produce;
 
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
 import demo.kafka.controller.produce.service.KafkaProduceService;
 import demo.kafka.controller.produce.vo.CreateProducerRequest;
 import demo.kafka.controller.produce.vo.RecordMetadataResponse;
@@ -171,6 +172,48 @@ public class ProduceController {
         return "kafkaProducer初始化成功";
     }
 
+    /**
+     * 同步! 发送立刻得到结果
+     * <p>
+     * {
+     * "offset": 46,
+     * "timestamp": 1585982277534,
+     * "serializedKeySize": 5,
+     * "serializedValueSize": 5,
+     * "partition": 0,
+     * "topic": "Topic11"
+     * }
+     */
+    @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
+    @GetMapping(value = "/sendSync")
+    public RecordMetadataResponse sendSync(
+            @ApiParam(value = "发送的 bootstrap_servers ")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "192.168.0.105:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "发送的 topic")
+            @RequestParam(name = "buffer.bytes", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "发送的 key")
+            @RequestParam(name = "key", defaultValue = "key")
+                    String key,
+            @ApiParam(value = "发送的 value")
+            @RequestParam(name = "value", defaultValue = "value")
+                    String value) throws ExecutionException, InterruptedException {
+        KafkaProduceSendSyncService<Object, Object> kafkaProduceSendSyncService = KafkaProduceSendSyncService
+                .getInstance(KafkaProduceSendSyncService.getInstance(bootstrap_servers));
+        RecordMetadataResponse recordMetadataResponse = kafkaProduceSendSyncService.sendSync(topic, key, value);
+        kafkaProduceSendSyncService.getKafkaProducer().close();
+        return recordMetadataResponse;
+    }
+
+    //
+//    @ApiOperation(value = "发送就忘记 - 不关心是否发生成功")
+//    @GetMapping(value = "/sendForget")
+//    public String sendForget(String topic, String key, String value) {
+//        kafkaProduceService.sendForget(topic, key, value);
+//        return "发送完成，不关心结果";
+//    }
+
 //
 //    /**
 //     * 发送就忘记
@@ -265,7 +308,6 @@ public class ProduceController {
 //        KafkaProducer kafkaConsumer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
 //        KafkaProduceService.kafkaConsumer = kafkaConsumer;
 //    }
-
 
 
 }

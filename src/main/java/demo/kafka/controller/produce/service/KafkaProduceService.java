@@ -57,6 +57,10 @@ public abstract class KafkaProduceService<K, V> {
         this.kafkaProducer = kafkaProducer;
     }
 
+    public KafkaProducer getKafkaProducer() {
+        return kafkaProducer;
+    }
+
     /**
      * 用于设置kafka的produce
      */
