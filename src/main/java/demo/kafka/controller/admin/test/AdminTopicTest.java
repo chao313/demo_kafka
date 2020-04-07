@@ -2,14 +2,10 @@ package demo.kafka.controller.admin.test;
 
 import demo.kafka.controller.admin.util.AdminTopicUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsResult;
-import org.junit.jupiter.api.BeforeAll;
+import org.apache.kafka.clients.admin.TopicDescription;
 import org.junit.jupiter.api.Test;
 
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -17,15 +13,8 @@ import java.util.concurrent.ExecutionException;
 
 public class AdminTopicTest {
 
-    private static AdminClient adminClient;
 
-
-    @BeforeAll
-    public static void BeforeAll() {
-        Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
-        adminClient = AdminClient.create(properties);
-    }
+    AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(Bootstrap.MY.getIp());
 
 
     /**
@@ -36,7 +25,7 @@ public class AdminTopicTest {
      */
     @Test
     public void listTopics() throws ExecutionException, InterruptedException {
-        ListTopicsResult listTopicsResult = AdminTopicUtil.listTopics(adminClient);
+        ListTopicsResult listTopicsResult = adminTopicUtil.getTopics();
         listTopicsResult.names().get().forEach(name -> {
             log.info("name:{}", name);
         });
@@ -50,7 +39,7 @@ public class AdminTopicTest {
      */
     @Test
     public void listTopicNames() throws ExecutionException, InterruptedException {
-        Set<String> topicNames = AdminTopicUtil.listTopicNames(adminClient);
+        Set<String> topicNames = adminTopicUtil.getTopicNames();
         topicNames.forEach(name -> {
             log.info("name:{}", name);
         });
@@ -65,7 +54,7 @@ public class AdminTopicTest {
      */
     @Test
     public void createTopics() throws Exception {
-        boolean bool = AdminTopicUtil.createTopic(adminClient, "Test11", 1, (short) 1);
+        boolean bool = adminTopicUtil.createTopic("Test11", 1, (short) 1);
         log.info("创建topic:{}", bool);
 
     }
@@ -78,7 +67,7 @@ public class AdminTopicTest {
      */
     @Test
     public void deleteTopics() throws ExecutionException, InterruptedException {
-        boolean bool = AdminTopicUtil.deleteTopics(adminClient, "Test11");
+        boolean bool = adminTopicUtil.deleteTopic("Test11");
         log.info("删除topic:{}", bool);
     }
 
@@ -87,13 +76,13 @@ public class AdminTopicTest {
      */
     @Test
     public void deleteAllTopics() throws ExecutionException, InterruptedException {
-        Set<String> topicNames = AdminTopicUtil.listTopicNames(adminClient);
+        Set<String> topicNames = adminTopicUtil.getTopicNames();
         for (String topic : topicNames) {
             if (!topic.startsWith("_")) {
                 /**
                  * 不删除 系统的 topic
                  */
-                boolean bool = AdminTopicUtil.deleteTopics(adminClient, topic);
+                boolean bool = adminTopicUtil.deleteTopic(topic);
                 log.info("删除topic:{}", bool);
             }
         }
@@ -107,7 +96,7 @@ public class AdminTopicTest {
      */
     @Test
     public void existTopicName() throws ExecutionException, InterruptedException {
-        boolean bool = AdminTopicUtil.existTopicName(adminClient, "Test11");
+        boolean bool = adminTopicUtil.existTopicName("Test11");
         log.info("topic是否存在:{}", bool);
     }
 
@@ -116,9 +105,9 @@ public class AdminTopicTest {
      * 测试获取 topic 的细节
      */
     @Test
-    public void describeTopic() throws ExecutionException, InterruptedException {
-        DescribeTopicsResult describeTopicsResult = AdminTopicUtil.describeTopic(adminClient, "Test11");
-        log.info("topic是否存在:{}", describeTopicsResult);
+    public void getTopic() throws ExecutionException, InterruptedException {
+        TopicDescription topicDescription = adminTopicUtil.getTopic("Test11");
+        log.info("topic是否存在:{}", topicDescription);
     }
 
 }

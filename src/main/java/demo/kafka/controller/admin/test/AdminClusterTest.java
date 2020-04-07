@@ -21,14 +21,6 @@ public class AdminClusterTest {
     private static AdminClient adminClient;
 
 
-    @BeforeAll
-    public static void BeforeAll() {
-        Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
-        adminClient = AdminClient.create(properties);
-    }
-
-
     /**
      * 获取集群的信息(可以获取节点的信息)
      * <p>
@@ -36,7 +28,7 @@ public class AdminClusterTest {
      */
     @Test
     public void describeCluster() throws ExecutionException, InterruptedException {
-        DescribeClusterResult describeClusterResult = AdminClusterUtil.describeCluster(adminClient);
+        DescribeClusterResult describeClusterResult = AdminClusterUtil.getInstance(Bootstrap.MY.getIp()).describeCluster();
         log.info("describeClusterResult:{}", describeClusterResult);
         log.info("describeClusterResult.nodes:{}", describeClusterResult.nodes());
         log.info("describeClusterResult.clusterId:{}", describeClusterResult.clusterId());

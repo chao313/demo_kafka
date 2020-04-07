@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
- *
+ * 作为Admin,可以删除指定 offset之前的Record
  */
 public class AdminRecordsUtil {
 

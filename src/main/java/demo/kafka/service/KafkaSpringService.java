@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 
 @Slf4j
-@Service
+//@Service
 public class KafkaSpringService {
 
 

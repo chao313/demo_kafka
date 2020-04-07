@@ -31,11 +31,11 @@ public class AdminPartitionsUtilTest {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    @Test
-    public void describeCluster() throws ExecutionException, InterruptedException {
-        DescribeClusterResult describeClusterResult = AdminClusterUtil.describeCluster(adminClient);
-        log.info("describeClusterResult:{}", describeClusterResult);
-    }
+//    @Test
+//    public void describeCluster() throws ExecutionException, InterruptedException {
+//        DescribeClusterResult describeClusterResult = AdminClusterUtil.describeCluster(adminClient);
+//        log.info("describeClusterResult:{}", describeClusterResult);
+//    }
 
 
 }
