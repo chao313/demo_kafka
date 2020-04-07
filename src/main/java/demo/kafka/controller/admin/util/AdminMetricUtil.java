@@ -10,10 +10,26 @@ import java.util.concurrent.ExecutionException;
 /**
  * 度量
  */
-public class AdminMetricUtil {
+public class AdminMetricUtil extends AdminUtil {
 
-    public static Map<MetricName, ? extends Metric> metrics(AdminClient client) throws ExecutionException, InterruptedException {
-        Map<MetricName, ? extends Metric> metricNameMap = client.metrics();
+    /**
+     * 获取实例
+     */
+    public static AdminMetricUtil getInstance(String bootstrap_servers) {
+        return new AdminMetricUtil(bootstrap_servers);
+    }
+
+    /**
+     * 构造函数(bootstrap_servers) 使用default来指定
+     *
+     * @param bootstrap_servers
+     */
+    AdminMetricUtil(String bootstrap_servers) {
+        super(bootstrap_servers);
+    }
+
+    public Map<MetricName, ? extends Metric> metrics() throws ExecutionException, InterruptedException {
+        Map<MetricName, ? extends Metric> metricNameMap = super.client.metrics();
         return metricNameMap;
     }
 
@@ -66,13 +82,12 @@ public class AdminMetricUtil {
      * groupName:app-info -> metricName:commit-id -> value:18a913733fb71c01
      * groupName:app-info -> metricName:version -> value:2.3.1
      *
-     * @param client
      * @return
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public static Map<String, List<Metric>> metricGroupNameMap(AdminClient client) throws ExecutionException, InterruptedException {
-        Map<MetricName, ? extends Metric> metricNameMap = AdminMetricUtil.metrics(client);
+    public Map<String, List<Metric>> metricGroupNameMap() throws ExecutionException, InterruptedException {
+        Map<MetricName, ? extends Metric> metricNameMap = super.client.metrics();
         Map<String, List<Metric>> metricGroupNameMap = new HashMap<>();
         metricNameMap.forEach((name, metric) -> {
             String groupName = metric.metricName().group();

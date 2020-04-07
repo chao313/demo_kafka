@@ -11,8 +11,26 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * 作为Admin,可以删除指定 offset之前的Record
+ * 对 Record 只有删除的功能
  */
-public class AdminRecordsUtil {
+public class AdminRecordsUtil extends AdminUtil {
+
+    /**
+     * 获取实例
+     */
+    public static AdminRecordsUtil getInstance(String bootstrap_servers) {
+        return new AdminRecordsUtil(bootstrap_servers);
+    }
+
+
+    /**
+     * 构造函数(bootstrap_servers) 使用default来指定
+     *
+     * @param bootstrap_servers
+     */
+    AdminRecordsUtil(String bootstrap_servers) {
+        super(bootstrap_servers);
+    }
 
     /**
      * 底层的删除逻辑

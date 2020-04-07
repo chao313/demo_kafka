@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
  * admin 分区操作
  * <p>
  * 可以指定分区在哪个 broker 上，这里暂时不做操作
+ * Admin对Partition只有提高的功能
  */
 public class AdminPartitionsUtil {
 
