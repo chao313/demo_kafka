@@ -20,49 +20,10 @@ import java.util.Set;
 
 
 @Slf4j
-@RequestMapping(value = "/ProduceController")
+@RequestMapping(value = "/ConsumeController")
 @RestController
 public class ConsumeController {
 
-
-//    private KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
-
-
-//
-//    @RequestMapping(value = "/ProduceController")
-//    public void test() {
-//        KafkaConsumerSupService<String, String> kafkaConsumerSupService = new KafkaConsumerSupService<>();
-//        kafkaConsumerSupService.beginningOffsets()
-//    }
-
-
-    @GetMapping(value = "/ProduceController")
-    public void test() {
-//        KafkaConsumerSupService<String, String> kafkaConsumerSupService = new KafkaConsumerSupService<>();
-//
-//        kafkaConsumerSupService.subscribe(Arrays.asList("Test11"));
-//        kafkaConsumerSupService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-//        Set<TopicPartition> assignments = kafkaConsumerSupService.assignment();
-//        kafkaConsumerSupService.seekToBeginning(assignments);
-//
-//
-//        ConsumerRecords<String, String> consumerRecords = kafkaConsumerSupService.poll(0);
-//
-//        kafkaConsumerSupService.listener(Arrays.asList("Test11"), new Consumer<ConsumerRecords<String, String>>() {
-//            @Override
-//            public void accept(ConsumerRecords<String, String> consumerRecords) {
-//                kafkaConsumerSupService.subscribe(Arrays.asList("Test11"));
-//                kafkaConsumerSupService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-//                assignments.forEach(assignment -> {
-//                    OffsetAndMetadata offsetAndMetadata = kafkaConsumerSupService.committed(assignment);
-//                    log.info("offsetAndMetadata:{}", offsetAndMetadata);
-//                });
-//                consumerRecords.forEach(record -> {
-//                    log.info("record 的 offset:{},record:{}", record.offset(), record);
-//                });
-//            }
-//        });
-    }
 
     /**
      * 把偏移量设置到最早的 offset
@@ -73,9 +34,15 @@ public class ConsumeController {
     @ApiOperation(value = "指定消费者的offset设置到最开始", notes = "指定消费者的offset设置到最开始")
     @GetMapping(value = "/seekToBeginning")
     public void seekToBeginning(
-            @ApiParam(value = "kafka地址") @RequestParam(name = "bootstrap.servers", defaultValue = "192.168.0.105:9092") String bootstrap_servers,
-            @ApiParam(value = "需要调拨的Topic") @RequestParam(name = "topic", defaultValue = "Test") String topic,
-            @ApiParam(value = "需要调拨的Topic的消费者groupId") @RequestParam(name = "group_id", defaultValue = "common_imp_db_test") String group_id) {
+            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要调拨的Topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "需要调拨的Topic的消费者groupId")
+            @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
+                    String group_id) {
 
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id);
 
@@ -88,12 +55,13 @@ public class ConsumeController {
     }
 
     /**
+     *
      */
     @ApiOperation(value = "消费一次", notes = "消费一次")
     @GetMapping(value = "/listenerOnce")
     public void listenerOnce(
-            @ApiParam(value = "kafka地址")
-            @RequestParam(name = "bootstrap.servers", defaultValue = "192.168.0.105:9092")
+            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要消费的的Topic")
             @RequestParam(name = "topic", defaultValue = "Test")
@@ -109,7 +77,6 @@ public class ConsumeController {
             log.info("offset:{} value:{}", consumerRecord.offset(), consumerRecord.value());
         });
     }
-
 
 
 //    @GetMapping(value = "/OffsetAndMetadata")

@@ -1,4 +1,4 @@
-package demo.kafka.controller.produce.vo;
+package demo.kafka.controller.response;
 
 import lombok.Data;
 import org.apache.kafka.clients.producer.RecordMetadata;

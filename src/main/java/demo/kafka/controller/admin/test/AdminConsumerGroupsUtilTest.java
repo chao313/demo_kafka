@@ -24,7 +24,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroups() throws ExecutionException, InterruptedException {
-        ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsUtil.listConsumerGroups();
+        ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsUtil.getConsumerGroups();
         listConsumerGroupsResult.all().get().forEach(result -> {
             log.info("groupId:{}", result.groupId());
         });
@@ -36,7 +36,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroupIds() throws ExecutionException, InterruptedException {
-        Collection<String> groupIds = adminConsumerGroupsUtil.listConsumerGroupIds();
+        Collection<String> groupIds = adminConsumerGroupsUtil.getConsumerGroupIds();
         groupIds.forEach(groupId -> {
             log.info("groupId:{}", groupId);
         });
@@ -57,7 +57,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void deleteConsumerGroups() throws ExecutionException, InterruptedException {
-        boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroups("common_imp_db_test");
+        boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroup("common_imp_db_test");
         log.info("groupId是否被删除:{}", isDeletedGroupId);
     }
 
@@ -67,11 +67,11 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void deleteAllConsumerGroups() throws ExecutionException, InterruptedException {
-        Collection<String> groups = adminConsumerGroupsUtil.listConsumerGroupIds();
+        Collection<String> groups = adminConsumerGroupsUtil.getConsumerGroupIds();
         for (String group : groups) {
             if (!group.contains("Offset")) {
                 try {
-                    boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroups(group);
+                    boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroup(group);
                     log.info("groupId是否被删除:{}", isDeletedGroupId);
                 } catch (Exception e) {
                     log.error("e:{}", group, e);
@@ -87,7 +87,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void describeConsumerGroups() throws ExecutionException, InterruptedException {
-        ConsumerGroupDescription consumerGroupDescription = adminConsumerGroupsUtil.describeConsumerGroups("common_imp_db_test");
+        ConsumerGroupDescription consumerGroupDescription = adminConsumerGroupsUtil.getConsumerGroupDescribe("common_imp_db_test");
         log.info("groupId:{}", consumerGroupDescription.groupId());
         log.info("isSimpleConsumerGroup:{}", consumerGroupDescription.isSimpleConsumerGroup());
         log.info("分区选择器: partitionAssignor:{}", consumerGroupDescription.partitionAssignor());
@@ -120,7 +120,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroupOffsets() throws ExecutionException, InterruptedException {
-        Map<TopicPartition, OffsetAndMetadata> map = adminConsumerGroupsUtil.listConsumerGroupOffsets("common_imp_db_test");
+        Map<TopicPartition, OffsetAndMetadata> map = adminConsumerGroupsUtil.getConsumerGroupOffsets("common_imp_db_test");
         map.forEach((key, value) -> {
             log.info("key:{}", key);
             log.info("value:{}", value);

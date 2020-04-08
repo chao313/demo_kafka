@@ -1,6 +1,6 @@
 package demo.kafka.controller.produce.service;
 
-import demo.kafka.controller.produce.vo.RecordMetadataResponse;
+import demo.kafka.controller.response.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;

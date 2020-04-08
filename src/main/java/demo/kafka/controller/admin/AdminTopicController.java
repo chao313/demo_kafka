@@ -1,18 +1,15 @@
 package demo.kafka.controller.admin;
 
 
-import demo.kafka.controller.admin.util.AdminConsumerGroupsUtil;
 import demo.kafka.controller.admin.util.AdminTopicUtil;
-import demo.kafka.controller.admin.vo.TopicDescriptionResponse;
+import demo.kafka.controller.response.TopicDescriptionResponse;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -38,44 +35,40 @@ public class AdminTopicController {
                     short replicationFactor
     ) throws Exception {
         AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-        boolean bool = adminTopicUtil.createTopic(topic, numPartitions, replicationFactor);
+        boolean bool = adminTopicUtil.addTopic(topic, numPartitions, replicationFactor);
         log.info("添加topic:{}", bool);
         return bool;
     }
 
-//    @ApiOperation(value = "获取 topic 的描述")
-//    @GetMapping(value = "/getTopicNames")
-//    public TopicDescriptionResponse getTopicNames(
-//            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
-//            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-//                    String bootstrap_servers,
-//            @ApiParam(value = "topic-name")
-//            @RequestParam(name = "topic", defaultValue = "Test")
-//                    String topic
-//    ) throws Exception {
-//        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-//        TopicDescription topicDescription = adminTopicUtil.getTopicNames(topic);
-//        TopicDescriptionResponse topicDescriptionResponse = new TopicDescriptionResponse(topicDescription);
-//        log.info("获取 topicDescriptionResponse :{}", topicDescriptionResponse);
-//        return topicDescriptionResponse;
-//    }
+    @ApiOperation(value = "获取 topic 的的名称")
+    @GetMapping(value = "/getTopicNames")
+    public Set<String> getTopicNames(
+            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers
+    ) throws Exception {
+        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
+        Set<String> topicNames = adminTopicUtil.getTopicNames();
+        log.info("获取 topicNames :{}", topicNames);
+        return topicNames;
+    }
 
-//    @ApiOperation(value = "获取 topic 的描述")
-//    @GetMapping(value = "/getTopicList")
-//    public TopicDescriptionResponse getTopic(
-//            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
-//            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-//                    String bootstrap_servers,
-//            @ApiParam(value = "topic-name")
-//            @RequestParam(name = "topic", defaultValue = "Test")
-//                    String topic
-//    ) throws Exception {
-//        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-//        TopicDescription topicDescription = adminTopicUtil.getTopicNames(topic);
-//        TopicDescriptionResponse topicDescriptionResponse = new TopicDescriptionResponse(topicDescription);
-//        log.info("获取 topicDescriptionResponse :{}", topicDescriptionResponse);
-//        return topicDescriptionResponse;
-//    }
+    @ApiOperation(value = "获取 topic 的描述")
+    @GetMapping(value = "/getTopicDescription")
+    public TopicDescriptionResponse getTopicDescription(
+            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "topic-name")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic
+    ) throws Exception {
+        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
+        TopicDescription topicDescription = adminTopicUtil.getTopicDescription(topic);
+        TopicDescriptionResponse topicDescriptionResponse = new TopicDescriptionResponse(topicDescription);
+        log.info("获取 topicDescriptionResponse :{}", topicDescriptionResponse);
+        return topicDescriptionResponse;
+    }
 
     @ApiOperation(value = "删除指定的 Topic ")
     @DeleteMapping(value = "/deleteTopic")
@@ -93,20 +86,5 @@ public class AdminTopicController {
         return bool;
     }
 
-
-    @ApiOperation(value = "删除指定的 consumer ")
-    @GetMapping(value = "/deleteConsumerGroups")
-    public boolean deleteConsumerGroups(
-            @ApiParam(value = "需要删除的 kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
-            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers,
-            @ApiParam(value = "需要删除的 group") @RequestParam(name = "group", defaultValue = "common_imp_db_test")
-                    String group)
-            throws ExecutionException, InterruptedException {
-        AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(bootstrap_servers);
-        boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroups(group);
-        log.info("groupId是否被删除:{}", isDeletedGroupId);
-        return isDeletedGroupId;
-    }
 }
 

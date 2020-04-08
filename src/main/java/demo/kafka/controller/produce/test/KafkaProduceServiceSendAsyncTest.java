@@ -2,9 +2,7 @@ package demo.kafka.controller.produce.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendAsyncService;
-import demo.kafka.controller.produce.service.KafkaProduceSendForgetService;
-import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
-import demo.kafka.controller.produce.vo.RecordMetadataResponse;
+import demo.kafka.controller.response.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;

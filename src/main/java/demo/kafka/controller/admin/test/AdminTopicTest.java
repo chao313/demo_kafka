@@ -4,8 +4,10 @@ import demo.kafka.controller.admin.util.AdminTopicUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.clients.admin.TopicListing;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -24,10 +26,10 @@ public class AdminTopicTest {
      * @throws InterruptedException
      */
     @Test
-    public void listTopics() throws ExecutionException, InterruptedException {
-        ListTopicsResult listTopicsResult = adminTopicUtil.getTopics();
-        listTopicsResult.names().get().forEach(name -> {
-            log.info("name:{}", name);
+    public void getTopicsResults() throws ExecutionException, InterruptedException {
+        Collection<TopicListing> topicListings = adminTopicUtil.getTopicsResults();
+        topicListings.forEach(topicListing -> {
+            log.info("topicListing:{}", topicListing);
         });
     }
 
@@ -54,7 +56,7 @@ public class AdminTopicTest {
      */
     @Test
     public void createTopics() throws Exception {
-        boolean bool = adminTopicUtil.createTopic("Test11", 1, (short) 1);
+        boolean bool = adminTopicUtil.addTopic("Test11", 1, (short) 1);
         log.info("创建topic:{}", bool);
 
     }
@@ -106,7 +108,7 @@ public class AdminTopicTest {
      */
     @Test
     public void getTopic() throws ExecutionException, InterruptedException {
-        TopicDescription topicDescription = adminTopicUtil.getTopic("Test11");
+        TopicDescription topicDescription = adminTopicUtil.getTopicDescription("Test11");
         log.info("topic是否存在:{}", topicDescription);
     }
 

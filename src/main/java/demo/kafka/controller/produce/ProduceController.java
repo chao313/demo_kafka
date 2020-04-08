@@ -1,30 +1,20 @@
 package demo.kafka.controller.produce;
 
-import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
-import demo.kafka.controller.produce.service.KafkaProduceService;
-import demo.kafka.controller.produce.vo.CreateProducerRequest;
-import demo.kafka.controller.produce.vo.RecordMetadataResponse;
-import demo.kafka.service.ProduceService;
-import demo.kafka.util.MapUtil;
+import demo.kafka.controller.response.CreateProducerRequest;
+import demo.kafka.controller.response.RecordMetadataResponse;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.*;
-import org.apache.kafka.common.Metric;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * 用于kafka生产者

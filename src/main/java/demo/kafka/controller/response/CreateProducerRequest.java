@@ -1,11 +1,8 @@
-package demo.kafka.controller.produce.vo;
+package demo.kafka.controller.response;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiParam;
 import lombok.Data;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Data
 @ApiModel

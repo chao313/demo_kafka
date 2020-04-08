@@ -1,4 +1,4 @@
-package demo.kafka.controller.admin.vo;
+package demo.kafka.controller.response;
 
 import lombok.Data;
 import org.apache.kafka.common.Node;

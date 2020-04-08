@@ -1,8 +1,7 @@
-package demo.kafka.controller.admin.vo;
+package demo.kafka.controller.response;
 
 import lombok.Data;
 import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.acl.AclOperation;
 
 import java.util.List;

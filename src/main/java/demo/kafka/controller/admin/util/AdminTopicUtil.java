@@ -3,6 +3,7 @@ package demo.kafka.controller.admin.util;
 import org.apache.kafka.clients.admin.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +16,6 @@ import java.util.concurrent.ExecutionException;
  * create
  */
 public class AdminTopicUtil extends AdminUtil {
-
     /**
      * 获取实例
      */
@@ -36,13 +36,13 @@ public class AdminTopicUtil extends AdminUtil {
     /**
      * 获取全部的 topics 原始状态的
      * 包含内部的topic
+     * 比{@link #getTopicNames()}多了是否是内部的标识而已
      */
-    public ListTopicsResult getTopics() throws ExecutionException, InterruptedException {
+    public Collection<TopicListing> getTopicsResults() throws ExecutionException, InterruptedException {
         ListTopicsOptions options = new ListTopicsOptions();
         options.listInternal(true); // 包含内部的 topic  - includes internal topics such as __consumer_offsets
         ListTopicsResult topics = super.client.listTopics(options);
-        topics.names().get();
-        return topics;
+        return topics.listings().get();
     }
 
     /**
@@ -54,11 +54,13 @@ public class AdminTopicUtil extends AdminUtil {
     }
 
     /**
-     * 判断 topic 是否存在
+     * 获取topic的描述
      */
-    public boolean existTopicName(String name) throws ExecutionException, InterruptedException {
-        return this.getTopicNames().contains(name);
+    public TopicDescription getTopicDescription(String name) throws ExecutionException, InterruptedException {
+        Map<String, TopicDescription> topicToTopicDescriptionMap = this.describeTopic(Arrays.asList(name));
+        return topicToTopicDescriptionMap.get(name);
     }
+
 
     /**
      * create multiple sample topics
@@ -69,7 +71,7 @@ public class AdminTopicUtil extends AdminUtil {
      * false -> 创建失败
      * @throws Exception 当目标topic已经存在时，会抛出异常
      */
-    public boolean createTopic(String name, int numPartitions, short replicationFactor) throws Exception {
+    public boolean addTopic(String name, int numPartitions, short replicationFactor) throws Exception {
         if (this.getTopicNames().contains(name)) {
             throw new Exception("topic已经存在");
         }
@@ -93,7 +95,7 @@ public class AdminTopicUtil extends AdminUtil {
      * false -> 创建失败
      * @throws Exception 当目标topic已经存在时，会抛出异常
      */
-    public boolean createTopic(String name, int numPartitions, short replicationFactor, Map<String, String> confgs) throws Exception {
+    public boolean addTopic(String name, int numPartitions, short replicationFactor, Map<String, String> confgs) throws Exception {
         if (this.getTopicNames().contains(name)) {
             throw new Exception("topic已经存在");
         }
@@ -125,21 +127,21 @@ public class AdminTopicUtil extends AdminUtil {
         }
     }
 
+
     /**
-     * 描述topic
+     * 判断 topic 是否存在
      */
-    Map<String, TopicDescription> describeTopic(String name) throws ExecutionException, InterruptedException {
-        DescribeTopicsResult describeTopicsResult = super.client.describeTopics(Arrays.asList(name));
-        Map<String, TopicDescription> topicToTopicDescriptionMap = describeTopicsResult.all().get();
-        return topicToTopicDescriptionMap;
+    public boolean existTopicName(String name) throws ExecutionException, InterruptedException {
+        return this.getTopicNames().contains(name);
     }
 
     /**
-     * 获取topic的描述 {@link #deleteTopic(String)}
+     * 描述topic
      */
-    public TopicDescription getTopic(String name) throws ExecutionException, InterruptedException {
-        Map<String, TopicDescription> topicToTopicDescriptionMap = this.describeTopic(name);
-        return topicToTopicDescriptionMap.get(name);
+    Map<String, TopicDescription> describeTopic(Collection<String> topics) throws ExecutionException, InterruptedException {
+        DescribeTopicsResult describeTopicsResult = super.client.describeTopics(topics);
+        Map<String, TopicDescription> topicToTopicDescriptionMap = describeTopicsResult.all().get();
+        return topicToTopicDescriptionMap;
     }
 
 
