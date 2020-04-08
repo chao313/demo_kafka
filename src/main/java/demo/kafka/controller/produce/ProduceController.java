@@ -1,18 +1,23 @@
 package demo.kafka.controller.produce;
 
-import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
-import demo.kafka.controller.response.CreateProducerRequest;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
+import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.produce.service.*;
 import demo.kafka.controller.response.RecordMetadataResponse;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.PartitionInfo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -27,27 +32,6 @@ public class ProduceController {
 //    @Autowired
 //    private KafkaProduceService kafkaProduceService;
 
-
-    /**
-     * 创建生产者
-     *
-     * @return
-     */
-    @ApiOperation(value = "创建生产者", notes = "使用工厂来生成")
-    @GetMapping(value = "/createProducer2")
-    public KafkaProducer createProducer2(CreateProducerRequest createProducerRequest) {
-        Properties kafkaProps = new Properties(); //新建一个Properties对象
-        kafkaProps.put("bootstrap.servers", "10.200.127.26:9092");
-        kafkaProps.put("zookeeper.connect", "10.200.127.26:2181");
-        kafkaProps.put("retries", "1");
-        kafkaProps.put("batch.size", "16384");
-        kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
-        kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
-        kafkaProps.put("max.request.size", "10485760000000");
-        kafkaProps.put("buffer.memory", "104857600");
-        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-        return kafkaProducer;
-    }
 
     /**
      * 创建生产者
@@ -162,6 +146,35 @@ public class ProduceController {
         return "kafkaProducer初始化成功";
     }
 
+
+    /**
+     * 根据 topic 获取分区信息
+     * <p>
+     * 首领分区在的节点  : partitionInfo.leader
+     * 当前分区的    id : partitionInfo.partition
+     * 当前分区的 Topic : partitionInfo.topic
+     * 同步复制子集     : partitionInfo.inSyncReplicas
+     * 完整子集:        : partitionInfo.replicas
+     * 离线副本         : partitionInfo.offlineReplicas
+     */
+    @ApiOperation(value = "根据 topic 获取分区信息", notes = "可以获取首领分区的节点,当前分区id,topic,同步的分区，完整的分区，离线的分区")
+    @GetMapping(value = "/getPartitionsByTopic")
+    public JSONArray getPartitionsByTopic(
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic) {
+
+        KafkaProducer<String, String> kafkaProducer = KafkaProduceService.getProducerInstance(bootstrap_servers);
+        KafkaProduceDefaultService<String, String> kafkaProduceDefaultService = KafkaProduceDefaultService.getInstance(kafkaProducer);
+        List<PartitionInfo> partitionInfos = kafkaProduceDefaultService.getPartitionsByTopic(topic);
+        String JsonObject = new Gson().toJson(partitionInfos);
+        JSONArray result = JSONObject.parseArray(JsonObject);
+        log.info("获取 BrokerConfigs 结果:{}", result);
+        return result;
+    }
+
     /**
      * 同步! 发送立刻得到结果
      * <p>
@@ -177,82 +190,85 @@ public class ProduceController {
     @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
     @GetMapping(value = "/sendSync")
     public RecordMetadataResponse sendSync(
-            @ApiParam(value = "发送的 bootstrap_servers ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
-            @ApiParam(value = "发送的 topic")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
-            @ApiParam(value = "发送的 key")
+            @ApiParam(value = "指定 partition -> 不指定就是null")
+                    Integer partition,
+            @ApiParam(value = "指定 timestamp -> 不指定就是null")
+                    Long timestamp,
             @RequestParam(name = "key", defaultValue = "key")
                     String key,
-            @ApiParam(value = "发送的 value")
             @RequestParam(name = "value", defaultValue = "value")
                     String value) throws ExecutionException, InterruptedException {
-        KafkaProduceSendSyncService<Object, Object> kafkaProduceSendSyncService = KafkaProduceSendSyncService
-                .getInstance(KafkaProduceSendSyncService.getInstance(bootstrap_servers));
-        RecordMetadataResponse recordMetadataResponse = kafkaProduceSendSyncService.sendSync(topic, key, value);
+        KafkaProduceSendSyncService<String, String> kafkaProduceSendSyncService = KafkaProduceSendSyncService
+                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        RecordMetadataResponse recordMetadataResponse = kafkaProduceSendSyncService.sendSync(topic, partition, timestamp, key, value);
         kafkaProduceSendSyncService.getKafkaProducer().close();
         return recordMetadataResponse;
     }
 
-    //
-//    @ApiOperation(value = "发送就忘记 - 不关心是否发生成功")
-//    @GetMapping(value = "/sendForget")
-//    public String sendForget(String topic, String key, String value) {
-//        kafkaProduceService.sendForget(topic, key, value);
-//        return "发送完成，不关心结果";
-//    }
+    /**
+     * 发送->忘记
+     */
+    @ApiOperation(value = "发送->忘记")
+    @GetMapping(value = "/SendForget")
+    public String SendForget(
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "指定 partition -> 不指定就是null")
+//            @RequestParam(name = "partition")
+                    Integer partition,
+            @ApiParam(value = "指定 timestamp -> 不指定就是null")
+//            @RequestParam(name = "timestamp")
+                    Long timestamp,
+            @RequestParam(name = "key", defaultValue = "key")
+                    String key,
+            @RequestParam(name = "value", defaultValue = "value")
+                    String value) {
+        KafkaProduceSendForgetService<String, String> producer = KafkaProduceSendForgetService
+                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        producer.sendForget(topic, partition, timestamp, key, value);
+        producer.getKafkaProducer().close();
+        return "发送结束";
+    }
 
-//
-//    /**
-//     * 发送就忘记
-//     */
-//
-//    @ApiOperation(value = "发送就忘记 - 不关心是否发生成功")
-//    @GetMapping(value = "/sendForget")
-//    public String sendForget(String topic, String key, String value) {
-//        kafkaProduceService.sendForget(topic, key, value);
-//        return "发送完成，不关心结果";
-//    }
-//
-//    /**
-//     * 同步! 发送立刻得到结果
-//     * <p>
-//     * {
-//     * "offset": 46,
-//     * "timestamp": 1585982277534,
-//     * "serializedKeySize": 5,
-//     * "serializedValueSize": 5,
-//     * "partition": 0,
-//     * "topic": "Topic11"
-//     * }
-//     */
-//    @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
-//    @GetMapping(value = "/sendSync")
-//    public RecordMetadataResponse sendSync(String topic, String key, String value) throws ExecutionException, InterruptedException {
-//        RecordMetadataResponse recordMetadataResponse = kafkaProduceService.sendSync(topic, key, value);
-//        return recordMetadataResponse;
-//    }
-//
-//    /**
-//     * 生产者发送
-//     *
-//     * @return
-//     */
-//    @ApiOperation(value = "异步! 发送等待回调")
-//    @GetMapping(value = "/sendAsync")
-//    public String sendAsync(String topic, String key, String value) {
-//        kafkaProduceService.sendAsync(topic, key, value, new Callback() {
-//            @Override
-//            public void onCompletion(RecordMetadata metadata, Exception exception) {
-//                log.info("回调成功:{}", new RecordMetadataResponse(metadata), exception);
-//            }
-//        });
-//        return "异步发送成功!";
-//    }
-//
-//    /**
+
+    @ApiOperation(value = "异步! 发送等待回调")
+    @GetMapping(value = "/sendAsync")
+    public String sendAsync(
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "指定 partition -> 不指定就是null")
+                    Integer partition,
+            @ApiParam(value = "指定 timestamp -> 不指定就是null")
+                    Long timestamp,
+            @RequestParam(name = "key", defaultValue = "key")
+                    String key,
+            @RequestParam(name = "value", defaultValue = "value")
+                    String value
+    ) throws ExecutionException, InterruptedException {
+        KafkaProduceSendAsyncService<String, String> producer = KafkaProduceSendAsyncService
+                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        producer.sendAsync(topic, partition, timestamp, key, value, new Callback() {
+            @Override
+            public void onCompletion(RecordMetadata metadata, Exception exception) {
+                log.info("回调成功:{}", new RecordMetadataResponse(metadata), exception);
+            }
+        });
+        producer.getKafkaProducer().close();
+        return "异步发送成功!";
+    }
+
+    //    /**
 //     */
 //    @ApiOperation(value = "获取生产者度量")
 //    @GetMapping(value = "/metricGroupNameMap")
@@ -281,23 +297,22 @@ public class ProduceController {
 //
 //
 //    @PostConstruct
-//    public void init() {
-//        Properties kafkaProps = new Properties(); //新建一个Properties对象
-//        kafkaProps.put("bootstrap.servers", Bootstrap.HONE.getIp());
-//        kafkaProps.put("zookeeper.connect", "10.200.127.26:2181");
-//        kafkaProps.put("retries", "1");
-//        kafkaProps.put("batch.size", "16384");
-//        kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
-//        kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
-//        /**
-//         * 开启事务需要
-//         * !!! 设置了这个以后正常的发送就不可以了
-//         */
-//        kafkaProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "transactionId2");
-//        kafkaProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
-//        KafkaProducer kafkaConsumer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-//        KafkaProduceService.kafkaConsumer = kafkaConsumer;
-//    }
+    public void init() {
+        Properties kafkaProps = new Properties(); //新建一个Properties对象
+        kafkaProps.put("bootstrap.servers", Bootstrap.HONE.getIp());
+        kafkaProps.put("zookeeper.connect", "10.200.127.26:2181");
+        kafkaProps.put("retries", "1");
+        kafkaProps.put("batch.size", "16384");
+        kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
+        kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
+        /**
+         * 开启事务需要
+         * !!! 设置了这个以后正常的发送就不可以了
+         */
+        kafkaProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "transactionId2");
+        kafkaProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        KafkaProducer kafkaConsumer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
+    }
 
 
 }

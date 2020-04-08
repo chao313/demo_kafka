@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class KafkaProduceServiceSendSyncTest {
 
-    KafkaProduceSendSyncService<String, String> kafkaProduceService = KafkaProduceSendSyncService.getInstance(KafkaProduceSendSyncService.getInstance(Bootstrap.HONE.getIp()));
+    KafkaProduceSendSyncService<String, String> kafkaProduceService = KafkaProduceSendSyncService.getInstance(KafkaProduceSendSyncService.getProducerInstance(Bootstrap.HONE.getIp()));
 
     /**
      * 测试 发送 value

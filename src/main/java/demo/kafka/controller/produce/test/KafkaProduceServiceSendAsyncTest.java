@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 public class KafkaProduceServiceSendAsyncTest {
 
     KafkaProduceSendAsyncService<String, String> kafkaProduceService
-            = KafkaProduceSendAsyncService.getInstance(KafkaProduceSendAsyncService.getInstance(Bootstrap.HONE.getIp()));
+            = KafkaProduceSendAsyncService.getInstance(KafkaProduceSendAsyncService.getProducerInstance(Bootstrap.HONE.getIp()));
 
     public static boolean flag = false;
 

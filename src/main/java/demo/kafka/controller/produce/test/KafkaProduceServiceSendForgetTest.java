@@ -15,7 +15,7 @@ import java.util.Date;
 public class KafkaProduceServiceSendForgetTest {
 
 
-    KafkaProduceSendForgetService<String, String> kafkaProduceService = KafkaProduceSendForgetService.getInstance(KafkaProduceSendForgetService.getInstance(Bootstrap.HONE.getIp()));
+    KafkaProduceSendForgetService<String, String> kafkaProduceService = KafkaProduceSendForgetService.getInstance(KafkaProduceSendForgetService.getProducerInstance(Bootstrap.HONE.getIp()));
 
     /**
      * 测试 发送 value

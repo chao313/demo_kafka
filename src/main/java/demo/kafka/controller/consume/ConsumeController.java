@@ -81,7 +81,7 @@ public class ConsumeController {
 
 //    @GetMapping(value = "/OffsetAndMetadata")
 //    public void OffsetAndMetadata() {
-//        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "test");
+//        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getProducerInstance(Bootstrap.HONE.getIp(), "test");
 //        consumerService.subscribe(Arrays.asList("Test11"));
 //        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
 //        Set<TopicPartition> assignments = consumerService.assignment();

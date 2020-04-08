@@ -18,11 +18,11 @@ import java.util.Map;
 public class KafkaProduceServiceTest {
 
     /**
-     * 测试 获取分区信息 partitionsFor
+     * 测试 获取分区信息 getPartitionsByTopic
      */
     @Test
     public void partitionsFor() {
-        List<PartitionInfo> list = KafkaProduceService.getInstance(Bootstrap.HONE.getIp()).partitionsFor("Test");
+        List<PartitionInfo> list = KafkaProduceService.getProducerInstance(Bootstrap.HONE.getIp()).partitionsFor("Test");
 
         list.forEach(partitionInfo -> {
             log.info("首领分区在的节点  : partitionInfo.leader:{}", partitionInfo.leader());
@@ -39,7 +39,7 @@ public class KafkaProduceServiceTest {
      */
     @Test
     public void metricGroupNameMap() {
-        Map<String, List<Metric>> metricNameMap = KafkaProduceDefaultService.getInstance(KafkaProduceDefaultService.getInstance(Bootstrap.HONE.getIp())).metricGroupNameMap();
+        Map<String, List<Metric>> metricNameMap = KafkaProduceDefaultService.getInstance(KafkaProduceDefaultService.getProducerInstance(Bootstrap.HONE.getIp())).metricGroupNameMap();
 
         metricNameMap.forEach((groupName, metrics) -> {
             log.info("groupName:{}", groupName);

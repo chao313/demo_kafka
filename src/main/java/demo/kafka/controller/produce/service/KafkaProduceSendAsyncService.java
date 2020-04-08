@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 
 /**
- * 发送就忘记 - 不关心是否发生成功
+ * 同步发送
  *
  * @return
  */
