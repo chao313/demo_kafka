@@ -1,11 +1,7 @@
 package demo.kafka.controller.admin.util;
 
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreatePartitionsResult;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.NewPartitions;
-import org.apache.kafka.common.Metric;
-import org.apache.kafka.common.MetricName;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,14 +13,14 @@ import java.util.concurrent.ExecutionException;
  * 可以指定分区在哪个 broker 上，这里暂时不做操作
  * Admin对Partition只有提高的功能
  */
-public class AdminPartitionsUtil extends AdminUtil {
+public class AdminPartitionsService extends AdminService {
 
 
     /**
      * 获取实例
      */
-    public static AdminPartitionsUtil getInstance(String bootstrap_servers) {
-        return new AdminPartitionsUtil(bootstrap_servers);
+    public static AdminPartitionsService getInstance(String bootstrap_servers) {
+        return new AdminPartitionsService(bootstrap_servers);
     }
 
     /**
@@ -32,7 +28,7 @@ public class AdminPartitionsUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminPartitionsUtil(String bootstrap_servers) {
+    AdminPartitionsService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

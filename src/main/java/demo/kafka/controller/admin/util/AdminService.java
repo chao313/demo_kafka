@@ -8,19 +8,19 @@ import java.util.Properties;
 /**
  * topic相关
  */
-public class AdminUtil {
+public class AdminService {
 
 
     AdminClient client;
 
-    private AdminUtil() {
+    private AdminService() {
     }
 
     /**
      * 构造函数(bootstrap_servers) 使用default来指定
      */
 
-    AdminUtil(String bootstrap_servers) {
+    AdminService(String bootstrap_servers) {
         Properties properties = new Properties(); //新建一个Properties对象
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
         AdminClient adminClient = AdminClient.create(properties);

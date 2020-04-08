@@ -3,17 +3,12 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
-import demo.kafka.controller.admin.util.AdminConfigsUtil;
-import demo.kafka.controller.admin.util.AdminTopicUtil;
+import demo.kafka.controller.admin.util.AdminConfigsService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.Config;
-import org.apache.kafka.clients.admin.TopicDescription;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RequestMapping(value = "/AdminConfigController")
@@ -31,8 +26,8 @@ public class AdminConfigController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws Exception {
-        AdminConfigsUtil adminConfigsUtil = AdminConfigsUtil.getInstance(bootstrap_servers);
-        Config topicConfigs = adminConfigsUtil.getTopicConfigs(topic);
+        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        Config topicConfigs = adminConfigsService.getTopicConfigs(topic);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);
         log.info("获取 TopicConfigs 结果:{}", result);
@@ -50,8 +45,8 @@ public class AdminConfigController {
             @RequestParam(name = "broker.id", defaultValue = "0")
                     int broker_id
     ) throws Exception {
-        AdminConfigsUtil adminConfigsUtil = AdminConfigsUtil.getInstance(bootstrap_servers);
-        Config topicConfigs = adminConfigsUtil.getBrokerConfigs(broker_id);
+        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        Config topicConfigs = adminConfigsService.getBrokerConfigs(broker_id);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);
         log.info("获取 BrokerConfigs 结果:{}", result);

@@ -1,6 +1,6 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminConfigsUtil;
+import demo.kafka.controller.admin.util.AdminConfigsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.Config;
@@ -14,9 +14,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
-public class AdminConfigsUtilTest {
+public class AdminConfigsServiceTest {
 
-    AdminConfigsUtil adminConfigsUtil = AdminConfigsUtil.getInstance(Bootstrap.MY.getIp());
+    AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(Bootstrap.MY.getIp());
 
 
     /**
@@ -24,7 +24,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeConfigs() throws ExecutionException, InterruptedException, UnknownHostException {
-        Map<ConfigResource, Config> configResourceConfigMap = adminConfigsUtil.getConfigs(ConfigResource.Type.TOPIC, "TP_010094051111");
+        Map<ConfigResource, Config> configResourceConfigMap = adminConfigsService.getConfigs(ConfigResource.Type.TOPIC, "TP_010094051111");
         log.info("configResourceConfigMap:{}", configResourceConfigMap);
     }
 
@@ -59,7 +59,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeTopicConfigs() throws ExecutionException, InterruptedException {
-        Config config = adminConfigsUtil.getTopicConfigs("TP_010094051111");
+        Config config = adminConfigsService.getTopicConfigs("TP_010094051111");
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -264,7 +264,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeBrokerConfigs() throws ExecutionException, InterruptedException {
-        Config config = adminConfigsUtil.getBrokerConfigs(0);
+        Config config = adminConfigsService.getBrokerConfigs(0);
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -276,7 +276,7 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("unclean.leader.election.enable", "false");
 
-        adminConfigsUtil.updateTopicConfigs("Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
+        adminConfigsService.updateTopicConfigs("Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
 
     }
 
@@ -291,7 +291,7 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("listeners", "PLAINTEXT://10.202.16.136:9092");
 
-        adminConfigsUtil.updateBrokerConfigs(0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
+        adminConfigsService.updateBrokerConfigs(0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
 
     }
 

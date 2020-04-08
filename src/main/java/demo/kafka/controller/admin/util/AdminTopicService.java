@@ -15,12 +15,12 @@ import java.util.concurrent.ExecutionException;
  * getTopics -> getTopicNames
  * create
  */
-public class AdminTopicUtil extends AdminUtil {
+public class AdminTopicService extends AdminService {
     /**
      * 获取实例
      */
-    public static AdminTopicUtil getInstance(String bootstrap_servers) {
-        return new AdminTopicUtil(bootstrap_servers);
+    public static AdminTopicService getInstance(String bootstrap_servers) {
+        return new AdminTopicService(bootstrap_servers);
     }
 
     /**
@@ -28,7 +28,7 @@ public class AdminTopicUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminTopicUtil(String bootstrap_servers) {
+    AdminTopicService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

@@ -1,7 +1,6 @@
 package demo.kafka.controller.admin.util;
 
 import demo.kafka.util.MapUtil;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DeleteRecordsResult;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.common.TopicPartition;
@@ -13,13 +12,13 @@ import java.util.concurrent.ExecutionException;
  * 作为Admin,可以删除指定 offset之前的Record
  * 对 Record 只有删除的功能
  */
-public class AdminRecordsUtil extends AdminUtil {
+public class AdminRecordsService extends AdminService {
 
     /**
      * 获取实例
      */
-    public static AdminRecordsUtil getInstance(String bootstrap_servers) {
-        return new AdminRecordsUtil(bootstrap_servers);
+    public static AdminRecordsService getInstance(String bootstrap_servers) {
+        return new AdminRecordsService(bootstrap_servers);
     }
 
 
@@ -28,7 +27,7 @@ public class AdminRecordsUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminRecordsUtil(String bootstrap_servers) {
+    AdminRecordsService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

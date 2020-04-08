@@ -1,6 +1,5 @@
 package demo.kafka.controller.admin.util;
 
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 
@@ -10,13 +9,13 @@ import java.util.concurrent.ExecutionException;
 /**
  * 度量
  */
-public class AdminMetricUtil extends AdminUtil {
+public class AdminMetricService extends AdminService {
 
     /**
      * 获取实例
      */
-    public static AdminMetricUtil getInstance(String bootstrap_servers) {
-        return new AdminMetricUtil(bootstrap_servers);
+    public static AdminMetricService getInstance(String bootstrap_servers) {
+        return new AdminMetricService(bootstrap_servers);
     }
 
     /**
@@ -24,7 +23,7 @@ public class AdminMetricUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminMetricUtil(String bootstrap_servers) {
+    AdminMetricService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

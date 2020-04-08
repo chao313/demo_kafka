@@ -1,8 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminTopicUtil;
+import demo.kafka.controller.admin.util.AdminTopicService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 public class AdminTopicTest {
 
 
-    AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(Bootstrap.MY.getIp());
+    AdminTopicService adminTopicService = AdminTopicService.getInstance(Bootstrap.MY.getIp());
 
 
     /**
@@ -27,7 +26,7 @@ public class AdminTopicTest {
      */
     @Test
     public void getTopicsResults() throws ExecutionException, InterruptedException {
-        Collection<TopicListing> topicListings = adminTopicUtil.getTopicsResults();
+        Collection<TopicListing> topicListings = adminTopicService.getTopicsResults();
         topicListings.forEach(topicListing -> {
             log.info("topicListing:{}", topicListing);
         });
@@ -41,7 +40,7 @@ public class AdminTopicTest {
      */
     @Test
     public void listTopicNames() throws ExecutionException, InterruptedException {
-        Set<String> topicNames = adminTopicUtil.getTopicNames();
+        Set<String> topicNames = adminTopicService.getTopicNames();
         topicNames.forEach(name -> {
             log.info("name:{}", name);
         });
@@ -56,7 +55,7 @@ public class AdminTopicTest {
      */
     @Test
     public void createTopics() throws Exception {
-        boolean bool = adminTopicUtil.addTopic("Test11", 1, (short) 1);
+        boolean bool = adminTopicService.addTopic("Test11", 1, (short) 1);
         log.info("创建topic:{}", bool);
 
     }
@@ -69,7 +68,7 @@ public class AdminTopicTest {
      */
     @Test
     public void deleteTopics() throws ExecutionException, InterruptedException {
-        boolean bool = adminTopicUtil.deleteTopic("Test11");
+        boolean bool = adminTopicService.deleteTopic("Test11");
         log.info("删除topic:{}", bool);
     }
 
@@ -78,13 +77,13 @@ public class AdminTopicTest {
      */
     @Test
     public void deleteAllTopics() throws ExecutionException, InterruptedException {
-        Set<String> topicNames = adminTopicUtil.getTopicNames();
+        Set<String> topicNames = adminTopicService.getTopicNames();
         for (String topic : topicNames) {
             if (!topic.startsWith("_")) {
                 /**
                  * 不删除 系统的 topic
                  */
-                boolean bool = adminTopicUtil.deleteTopic(topic);
+                boolean bool = adminTopicService.deleteTopic(topic);
                 log.info("删除topic:{}", bool);
             }
         }
@@ -98,7 +97,7 @@ public class AdminTopicTest {
      */
     @Test
     public void existTopicName() throws ExecutionException, InterruptedException {
-        boolean bool = adminTopicUtil.existTopicName("Test11");
+        boolean bool = adminTopicService.existTopicName("Test11");
         log.info("topic是否存在:{}", bool);
     }
 
@@ -108,7 +107,7 @@ public class AdminTopicTest {
      */
     @Test
     public void getTopic() throws ExecutionException, InterruptedException {
-        TopicDescription topicDescription = adminTopicUtil.getTopicDescription("Test11");
+        TopicDescription topicDescription = adminTopicService.getTopicDescription("Test11");
         log.info("topic是否存在:{}", topicDescription);
     }
 

@@ -3,7 +3,7 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
-import demo.kafka.controller.admin.util.AdminClusterUtil;
+import demo.kafka.controller.admin.util.AdminClusterService;
 import demo.kafka.controller.response.DescribeClusterResultResponse;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -27,8 +27,8 @@ public class AdminClusterController {
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
-        AdminClusterUtil adminClusterUtil = AdminClusterUtil.getInstance(bootstrap_servers);
-        DescribeClusterResult describeClusterResult = adminClusterUtil.getCluster();
+        AdminClusterService adminClusterService = AdminClusterService.getInstance(bootstrap_servers);
+        DescribeClusterResult describeClusterResult = adminClusterService.getCluster();
         DescribeClusterResultResponse describeClusterResultResponse = DescribeClusterResultResponse.addAll(describeClusterResult);
         String JsonObject = new Gson().toJson(describeClusterResultResponse);
         JSONObject result = JSONObject.parseObject(JsonObject);

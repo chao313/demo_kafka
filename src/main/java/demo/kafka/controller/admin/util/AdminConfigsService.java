@@ -11,13 +11,13 @@ import java.util.concurrent.ExecutionException;
  * <p>
  * !!!! 这里的配置存放在 Zookeeper里面(必须请求zk里面的数据才能恢复，不然每次启动都会读取里面的配置!!!)
  */
-public class AdminConfigsUtil extends AdminUtil {
+public class AdminConfigsService extends AdminService {
 
     /**
      * 获取实例
      */
-    public static AdminConfigsUtil getInstance(String bootstrap_servers) {
-        return new AdminConfigsUtil(bootstrap_servers);
+    public static AdminConfigsService getInstance(String bootstrap_servers) {
+        return new AdminConfigsService(bootstrap_servers);
     }
 
 
@@ -26,7 +26,7 @@ public class AdminConfigsUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminConfigsUtil(String bootstrap_servers) {
+    AdminConfigsService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

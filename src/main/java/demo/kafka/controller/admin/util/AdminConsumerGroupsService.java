@@ -13,13 +13,13 @@ import org.apache.kafka.common.errors.UnsupportedVersionException;
 /**
  * 消费者群组相关
  */
-public class AdminConsumerGroupsUtil extends AdminUtil {
+public class AdminConsumerGroupsService extends AdminService {
 
     /**
      * 获取实例
      */
-    public static AdminConsumerGroupsUtil getInstance(String bootstrap_servers) {
-        return new AdminConsumerGroupsUtil(bootstrap_servers);
+    public static AdminConsumerGroupsService getInstance(String bootstrap_servers) {
+        return new AdminConsumerGroupsService(bootstrap_servers);
     }
 
 
@@ -28,7 +28,7 @@ public class AdminConsumerGroupsUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminConsumerGroupsUtil(String bootstrap_servers) {
+    AdminConsumerGroupsService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 

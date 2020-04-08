@@ -3,8 +3,7 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
-import demo.kafka.controller.admin.util.AdminTopicUtil;
-import demo.kafka.controller.response.TopicDescriptionResponse;
+import demo.kafka.controller.admin.util.AdminTopicService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +35,8 @@ public class AdminTopicController {
             @RequestParam(name = "replicationFactor", defaultValue = "1")
                     short replicationFactor
     ) throws Exception {
-        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-        boolean bool = adminTopicUtil.addTopic(topic, numPartitions, replicationFactor);
+        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        boolean bool = adminTopicService.addTopic(topic, numPartitions, replicationFactor);
         log.info("添加topic:{}", bool);
         return bool;
     }
@@ -49,8 +48,8 @@ public class AdminTopicController {
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
-        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-        Set<String> topicNames = adminTopicUtil.getTopicNames();
+        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        Set<String> topicNames = adminTopicService.getTopicNames();
         log.info("获取 topicNames :{}", topicNames);
         return topicNames;
     }
@@ -65,8 +64,8 @@ public class AdminTopicController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws Exception {
-        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-        TopicDescription topicDescription = adminTopicUtil.getTopicDescription(topic);
+        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        TopicDescription topicDescription = adminTopicService.getTopicDescription(topic);
         String JsonObject = new Gson().toJson(topicDescription);
         JSONObject result = JSONObject.parseObject(JsonObject);
         log.info("获取topic结果:{}", result);
@@ -83,8 +82,8 @@ public class AdminTopicController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws ExecutionException, InterruptedException {
-        AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
-        boolean bool = adminTopicUtil.deleteTopic(topic);
+        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        boolean bool = adminTopicService.deleteTopic(topic);
         log.info("删除topic:{}", bool);
         return bool;
     }

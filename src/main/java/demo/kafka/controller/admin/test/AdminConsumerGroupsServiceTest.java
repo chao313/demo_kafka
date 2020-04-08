@@ -1,6 +1,6 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminConsumerGroupsUtil;
+import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
-public class AdminConsumerGroupsUtilTest {
+public class AdminConsumerGroupsServiceTest {
 
 
-    AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(Bootstrap.MY.getIp());
+    AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(Bootstrap.MY.getIp());
 
 
     /**
@@ -24,7 +24,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroups() throws ExecutionException, InterruptedException {
-        ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsUtil.getConsumerGroups();
+        ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsService.getConsumerGroups();
         listConsumerGroupsResult.all().get().forEach(result -> {
             log.info("groupId:{}", result.groupId());
         });
@@ -36,7 +36,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroupIds() throws ExecutionException, InterruptedException {
-        Collection<String> groupIds = adminConsumerGroupsUtil.getConsumerGroupIds();
+        Collection<String> groupIds = adminConsumerGroupsService.getConsumerGroupIds();
         groupIds.forEach(groupId -> {
             log.info("groupId:{}", groupId);
         });
@@ -48,7 +48,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void existGroupId() throws ExecutionException, InterruptedException {
-        boolean isExistGroupId = adminConsumerGroupsUtil.existGroupId("common_imp_db_test");
+        boolean isExistGroupId = adminConsumerGroupsService.existGroupId("common_imp_db_test");
         log.info("groupId是否存在:{}", isExistGroupId);
     }
 
@@ -57,7 +57,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void deleteConsumerGroups() throws ExecutionException, InterruptedException {
-        boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroup("common_imp_db_test");
+        boolean isDeletedGroupId = adminConsumerGroupsService.deleteConsumerGroup("common_imp_db_test");
         log.info("groupId是否被删除:{}", isDeletedGroupId);
     }
 
@@ -67,11 +67,11 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void deleteAllConsumerGroups() throws ExecutionException, InterruptedException {
-        Collection<String> groups = adminConsumerGroupsUtil.getConsumerGroupIds();
+        Collection<String> groups = adminConsumerGroupsService.getConsumerGroupIds();
         for (String group : groups) {
             if (!group.contains("Offset")) {
                 try {
-                    boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroup(group);
+                    boolean isDeletedGroupId = adminConsumerGroupsService.deleteConsumerGroup(group);
                     log.info("groupId是否被删除:{}", isDeletedGroupId);
                 } catch (Exception e) {
                     log.error("e:{}", group, e);
@@ -87,7 +87,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void describeConsumerGroups() throws ExecutionException, InterruptedException {
-        ConsumerGroupDescription consumerGroupDescription = adminConsumerGroupsUtil.getConsumerGroupDescribe("common_imp_db_test");
+        ConsumerGroupDescription consumerGroupDescription = adminConsumerGroupsService.getConsumerGroupDescribe("common_imp_db_test");
         log.info("groupId:{}", consumerGroupDescription.groupId());
         log.info("isSimpleConsumerGroup:{}", consumerGroupDescription.isSimpleConsumerGroup());
         log.info("分区选择器: partitionAssignor:{}", consumerGroupDescription.partitionAssignor());
@@ -120,7 +120,7 @@ public class AdminConsumerGroupsUtilTest {
      */
     @Test
     public void listConsumerGroupOffsets() throws ExecutionException, InterruptedException {
-        Map<TopicPartition, OffsetAndMetadata> map = adminConsumerGroupsUtil.getConsumerGroupOffsets("common_imp_db_test");
+        Map<TopicPartition, OffsetAndMetadata> map = adminConsumerGroupsService.getConsumerGroupOffsets("common_imp_db_test");
         map.forEach((key, value) -> {
             log.info("key:{}", key);
             log.info("value:{}", value);

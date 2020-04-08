@@ -9,14 +9,14 @@ import java.util.concurrent.ExecutionException;
 /**
  * 获取集群的信息
  */
-public class AdminClusterUtil extends AdminUtil {
+public class AdminClusterService extends AdminService {
 
 
     /**
      * 获取实例
      */
-    public static AdminClusterUtil getInstance(String bootstrap_servers) {
-        return new AdminClusterUtil(bootstrap_servers);
+    public static AdminClusterService getInstance(String bootstrap_servers) {
+        return new AdminClusterService(bootstrap_servers);
     }
 
 
@@ -25,7 +25,7 @@ public class AdminClusterUtil extends AdminUtil {
      *
      * @param bootstrap_servers
      */
-    AdminClusterUtil(String bootstrap_servers) {
+    AdminClusterService(String bootstrap_servers) {
         super(bootstrap_servers);
     }
 
