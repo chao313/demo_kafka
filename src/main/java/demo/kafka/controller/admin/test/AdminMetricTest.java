@@ -18,20 +18,12 @@ import java.util.concurrent.ExecutionException;
 
 public class AdminMetricTest {
 
-    private static AdminClient adminClient;
-
-
-    @BeforeAll
-    public static void BeforeAll() {
-        Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.MY.getIp());
-        adminClient = AdminClient.create(properties);
-    }
+    private static AdminMetricUtil adminMetricUtil = AdminMetricUtil.getInstance(Bootstrap.MY.getIp());
 
 
     @Test
     public void metrics() throws ExecutionException, InterruptedException {
-        Map<MetricName, ? extends Metric> metricNameMap = AdminMetricUtil.metrics(adminClient);
+        Map<MetricName, ? extends Metric> metricNameMap = adminMetricUtil.metrics();
         metricNameMap.forEach((key, value) -> {
             log.info("Metric.metricName:{}", value.metricName());
             log.info("Metric.metricValue:{}", value.metricValue());
@@ -42,7 +34,7 @@ public class AdminMetricTest {
 
     @Test
     public void metricGroupNameMap() throws ExecutionException, InterruptedException {
-        Map<String, List<Metric>> metricNameMap = AdminMetricUtil.metricGroupNameMap(adminClient);
+        Map<String, List<Metric>> metricNameMap = adminMetricUtil.metricGroupNameMap();
         metricNameMap.forEach((groupName, metrics) -> {
             log.info("groupName:{}", groupName);
             metrics.forEach(metric -> {

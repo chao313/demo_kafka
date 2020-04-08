@@ -15,11 +15,9 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
-
 public class AdminClusterTest {
 
-    private static AdminClient adminClient;
-
+    AdminClusterUtil adminClusterUtil = AdminClusterUtil.getInstance(Bootstrap.MY.getIp());
 
     /**
      * 获取集群的信息(可以获取节点的信息)
@@ -28,7 +26,7 @@ public class AdminClusterTest {
      */
     @Test
     public void describeCluster() throws ExecutionException, InterruptedException {
-        DescribeClusterResult describeClusterResult = AdminClusterUtil.getInstance(Bootstrap.MY.getIp()).describeCluster();
+        DescribeClusterResult describeClusterResult = adminClusterUtil.describeCluster();
         log.info("describeClusterResult:{}", describeClusterResult);
         log.info("describeClusterResult.nodes:{}", describeClusterResult.nodes());
         log.info("describeClusterResult.clusterId:{}", describeClusterResult.clusterId());

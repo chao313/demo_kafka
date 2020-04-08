@@ -1,34 +1,22 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminClusterUtil;
 import demo.kafka.controller.admin.util.AdminConfigsUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.Config;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.common.config.ConfigResource;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class AdminConfigsUtilTest {
 
-    private static AdminClient adminClient;
-
-
-    @BeforeAll
-    public static void BeforeAll() {
-        Properties properties = new Properties();
-//        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "10.200.126.163:9092");
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
-        adminClient = AdminClient.create(properties);
-    }
+    AdminConfigsUtil adminConfigsUtil = AdminConfigsUtil.getInstance(Bootstrap.MY.getIp());
 
 
     /**
@@ -36,7 +24,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeConfigs() throws ExecutionException, InterruptedException, UnknownHostException {
-        Map<ConfigResource, Config> configResourceConfigMap = AdminConfigsUtil.describeConfigs(adminClient, ConfigResource.Type.TOPIC, "TP_010094051111");
+        Map<ConfigResource, Config> configResourceConfigMap = adminConfigsUtil.describeConfigs(ConfigResource.Type.TOPIC, "TP_010094051111");
         log.info("configResourceConfigMap:{}", configResourceConfigMap);
     }
 
@@ -71,7 +59,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeTopicConfigs() throws ExecutionException, InterruptedException {
-        Config config = AdminConfigsUtil.describeTopicConfigs(adminClient, "TP_010094051111");
+        Config config = adminConfigsUtil.describeTopicConfigs("TP_010094051111");
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -276,7 +264,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeBrokerConfigs() throws ExecutionException, InterruptedException {
-        Config config = AdminConfigsUtil.describeBrokerConfigs(adminClient, 0);
+        Config config = adminConfigsUtil.describeBrokerConfigs(0);
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -288,12 +276,13 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("unclean.leader.election.enable", "false");
 
-        AdminConfigsUtil.incrementalAlterTopicConfigs(adminClient, "Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
+        adminConfigsUtil.incrementalAlterTopicConfigs("Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
 
     }
 
     /**
      * 确实可以修改
+     *
      * @throws ExecutionException
      * @throws InterruptedException
      */
@@ -302,7 +291,7 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("listeners", "PLAINTEXT://10.202.16.136:9092");
 
-        AdminConfigsUtil.incrementalAlterBrokerConfigs(adminClient, 0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
+        adminConfigsUtil.incrementalAlterBrokerConfigs(0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
 
     }
 

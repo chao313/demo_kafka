@@ -11,16 +11,33 @@ import java.util.concurrent.ExecutionException;
  * <p>
  * !!!! 这里的配置存放在 Zookeeper里面(必须请求zk里面的数据才能恢复，不然每次启动都会读取里面的配置!!!)
  */
-public class AdminConfigsUtil {
+public class AdminConfigsUtil extends AdminUtil {
+
+    /**
+     * 获取实例
+     */
+    public static AdminConfigsUtil getInstance(String bootstrap_servers) {
+        return new AdminConfigsUtil(bootstrap_servers);
+    }
+
+
+    /**
+     * 构造函数(bootstrap_servers) 使用default来指定
+     *
+     * @param bootstrap_servers
+     */
+    AdminConfigsUtil(String bootstrap_servers) {
+        super(bootstrap_servers);
+    }
 
     /**
      * 查询 配置描述 (最基础的)
      *
      * @throws ExecutionException: org.apache.kafka.common.errors.UnsupportedVersionException: The broker does not support DESCRIBE_CONFIGS
      */
-    public static Map<ConfigResource, Config> describeConfigs(AdminClient client, ConfigResource.Type type, String name) throws ExecutionException, InterruptedException {
+    public Map<ConfigResource, Config> describeConfigs(ConfigResource.Type type, String name) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(type, name);
-        DescribeConfigsResult describeClusterResult = client.describeConfigs(Arrays.asList(configResource));
+        DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
         return configResourceConfigMap;
     }
@@ -63,9 +80,9 @@ public class AdminConfigsUtil {
      * * name=message.timestamp.difference.max.ms, value=9223372036854775807, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[])
      * * name=segment.index.bytes, value=10485760, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[])
      */
-    public static Config describeTopicConfigs(AdminClient client, String topic) throws ExecutionException, InterruptedException {
+    public Config describeTopicConfigs(String topic) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.TOPIC, topic);
-        DescribeConfigsResult describeClusterResult = client.describeConfigs(Arrays.asList(configResource));
+        DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
         return configResourceConfigMap.get(configResource);
     }
@@ -275,9 +292,9 @@ public class AdminConfigsUtil {
      * * name=queued.max.request.bytes, value=-1, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=true, synonyms=[])
      */
 
-    public static Config describeBrokerConfigs(AdminClient client, int brokerId) throws ExecutionException, InterruptedException {
+    public Config describeBrokerConfigs(int brokerId) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId));
-        DescribeConfigsResult describeClusterResult = client.describeConfigs(Arrays.asList(configResource));
+        DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
         return configResourceConfigMap.get(configResource);
     }
@@ -285,11 +302,10 @@ public class AdminConfigsUtil {
     /**
      * 修改配置的底层函数
      *
-     * @param client
      * @param configsMap
      */
-    public static void incrementalAlterConfigs(AdminClient client, Map<ConfigResource, Collection<AlterConfigOp>> configsMap) throws ExecutionException, InterruptedException {
-        AlterConfigsResult alterConfigsResult = client.incrementalAlterConfigs(configsMap);
+    public void incrementalAlterConfigs(Map<ConfigResource, Collection<AlterConfigOp>> configsMap) throws ExecutionException, InterruptedException {
+        AlterConfigsResult alterConfigsResult = super.client.incrementalAlterConfigs(configsMap);
         alterConfigsResult.all().get();
     }
 
@@ -300,7 +316,7 @@ public class AdminConfigsUtil {
      * @param brokerId
      * @param alterConfigOps
      */
-    public static void incrementalAlterBrokerConfigs(AdminClient client, int brokerId, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
+    public void incrementalAlterBrokerConfigs(int brokerId, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
 
         /**
          * 指定修改 broker 的配置
@@ -308,18 +324,17 @@ public class AdminConfigsUtil {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId));
         Map<ConfigResource, Collection<AlterConfigOp>> configsMap = new HashMap<>();
         configsMap.put(configResource, alterConfigOps);
-        AlterConfigsResult alterConfigsResult = client.incrementalAlterConfigs(configsMap);
+        AlterConfigsResult alterConfigsResult = super.client.incrementalAlterConfigs(configsMap);
         alterConfigsResult.all().get();
     }
 
     /**
      * 专门修改 Topic 的配置
      *
-     * @param client
      * @param topic
      * @param alterConfigOps
      */
-    public static void incrementalAlterTopicConfigs(AdminClient client, String topic, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
+    public void incrementalAlterTopicConfigs(String topic, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
 
         /**
          * 指定修改 topic 配置
@@ -327,7 +342,7 @@ public class AdminConfigsUtil {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.TOPIC, topic);
         Map<ConfigResource, Collection<AlterConfigOp>> configsMap = new HashMap<>();
         configsMap.put(configResource, alterConfigOps);
-        AlterConfigsResult alterConfigsResult = client.incrementalAlterConfigs(configsMap);
+        AlterConfigsResult alterConfigsResult = super.client.incrementalAlterConfigs(configsMap);
         alterConfigsResult.all().get();
     }
 
@@ -336,13 +351,13 @@ public class AdminConfigsUtil {
      *
      * @param brokerId
      */
-    public static void incrementalAlterBrokerConfigs(AdminClient client, int brokerId, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
+    public void incrementalAlterBrokerConfigs(int brokerId, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
         List<AlterConfigOp> alterConfigOps = new ArrayList<>();
         configEntries.forEach(configEntry -> {
             AlterConfigOp alterConfigOp = new AlterConfigOp(configEntry, opType);
             alterConfigOps.add(alterConfigOp);
         });
-        AdminConfigsUtil.incrementalAlterBrokerConfigs(client, brokerId, alterConfigOps);
+        this.incrementalAlterBrokerConfigs(brokerId, alterConfigOps);
     }
 
     /**
@@ -350,14 +365,14 @@ public class AdminConfigsUtil {
      *
      * @throws InvalidRequestException : Config value append is not allowed for config key: unclean.leader.election.enable
      */
-    public static void incrementalAlterTopicConfigs(AdminClient client, String topic, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
+    public void incrementalAlterTopicConfigs(String topic, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
 
         List<AlterConfigOp> alterConfigOps = new ArrayList<>();
         configEntries.forEach(configEntry -> {
             AlterConfigOp alterConfigOp = new AlterConfigOp(configEntry, opType);
             alterConfigOps.add(alterConfigOp);
         });
-        AdminConfigsUtil.incrementalAlterTopicConfigs(client, topic, alterConfigOps);
+        this.incrementalAlterTopicConfigs(topic, alterConfigOps);
     }
 
 }

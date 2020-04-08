@@ -103,10 +103,8 @@ public class AdminTopicController {
             @ApiParam(value = "需要删除的 group") @RequestParam(name = "group", defaultValue = "common_imp_db_test")
                     String group)
             throws ExecutionException, InterruptedException {
-        Properties properties = new Properties();
-        properties.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
-        AdminClient adminClient = AdminClient.create(properties);
-        boolean isDeletedGroupId = AdminConsumerGroupsUtil.deleteConsumerGroups(adminClient, group);
+        AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(bootstrap_servers);
+        boolean isDeletedGroupId = adminConsumerGroupsUtil.deleteConsumerGroups(group);
         log.info("groupId是否被删除:{}", isDeletedGroupId);
         return isDeletedGroupId;
     }

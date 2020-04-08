@@ -92,9 +92,15 @@ public class ConsumeController {
     @ApiOperation(value = "消费一次", notes = "消费一次")
     @GetMapping(value = "/listenerOnce")
     public void listenerOnce(
-            @ApiParam(value = "kafka地址") @RequestParam(name = "bootstrap.servers", defaultValue = "192.168.0.105:9092") String bootstrap_servers,
-            @ApiParam(value = "需要消费的的Topic") @RequestParam(name = "topic", defaultValue = "Test") String topic,
-            @ApiParam(value = "需要消费的Topic的消费者groupId") @RequestParam(name = "group_id", defaultValue = "common_imp_db_test") String group_id) {
+            @ApiParam(value = "kafka地址")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "192.168.0.105:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要消费的的Topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "需要消费的Topic的消费者groupId")
+            @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
+                    String group_id) {
 
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
         KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);

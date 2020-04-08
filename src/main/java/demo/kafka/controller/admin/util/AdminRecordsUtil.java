@@ -35,11 +35,10 @@ public class AdminRecordsUtil extends AdminUtil {
     /**
      * 底层的删除逻辑
      *
-     * @param client
      * @param recordsToDeleteMap
      */
-    public static void deleteRecords(AdminClient client, Map<TopicPartition, RecordsToDelete> recordsToDeleteMap) throws ExecutionException, InterruptedException {
-        DeleteRecordsResult deleteRecordsResult = client.deleteRecords(recordsToDeleteMap);
+    public void deleteRecords(Map<TopicPartition, RecordsToDelete> recordsToDeleteMap) throws ExecutionException, InterruptedException {
+        DeleteRecordsResult deleteRecordsResult = super.client.deleteRecords(recordsToDeleteMap);
         deleteRecordsResult.all().get();
     }
 
@@ -50,8 +49,8 @@ public class AdminRecordsUtil extends AdminUtil {
      *
      * @param client
      */
-    public static void deleteRecordsBeforeOffset(AdminClient client, TopicPartition topicPartition, RecordsToDelete recordsToDelete) throws ExecutionException, InterruptedException {
-        AdminRecordsUtil.deleteRecords(client, MapUtil.$(topicPartition, recordsToDelete));
+    public void deleteRecordsBeforeOffset(TopicPartition topicPartition, RecordsToDelete recordsToDelete) throws ExecutionException, InterruptedException {
+        this.deleteRecords(MapUtil.$(topicPartition, recordsToDelete));
     }
 
 }
