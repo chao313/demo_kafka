@@ -1,6 +1,12 @@
 package demo.kafka.controller.admin;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import demo.kafka.controller.admin.util.AdminConsumerGroupsUtil;
 import demo.kafka.controller.response.ListConsumerGroupsResultResponse;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +41,7 @@ public class AdminConsumerGroupController {
     }
 
     @GetMapping(value = "/getConsumerGroups")
-    public ListConsumerGroupsResultResponse getConsumerGroups(
+    public JSONObject getConsumerGroups(
             @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers)
@@ -43,11 +49,13 @@ public class AdminConsumerGroupController {
         AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(bootstrap_servers);
         ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsUtil.getConsumerGroups();
         log.info("listConsumerGroupsResult:{}", listConsumerGroupsResult);
-        return new ListConsumerGroupsResultResponse(listConsumerGroupsResult);
+        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(listConsumerGroupsResult);
+        JSONObject jsonObject = JSONObject.parseObject(JsonObject);
+        return jsonObject;
     }
 
     @GetMapping(value = "/getConsumerGroupDescribe")
-    public ConsumerGroupDescription getConsumerGroupDescribe(
+    public JSONObject getConsumerGroupDescribe(
             @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -58,11 +66,13 @@ public class AdminConsumerGroupController {
         AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(bootstrap_servers);
         ConsumerGroupDescription consumerGroupDescription = adminConsumerGroupsUtil.getConsumerGroupDescribe(group);
         log.info("listConsumerGroupsResult:{}", consumerGroupDescription);
-        return consumerGroupDescription;
+        String JsonObject = new Gson().toJson(consumerGroupDescription);
+        JSONObject jsonObject = JSONObject.parseObject(JsonObject);
+        return jsonObject;
     }
 
     @GetMapping(value = "/getConsumerGroupOffsets")
-    public Map<TopicPartition, OffsetAndMetadata> getConsumerGroupOffsets(
+    public JSONObject getConsumerGroupOffsets(
             @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -73,7 +83,9 @@ public class AdminConsumerGroupController {
         AdminConsumerGroupsUtil adminConsumerGroupsUtil = AdminConsumerGroupsUtil.getInstance(bootstrap_servers);
         Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsUtil.getConsumerGroupOffsets(group);
         log.info("listConsumerGroupsResult:{}", metadataMap);
-        return metadataMap;
+        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(metadataMap);
+        JSONObject jsonObject = JSONObject.parseObject(JsonObject);
+        return jsonObject;
     }
 
 

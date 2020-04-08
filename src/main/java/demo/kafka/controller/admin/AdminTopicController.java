@@ -1,6 +1,8 @@
 package demo.kafka.controller.admin;
 
 
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
 import demo.kafka.controller.admin.util.AdminTopicUtil;
 import demo.kafka.controller.response.TopicDescriptionResponse;
 import io.swagger.annotations.ApiOperation;
@@ -55,7 +57,7 @@ public class AdminTopicController {
 
     @ApiOperation(value = "获取 topic 的描述")
     @GetMapping(value = "/getTopicDescription")
-    public TopicDescriptionResponse getTopicDescription(
+    public JSONObject getTopicDescription(
             @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -65,9 +67,10 @@ public class AdminTopicController {
     ) throws Exception {
         AdminTopicUtil adminTopicUtil = AdminTopicUtil.getInstance(bootstrap_servers);
         TopicDescription topicDescription = adminTopicUtil.getTopicDescription(topic);
-        TopicDescriptionResponse topicDescriptionResponse = new TopicDescriptionResponse(topicDescription);
-        log.info("获取 topicDescriptionResponse :{}", topicDescriptionResponse);
-        return topicDescriptionResponse;
+        String JsonObject = new Gson().toJson(topicDescription);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        log.info("获取topic结果:{}", result);
+        return result;
     }
 
     @ApiOperation(value = "删除指定的 Topic ")
