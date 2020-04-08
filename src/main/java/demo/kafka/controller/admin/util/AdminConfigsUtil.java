@@ -35,7 +35,7 @@ public class AdminConfigsUtil extends AdminUtil {
      *
      * @throws ExecutionException: org.apache.kafka.common.errors.UnsupportedVersionException: The broker does not support DESCRIBE_CONFIGS
      */
-    public Map<ConfigResource, Config> describeConfigs(ConfigResource.Type type, String name) throws ExecutionException, InterruptedException {
+    public Map<ConfigResource, Config> getConfigs(ConfigResource.Type type, String name) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(type, name);
         DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
@@ -80,7 +80,7 @@ public class AdminConfigsUtil extends AdminUtil {
      * * name=message.timestamp.difference.max.ms, value=9223372036854775807, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[])
      * * name=segment.index.bytes, value=10485760, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=false, synonyms=[])
      */
-    public Config describeTopicConfigs(String topic) throws ExecutionException, InterruptedException {
+    public Config getTopicConfigs(String topic) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.TOPIC, topic);
         DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
@@ -292,7 +292,7 @@ public class AdminConfigsUtil extends AdminUtil {
      * * name=queued.max.request.bytes, value=-1, source=DEFAULT_CONFIG, isSensitive=false, isReadOnly=true, synonyms=[])
      */
 
-    public Config describeBrokerConfigs(int brokerId) throws ExecutionException, InterruptedException {
+    public Config getBrokerConfigs(int brokerId) throws ExecutionException, InterruptedException {
         ConfigResource configResource = new ConfigResource(ConfigResource.Type.BROKER, String.valueOf(brokerId));
         DescribeConfigsResult describeClusterResult = super.client.describeConfigs(Arrays.asList(configResource));
         Map<ConfigResource, Config> configResourceConfigMap = describeClusterResult.all().get();
@@ -312,11 +312,10 @@ public class AdminConfigsUtil extends AdminUtil {
     /**
      * 专门修改 Broker 的配置
      *
-     * @param client
      * @param brokerId
      * @param alterConfigOps
      */
-    public void incrementalAlterBrokerConfigs(int brokerId, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
+    public void updateBrokerConfigs(int brokerId, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
 
         /**
          * 指定修改 broker 的配置
@@ -334,7 +333,7 @@ public class AdminConfigsUtil extends AdminUtil {
      * @param topic
      * @param alterConfigOps
      */
-    public void incrementalAlterTopicConfigs(String topic, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
+    public void updateTopicConfigs(String topic, Collection<AlterConfigOp> alterConfigOps) throws ExecutionException, InterruptedException {
 
         /**
          * 指定修改 topic 配置
@@ -351,13 +350,13 @@ public class AdminConfigsUtil extends AdminUtil {
      *
      * @param brokerId
      */
-    public void incrementalAlterBrokerConfigs(int brokerId, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
+    public void updateBrokerConfigs(int brokerId, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
         List<AlterConfigOp> alterConfigOps = new ArrayList<>();
         configEntries.forEach(configEntry -> {
             AlterConfigOp alterConfigOp = new AlterConfigOp(configEntry, opType);
             alterConfigOps.add(alterConfigOp);
         });
-        this.incrementalAlterBrokerConfigs(brokerId, alterConfigOps);
+        this.updateBrokerConfigs(brokerId, alterConfigOps);
     }
 
     /**
@@ -365,14 +364,14 @@ public class AdminConfigsUtil extends AdminUtil {
      *
      * @throws InvalidRequestException : Config value append is not allowed for config key: unclean.leader.election.enable
      */
-    public void incrementalAlterTopicConfigs(String topic, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
+    public void updateTopicConfigs(String topic, Collection<ConfigEntry> configEntries, AlterConfigOp.OpType opType) throws ExecutionException, InterruptedException {
 
         List<AlterConfigOp> alterConfigOps = new ArrayList<>();
         configEntries.forEach(configEntry -> {
             AlterConfigOp alterConfigOp = new AlterConfigOp(configEntry, opType);
             alterConfigOps.add(alterConfigOp);
         });
-        this.incrementalAlterTopicConfigs(topic, alterConfigOps);
+        this.updateTopicConfigs(topic, alterConfigOps);
     }
 
 }

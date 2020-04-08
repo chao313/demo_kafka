@@ -1,7 +1,9 @@
 package demo.kafka.controller.admin.util;
 
 import org.apache.kafka.clients.admin.DescribeClusterResult;
+import org.apache.kafka.common.Node;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -36,10 +38,17 @@ public class AdminClusterUtil extends AdminUtil {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    public DescribeClusterResult describeCluster() throws ExecutionException, InterruptedException {
+    public DescribeClusterResult getCluster() throws ExecutionException, InterruptedException {
         DescribeClusterResult describeClusterResult = super.client.describeCluster();
         describeClusterResult.nodes().get();
         return describeClusterResult;
+    }
+
+    /**
+     * 获取集群中的 Broker信息
+     */
+    public Collection<Node> getBrokersInCluster() throws ExecutionException, InterruptedException {
+        return this.getCluster().nodes().get();
     }
 
 

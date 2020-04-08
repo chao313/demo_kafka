@@ -15,9 +15,9 @@ public class AdminPartitionsTest {
      *
      */
     @Test
-    public void createPartitions() throws ExecutionException, InterruptedException {
+    public void increasePartitions() throws ExecutionException, InterruptedException {
         boolean bool = adminPartitionsUtil.increasePartitions("TP_0100940511112", 1);
-        log.info("createPartitions:{}", bool);
+        log.info("increasePartitions:{}", bool);
     }
 
 

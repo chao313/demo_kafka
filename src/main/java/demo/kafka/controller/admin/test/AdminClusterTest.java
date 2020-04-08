@@ -1,23 +1,18 @@
 package demo.kafka.controller.admin.test;
 
 import demo.kafka.controller.admin.util.AdminClusterUtil;
-import demo.kafka.controller.admin.util.AdminTopicUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
-import org.apache.kafka.clients.admin.ListTopicsResult;
-import org.junit.jupiter.api.BeforeAll;
+import org.apache.kafka.common.Node;
 import org.junit.jupiter.api.Test;
 
-import java.util.Properties;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class AdminClusterTest {
 
-    AdminClusterUtil adminClusterUtil = AdminClusterUtil.getInstance(Bootstrap.MY.getIp());
+    AdminClusterUtil adminClusterUtil = AdminClusterUtil.getInstance(Bootstrap.PROD_WIND.getIp());
 
     /**
      * 获取集群的信息(可以获取节点的信息)
@@ -26,11 +21,23 @@ public class AdminClusterTest {
      */
     @Test
     public void describeCluster() throws ExecutionException, InterruptedException {
-        DescribeClusterResult describeClusterResult = adminClusterUtil.describeCluster();
+        DescribeClusterResult describeClusterResult = adminClusterUtil.getCluster();
         log.info("describeClusterResult:{}", describeClusterResult);
         log.info("describeClusterResult.nodes:{}", describeClusterResult.nodes());
         log.info("describeClusterResult.clusterId:{}", describeClusterResult.clusterId());
         log.info("describeClusterResult.controller:{}", describeClusterResult.controller());
+
+    }
+
+    /**
+     * 测试 获取集群中的 brokers
+     */
+    @Test
+    public void getBrokersInCluster() throws ExecutionException, InterruptedException {
+        Collection<Node> nodes = adminClusterUtil.getBrokersInCluster();
+        nodes.forEach(node -> {
+            log.info("node:{}", node);
+        });
 
     }
 

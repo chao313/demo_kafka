@@ -24,7 +24,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeConfigs() throws ExecutionException, InterruptedException, UnknownHostException {
-        Map<ConfigResource, Config> configResourceConfigMap = adminConfigsUtil.describeConfigs(ConfigResource.Type.TOPIC, "TP_010094051111");
+        Map<ConfigResource, Config> configResourceConfigMap = adminConfigsUtil.getConfigs(ConfigResource.Type.TOPIC, "TP_010094051111");
         log.info("configResourceConfigMap:{}", configResourceConfigMap);
     }
 
@@ -59,7 +59,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeTopicConfigs() throws ExecutionException, InterruptedException {
-        Config config = adminConfigsUtil.describeTopicConfigs("TP_010094051111");
+        Config config = adminConfigsUtil.getTopicConfigs("TP_010094051111");
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -264,7 +264,7 @@ public class AdminConfigsUtilTest {
      */
     @Test
     public void describeBrokerConfigs() throws ExecutionException, InterruptedException {
-        Config config = adminConfigsUtil.describeBrokerConfigs(0);
+        Config config = adminConfigsUtil.getBrokerConfigs(0);
         config.entries().forEach(configEntry -> {
             log.info("configEntry:{}", configEntry);
         });
@@ -276,7 +276,7 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("unclean.leader.election.enable", "false");
 
-        adminConfigsUtil.incrementalAlterTopicConfigs("Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
+        adminConfigsUtil.updateTopicConfigs("Test11", Arrays.asList(configEntry), AlterConfigOp.OpType.SUBTRACT);
 
     }
 
@@ -291,7 +291,7 @@ public class AdminConfigsUtilTest {
 
         ConfigEntry configEntry = new ConfigEntry("listeners", "PLAINTEXT://10.202.16.136:9092");
 
-        adminConfigsUtil.incrementalAlterBrokerConfigs(0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
+        adminConfigsUtil.updateBrokerConfigs(0, Arrays.asList(configEntry), AlterConfigOp.OpType.SET);
 
     }
 

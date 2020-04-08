@@ -46,8 +46,6 @@ public class AdminRecordsUtil extends AdminUtil {
     /**
      * 调用删除逻辑
      * 这里只能删除指定 offset 之前的数据（偏移量是固定的，惟一的 -> 执行多次删除的效果一样）
-     *
-     * @param client
      */
     public void deleteRecordsBeforeOffset(TopicPartition topicPartition, RecordsToDelete recordsToDelete) throws ExecutionException, InterruptedException {
         this.deleteRecords(MapUtil.$(topicPartition, recordsToDelete));
