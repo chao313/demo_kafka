@@ -10,4 +10,8 @@ public class ConsumerService<K, V> {
 
     private ConsumerService() {
     }
+
+    public KafkaConsumerService<K, V> getKafkaConsumerService() {
+        return kafkaConsumerService;
+    }
 }

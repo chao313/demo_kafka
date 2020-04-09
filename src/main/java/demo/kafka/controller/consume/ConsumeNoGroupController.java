@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.consume.service.ConsumerHavGroupService;
+import demo.kafka.controller.consume.service.ConsumerHavAssignGroupService;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
@@ -93,28 +93,7 @@ public class ConsumeNoGroupController {
         return result;
     }
 
-    /**
-     * 根据 topic 和 partition 来获取 下一个offset
-     */
-    @ApiOperation(value = "根据 topic 和 partition 来获取 下一个offset")
-    @GetMapping(value = "/getNextOffsetByTopicAndPartition")
-    public long getNextOffsetByTopicAndPartition(
-            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers,
-            @ApiParam(value = "group")
-            @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
-                    String group_id,
-            String topic,
-            int partition
 
-    ) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id);
-        ConsumerHavGroupService<String, String> consumerHavGroupService = ConsumerHavGroupService.getInstance(consumerService);
-        long offsetByTopicAndPartition = consumerHavGroupService.getNextOffsetByTopicAndPartition(topic, partition);
-        log.info("下个offset:{}", offsetByTopicAndPartition);
-        return offsetByTopicAndPartition;
-    }
 
 
     /**
