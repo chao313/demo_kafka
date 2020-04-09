@@ -79,6 +79,28 @@ public class ConsumeController {
     }
 
 
+    /**
+     *
+     */
+    @ApiOperation(value = "获取最新的Record", notes = "获取最新的Record")
+    @GetMapping(value = "/getLastRecord")
+    public void getLastRecord(
+            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要消费的的Topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic) {
+
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
+        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+
+        kafkaConsumerSupService.getLastRecordEachPartition(topic, consumerRecord -> {
+            log.info("offset:{} value:{}", consumerRecord.offset(), consumerRecord.value());
+        });
+    }
+
+
 //    @GetMapping(value = "/OffsetAndMetadata")
 //    public void OffsetAndMetadata() {
 //        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getProducerInstance(Bootstrap.HONE.getIp(), "test");

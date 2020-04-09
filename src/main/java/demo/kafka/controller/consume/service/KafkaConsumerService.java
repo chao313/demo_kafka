@@ -60,6 +60,19 @@ public class KafkaConsumerService<K, V> implements Consumer<K, V> {
         return new KafkaConsumerService(kafkaConsumer);
     }
 
+    /**
+     * 获取的是没有group的消费者
+     */
+    public static <K, V> KafkaConsumerService<K, V> getInstance(String bootstrap_servers, Map<String, String> mapOver) {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
+        props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.putAll(mapOver);
+        KafkaConsumer<K, V> kafkaConsumer = new KafkaConsumer<>(props);
+        return new KafkaConsumerService(kafkaConsumer);
+    }
+
     private KafkaConsumerService() {
     }
 

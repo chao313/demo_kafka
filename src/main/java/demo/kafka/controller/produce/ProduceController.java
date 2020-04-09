@@ -186,18 +186,21 @@ public class ProduceController {
      * "partition": 0,
      * "topic": "Topic11"
      * }
+     * ??????
      */
     @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
     @GetMapping(value = "/sendSync")
     public RecordMetadataResponse sendSync(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092,10.200.126.163:9092")
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
             @ApiParam(value = "指定 partition -> 不指定就是null")
+            @RequestParam(name = "partition", defaultValue = "")
                     Integer partition,
             @ApiParam(value = "指定 timestamp -> 不指定就是null")
+            @RequestParam(name = "timestamp", defaultValue = "")
                     Long timestamp,
             @RequestParam(name = "key", defaultValue = "key")
                     String key,

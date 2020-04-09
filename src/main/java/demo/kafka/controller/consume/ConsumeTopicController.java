@@ -5,10 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.consume.service.ConsumerTopicService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
+import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -90,6 +92,25 @@ public class ConsumeTopicController {
         long offsetByTopicAndPartition = consumerTopicService.getNextOffsetByTopicAndPartition(topic, partition);
         log.info("下个offset:{}", offsetByTopicAndPartition);
         return offsetByTopicAndPartition;
+    }
+
+
+    /**
+     * 根据 topic 获取每个分区的真实 offset
+     */
+    @ApiOperation(value = "根据 topic 获取每个分区的真实 offset")
+    @GetMapping(value = "/getLastOffsetByTopic")
+    public JSONObject getLastOffsetByTopic(
+            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            String topic) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerTopicService<String, String> consumerTopicService = ConsumerTopicService.getInstance(consumerService);
+        Map<TopicPartition, Long> offsetByTopicAndPartition = consumerTopicService.getLastOffsetByTopic(topic);
+        String JsonObject = new Gson().toJson(offsetByTopicAndPartition);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
     }
 
 

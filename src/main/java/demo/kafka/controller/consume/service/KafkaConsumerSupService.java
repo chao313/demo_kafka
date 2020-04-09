@@ -92,4 +92,37 @@ public class KafkaConsumerSupService<K, V> {
         return topicPartitions;
     }
 
+    /**
+     * 获取最新的 record (每个分区的)
+     */
+    public void getLastRecordEachPartition(String topic, Consumer<ConsumerRecord<K, V>> consumer) {
+        List<PartitionInfo> partitionInfos = this.kvKafkaConsumerService.partitionsFor(topic);
+
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        partitionInfos.forEach(partitionInfo -> {
+            TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());
+            topicPartitions.add(topicPartition);
+        });
+
+
+        this.kvKafkaConsumerService.assign(topicPartitions);
+
+        Map<TopicPartition, Long> topicPartitionLongMap = this.kvKafkaConsumerService.endOffsets(topicPartitions);
+
+        topicPartitionLongMap.forEach((topicPartition, offsetSize) -> {
+            this.kvKafkaConsumerService.seek(topicPartition, offsetSize > 0 ? offsetSize - 1 : 0);
+        });
+
+        ConsumerRecords<K, V> records;
+        records = this.kvKafkaConsumerService.poll(100);
+        while (records.isEmpty()) {
+            records = this.kvKafkaConsumerService.poll(100);
+        }
+        records.forEach(record -> {
+            consumer.accept(record);
+        });
+        log.info("尝试获取一批数据...:{}", records.count());
+        this.kvKafkaConsumerService.close();
+    }
+
 }

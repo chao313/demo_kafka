@@ -4,10 +4,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ConsumerTopicService<K, V> extends ConsumerService<K, V> {
 
@@ -46,5 +43,28 @@ public class ConsumerTopicService<K, V> extends ConsumerService<K, V> {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
         super.kafkaConsumerService.assign(Arrays.asList(topicPartition));
         return super.kafkaConsumerService.position(topicPartition);
+    }
+
+    /**
+     * 根据 topic 来生成 TopicPartitions
+     */
+    public Collection<TopicPartition> getTopicPartitionsByTopic(String topic) {
+        List<PartitionInfo> partitionInfos = super.kafkaConsumerService.partitionsFor(topic);
+
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        partitionInfos.forEach(partitionInfo -> {
+            TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());
+            topicPartitions.add(topicPartition);
+        });
+        return topicPartitions;
+    }
+
+    /**
+     * 获取record的最新的分区(不需要)
+     */
+    public Map<TopicPartition, Long> getLastOffsetByTopic(String topic) {
+        Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
+        return topicPartitionLongMap;
     }
 }
