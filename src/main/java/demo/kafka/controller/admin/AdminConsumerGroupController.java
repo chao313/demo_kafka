@@ -4,6 +4,7 @@ package demo.kafka.controller.admin;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -26,7 +27,7 @@ public class AdminConsumerGroupController {
 
     @GetMapping(value = "/getConsumerGroupIds")
     public Collection<String> getConsumerGroupIds(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers)
             throws ExecutionException, InterruptedException {
@@ -38,7 +39,7 @@ public class AdminConsumerGroupController {
 
     @GetMapping(value = "/getConsumerGroups")
     public JSONObject getConsumerGroups(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers)
             throws ExecutionException, InterruptedException {
@@ -52,7 +53,7 @@ public class AdminConsumerGroupController {
 
     @GetMapping(value = "/getConsumerGroupDescribe")
     public JSONObject getConsumerGroupDescribe(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "group", defaultValue = "common_imp_db_test")
@@ -69,7 +70,7 @@ public class AdminConsumerGroupController {
 
     @GetMapping(value = "/getConsumerGroupOffsets")
     public JSONObject getConsumerGroupOffsets(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "group", defaultValue = "common_imp_db_test")

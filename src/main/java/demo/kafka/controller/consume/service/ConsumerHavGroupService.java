@@ -3,20 +3,19 @@ package demo.kafka.controller.consume.service;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
-import java.time.Duration;
 import java.util.*;
 
-public class ConsumerTopicService<K, V> extends ConsumerService<K, V> {
+public class ConsumerHavGroupService<K, V> extends ConsumerService<K, V> {
 
-    ConsumerTopicService(KafkaConsumerService kafkaConsumerService) {
+    ConsumerHavGroupService(KafkaConsumerService kafkaConsumerService) {
         super(kafkaConsumerService);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer)
      */
-    public static <K, V> ConsumerTopicService<K, V> getInstance(KafkaConsumerService kafkaConsumerService) {
-        return new ConsumerTopicService(kafkaConsumerService);
+    public static <K, V> ConsumerHavGroupService<K, V> getInstance(KafkaConsumerService kafkaConsumerService) {
+        return new ConsumerHavGroupService(kafkaConsumerService);
     }
 
     /**
@@ -60,11 +59,20 @@ public class ConsumerTopicService<K, V> extends ConsumerService<K, V> {
     }
 
     /**
-     * 获取record的最新的分区(不需要)
+     * 获取record的分区的真实偏移量
      */
-    public Map<TopicPartition, Long> getLastOffsetByTopic(String topic) {
+    public Map<TopicPartition, Long> getLastPartitionOffsetByTopic(String topic) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
         Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
+        return topicPartitionLongMap;
+    }
+
+    /**
+     * 获取record的最早的没有过期的偏移量
+     */
+    public Map<TopicPartition, Long> getEarliestPartitionOffsetByTopic(String topic) {
+        Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.beginningOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 }

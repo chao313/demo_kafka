@@ -20,4 +20,6 @@ public enum Bootstrap {
     public void setIp(String ip) {
         this.ip = ip;
     }
+
+    public static final String allowableValues = "10.200.126.163:9092,10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092";
 }

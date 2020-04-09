@@ -160,7 +160,7 @@ public class ProduceController {
     @ApiOperation(value = "根据 topic 获取分区信息", notes = "可以获取首领分区的节点,当前分区id,topic,同步的分区，完整的分区，离线的分区")
     @GetMapping(value = "/getPartitionsByTopic")
     public JSONArray getPartitionsByTopic(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
@@ -191,7 +191,7 @@ public class ProduceController {
     @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
     @GetMapping(value = "/sendSync")
     public RecordMetadataResponse sendSync(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092,10.200.126.163:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
@@ -219,7 +219,7 @@ public class ProduceController {
     @ApiOperation(value = "发送->忘记")
     @GetMapping(value = "/SendForget")
     public String SendForget(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
@@ -245,7 +245,7 @@ public class ProduceController {
     @ApiOperation(value = "异步! 发送等待回调")
     @GetMapping(value = "/sendAsync")
     public String sendAsync(
-            @ApiParam(value = "kafka", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
