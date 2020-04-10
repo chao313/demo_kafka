@@ -60,6 +60,17 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
     }
 
     /**
+     * 获取全部的 TopicPartition
+     */
+    public Collection<TopicPartition> getTopicPartitionsByTopics(Collection<String> topics) {
+        List<TopicPartition> topicPartitions = new ArrayList<>();
+        topics.forEach(topic -> {
+            topicPartitions.addAll(this.getTopicPartitionsByTopic(topic));
+        });
+        return topicPartitions;
+    }
+
+    /**
      * 获取record的分区的真实偏移量
      */
     public Map<TopicPartition, Long> getLastPartitionOffsetByTopic(String topic) {

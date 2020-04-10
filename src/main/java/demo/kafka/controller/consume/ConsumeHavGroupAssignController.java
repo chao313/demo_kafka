@@ -41,7 +41,7 @@ public class ConsumeHavGroupAssignController {
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
-            @ApiParam(value = "需要查询的 topic ")
+            @ApiParam(value = "需要分配的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
             @ApiParam(value = " 没有偏移量时的重置")
@@ -122,10 +122,10 @@ public class ConsumeHavGroupAssignController {
 
 
     /**
-     * 把订阅到的 partition 全部更新到最开始的偏移量
+     * 把 分配 到的 partition 全部更新到最开始的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
-    @ApiOperation(value = "把订阅到的 partition 全部更新到 最开始 的偏移量")
+    @ApiOperation(value = "把 分配 到的 partition 全部更新到 最开始 的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffsetToBeginning")
     public JSONArray updatePartitionAssignedOffsetToBeginning() {
         Collection<TopicPartition> partitionToBeSeekBegin
@@ -136,10 +136,10 @@ public class ConsumeHavGroupAssignController {
     }
 
     /**
-     * 把订阅到的 partition 全部更新到最新的偏移量
+     * 把  分配 到的 partition 全部更新到最新的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
-    @ApiOperation(value = "把订阅到的 partition 全部更新到 最新 的偏移量")
+    @ApiOperation(value = "把 分配 到的 partition 全部更新到 最新 的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffsetToEnd")
     public JSONArray updatePartitionAssignedOffsetToEnd() {
         Collection<TopicPartition> partitionToBeSeekEnd
@@ -150,11 +150,11 @@ public class ConsumeHavGroupAssignController {
     }
 
     /**
-     * 把订阅到的 partition 全部更新到 指定的偏移量
+     * 把 分配 到的 partition 全部更新到 指定的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      * -> 设置的 offset 超过最大值后，似乎就会从头开始
      */
-    @ApiOperation(value = "把订阅到的 partition 全部更新到 指定的偏移量")
+    @ApiOperation(value = "把 分配 到的 partition 全部更新到 指定的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffset")
     public JSONArray updatePartitionAssignedOffset(
             @ApiParam(value = "指定的 offset")
@@ -170,11 +170,11 @@ public class ConsumeHavGroupAssignController {
 
 
     /**
-     * 把订阅到的 partition 全部 暂停
+     * 把 分配 到的 partition 全部 暂停
      * <p>
      * {@link #pollOnce()} 就会无法获取到值
      */
-    @ApiOperation(value = "把订阅到的 partition 全部 暂停")
+    @ApiOperation(value = "把 分配 到的 partition 全部 暂停")
     @GetMapping(value = "/updatePartitionAssignedToBePause")
     public JSONArray updatePartitionAssignedToBePause() {
         Collection<TopicPartition> partitionToBePause
@@ -186,10 +186,10 @@ public class ConsumeHavGroupAssignController {
 
 
     /**
-     * 把订阅到的 partition 全部 恢复
+     * 把 分配 到的 partition 全部 恢复
      * {@link #pollOnce()} 就会正常获取到值
      */
-    @ApiOperation(value = "把订阅到的 partition 全部 恢复")
+    @ApiOperation(value = "把 分配 到的 partition 全部 恢复")
     @GetMapping(value = "/updatePartitionAssignedToBeResume")
     public JSONArray updatePartitionAssignedToBeResume() {
         Collection<TopicPartition> partitionToBeResume

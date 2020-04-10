@@ -19,14 +19,7 @@ import java.util.function.Consumer;
  * 1.assign的初衷应该是 Partition(订阅的入口就是Partition )
  */
 @Slf4j
-public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> {
-
-    ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic) {
-        super(kafkaConsumerService);
-        Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
-        super.getKafkaConsumerService().assign(topicPartitionsByTopic);
-    }
-
+public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> implements ConsumerHavGroupService<K, V> {
     /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
@@ -34,10 +27,17 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         return new ConsumerHavGroupAssignService<>(kafkaConsumerService, topic);
     }
 
+    ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic) {
+        super(kafkaConsumerService);
+        Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
+        super.getKafkaConsumerService().assign(topicPartitionsByTopic);
+    }
+
 
     /**
      * 普通的监听函数(只一次)
      */
+    @Override
     public void pollOnce(Consumer<ConsumerRecord<K, V>> consumer) {
         ConsumerRecords<K, V> records;
         records = this.getKafkaConsumerService().poll(Duration.ofMillis(1000));
@@ -50,10 +50,12 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
 
     /**
      * 根据 partition 来获取下一个偏移量
+     * <p>
+     * !!!! 这里会检查是否是assign的分配的分区！ 不是就会抛出异常 （必须poll）
      */
+    @Override
     public long getNextOffsetByTopicAndPartition(String topic, int partition) {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
-        super.kafkaConsumerService.assign(Arrays.asList(topicPartition));
         return super.kafkaConsumerService.position(topicPartition);
     }
 
@@ -61,14 +63,16 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     /**
      * 查看分配到的Partition
      */
+    @Override
     public Set<TopicPartition> getPartitionAssigned() {
         return this.getKafkaConsumerService().assignment();
     }
 
     /**
      * update新的Partition
-     *  -> 调用之后 {@link #getPartitionAssigned()}  就会改变
+     * -> 调用之后 {@link #getPartitionAssigned()}  就会改变
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssign(String topic) {
         Collection<TopicPartition> topicPartitionsToBeAssigned = super.getTopicPartitionsByTopic(topic);
         this.getKafkaConsumerService().assign(topicPartitionsToBeAssigned);
@@ -76,9 +80,10 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     }
 
     /**
-     * 把订阅到的 partition 全部更新到最开始的偏移量
+     * 把分配到的 partition 全部更新到最开始的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToBeginning() {
         Set<TopicPartition> partitionToBeSeekBegin = this.getPartitionAssigned();
         this.getKafkaConsumerService().seekToBeginning(partitionToBeSeekBegin);
@@ -86,9 +91,10 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     }
 
     /**
-     * 把订阅到的 partition 全部更新到最新的偏移量
+     * 把分配到的 partition 全部更新到最新的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToEnd() {
         Set<TopicPartition> partitionToBeSeekEnd = this.getPartitionAssigned();
         this.getKafkaConsumerService().seekToEnd(partitionToBeSeekEnd);
@@ -96,10 +102,11 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     }
 
     /**
-     * 把订阅到的 partition 全部更新到 指定的偏移量
+     * 把分配到的 partition 全部更新到 指定的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      * -> 设置的 offset 超过最大值后，似乎就会从头开始
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffset(long offset) {
         Set<TopicPartition> partitionToBeSeek = this.getPartitionAssigned();
         partitionToBeSeek.forEach(partition -> {
@@ -110,9 +117,10 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
 
 
     /**
-     * 把订阅到的 partition 全部 暂停
+     * 把 分配 到的 partition 全部 暂停
      * {@link #pollOnce(Consumer)} ()} 就会无法获取到值
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssignedToBePause() {
         Set<TopicPartition> partitionToBePause = this.getPartitionAssigned();
         this.getKafkaConsumerService().pause(partitionToBePause);
@@ -120,9 +128,10 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     }
 
     /**
-     * 把订阅到的 partition 全部 恢复
+     * 把 分配 到的 partition 全部 恢复
      * {@link #pollOnce(Consumer)} ()}就会正常获取到值
      */
+    @Override
     public Collection<TopicPartition> updatePartitionAssignedToBeResume() {
         Set<TopicPartition> partitionToBeResume = this.getPartitionAssigned();
         this.getKafkaConsumerService().resume(partitionToBeResume);
