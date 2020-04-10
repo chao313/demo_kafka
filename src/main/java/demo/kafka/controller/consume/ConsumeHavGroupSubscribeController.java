@@ -169,6 +169,28 @@ public class ConsumeHavGroupSubscribeController {
     }
 
     /**
+     * 把 订阅 到的 topic 全部更新到 指定的偏移量
+     * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
+     * -> 设置的 offset 超过最大值后，似乎就会从头开始
+     */
+    @ApiOperation(value = "把 订阅 到的 topic (指定)更新到 指定的偏移量")
+    @GetMapping(value = "/updatePartitionSubscribedOffsetByTopics")
+    public JSONArray updatePartitionSubscribedOffset(
+            @ApiParam(value = "需要更新的主题")
+            @RequestParam(name = "topics", defaultValue = "Test,Test1")
+                    List<String> topics,
+            @ApiParam(value = "指定的 offset")
+            @RequestParam(name = "offset", defaultValue = "1")
+                    long offset
+    ) {
+        Collection<TopicPartition> partitionToBeSeek
+                = consumerHavGroupSubscribeService.updatePartitionSubscribedOffset(topics, offset);
+        String JsonObject = new Gson().toJson(partitionToBeSeek);
+        JSONArray result = JSONObject.parseArray(JsonObject);
+        return result;
+    }
+
+    /**
      * 把 订阅 到的 partition 全部 暂停
      * <p>
      * {@link #pollOnce()} 就会无法获取到值
