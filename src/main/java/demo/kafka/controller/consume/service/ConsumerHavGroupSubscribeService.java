@@ -3,19 +3,22 @@ package demo.kafka.controller.consume.service;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
-public class ConsumerHavAssignGroupService<K, V> extends ConsumerService<K, V> {
+public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerService<K, V> {
 
-    ConsumerHavAssignGroupService(KafkaConsumerService kafkaConsumerService) {
+    ConsumerHavGroupSubscribeService(KafkaConsumerService kafkaConsumerService) {
         super(kafkaConsumerService);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer)
      */
-    public static <K, V> ConsumerHavAssignGroupService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
-        ConsumerHavAssignGroupService consumerHavAssignGroupService = new ConsumerHavAssignGroupService(kafkaConsumerService);
+    public static <K, V> ConsumerHavGroupSubscribeService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
+        ConsumerHavGroupSubscribeService consumerHavAssignGroupService = new ConsumerHavGroupSubscribeService(kafkaConsumerService);
         Collection<TopicPartition> partitionInfos = new ArrayList<>();
         topics.forEach(topic -> {
             partitionInfos.addAll(getTopicPartitionsByTopic(consumerHavAssignGroupService, topic));

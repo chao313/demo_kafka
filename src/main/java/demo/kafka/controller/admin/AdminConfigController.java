@@ -3,6 +3,7 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.util.AdminConfigsService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -19,7 +20,7 @@ public class AdminConfigController {
     @ApiOperation(value = "获取 topic 的配置")
     @GetMapping(value = "/getTopicConfigs")
     public JSONObject getTopicConfigs(
-            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "topic-name")
@@ -38,7 +39,7 @@ public class AdminConfigController {
     @ApiOperation(value = "获取 topic 的配置")
     @GetMapping(value = "/getBrokerConfigs")
     public JSONObject getBrokerConfigs(
-            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "broker.id")

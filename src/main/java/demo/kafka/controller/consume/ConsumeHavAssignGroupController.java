@@ -1,7 +1,7 @@
 package demo.kafka.controller.consume;
 
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.consume.service.ConsumerHavAssignGroupService;
+import demo.kafka.controller.consume.service.ConsumerHavGroupAssignService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
 
 
 @Slf4j
@@ -24,18 +22,21 @@ public class ConsumeHavAssignGroupController {
     /**
      * 获取全部的 topic
      */
-    @ApiOperation(value = "获取全部的 topic")
-    @GetMapping(value = "/getAllTopics")
-    public long getAllTopics(
+    @ApiOperation(value = "根据 partition 来获取下一个偏移量")
+    @GetMapping(value = "/getNextOffsetByTopicAndPartition")
+    public long getNextOffsetByTopicAndPartition(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要查询的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
-                    String topic) {
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition
+    ) {
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerHavAssignGroupService<String, String> consumerHavAssignGroupService = ConsumerHavAssignGroupService.getInstance(consumerService, Arrays.asList(topic));
-        long nextOffsetByTopicAndPartition = consumerHavAssignGroupService.getNextOffsetByTopicAndPartition(topic, 0);
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService = ConsumerHavGroupAssignService.getInstance(consumerService, topic);
+        long nextOffsetByTopicAndPartition = consumerHavGroupAssignService.getNextOffsetByTopicAndPartition(topic, 0);
 
         return nextOffsetByTopicAndPartition;
     }

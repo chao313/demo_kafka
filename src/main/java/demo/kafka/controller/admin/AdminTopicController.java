@@ -3,6 +3,7 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.util.AdminTopicService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -22,7 +23,7 @@ public class AdminTopicController {
     @ApiOperation(value = "添加 Topic(简单的创建，还有很多个性化的配置)")
     @PostMapping(value = "/addTopic")
     public boolean addTopic(
-            @ApiParam(value = "kafka地址", allowableValues = "10.200.126.163:9092,10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "topic-name")
@@ -44,7 +45,7 @@ public class AdminTopicController {
     @ApiOperation(value = "获取 topic 的的名称")
     @GetMapping(value = "/getTopicNames")
     public Set<String> getTopicNames(
-            @ApiParam(value = "kafka地址", allowableValues = "10.200.126.163:9092,10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
@@ -57,7 +58,7 @@ public class AdminTopicController {
     @ApiOperation(value = "获取 topic 的描述")
     @GetMapping(value = "/getTopicDescription")
     public JSONObject getTopicDescription(
-            @ApiParam(value = "kafka地址", allowableValues = "10.200.126.163:9092,10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "topic-name")
@@ -75,7 +76,7 @@ public class AdminTopicController {
     @ApiOperation(value = "删除指定的 Topic ")
     @DeleteMapping(value = "/deleteTopic")
     public boolean deleteTopic(
-            @ApiParam(value = "需要删除的 kafka地址 ", allowableValues = "10.200.126.163:9092,10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要删除的 Topic ")

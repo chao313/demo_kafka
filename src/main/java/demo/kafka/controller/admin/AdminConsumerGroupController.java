@@ -89,7 +89,7 @@ public class AdminConsumerGroupController {
     @ApiOperation(value = "删除指定的 consumerGroup")
     @DeleteMapping(value = "/deleteConsumerGroup")
     public boolean deleteConsumerGroup(
-            @ApiParam(value = "需要删除的 kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "group", defaultValue = "common_imp_db_test")

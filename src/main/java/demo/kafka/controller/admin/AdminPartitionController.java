@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin;
 
 
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.util.AdminPartitionsService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -19,7 +20,7 @@ public class AdminPartitionController {
     @ApiOperation(value = "增加topic的分区数量")
     @GetMapping(value = "/increasePartitions")
     public boolean increasePartitions(
-            @ApiParam(value = "kafka地址", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "topic-name")

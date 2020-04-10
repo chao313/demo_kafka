@@ -34,7 +34,7 @@ public class ConsumeController {
     @ApiOperation(value = "指定消费者的offset设置到最开始", notes = "指定消费者的offset设置到最开始")
     @GetMapping(value = "/seekToBeginning")
     public void seekToBeginning(
-            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要调拨的Topic")
@@ -60,7 +60,7 @@ public class ConsumeController {
     @ApiOperation(value = "消费一次", notes = "消费一次")
     @GetMapping(value = "/listenerOnce")
     public void listenerOnce(
-            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要消费的的Topic")
@@ -85,7 +85,7 @@ public class ConsumeController {
     @ApiOperation(value = "获取最新的Record", notes = "获取最新的Record")
     @GetMapping(value = "/getLastRecord")
     public void getLastRecord(
-            @ApiParam(value = "kafka地址 ", allowableValues = "10.202.16.136:9092,192.168.0.105:9092,10.200.3.34:9092")
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @ApiParam(value = "需要消费的的Topic")
