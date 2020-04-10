@@ -1,55 +1,30 @@
 package demo.kafka.controller.consume.service;
 
-import org.apache.kafka.common.PartitionInfo;
-import org.apache.kafka.common.TopicPartition;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
-public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerService<K, V> {
+public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupService<K, V> {
 
-    ConsumerHavGroupSubscribeService(KafkaConsumerService kafkaConsumerService) {
+    ConsumerHavGroupSubscribeService(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
         super(kafkaConsumerService);
+        super.getKafkaConsumerService().subscribe(topics);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer)
      */
     public static <K, V> ConsumerHavGroupSubscribeService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
-        ConsumerHavGroupSubscribeService consumerHavAssignGroupService = new ConsumerHavGroupSubscribeService(kafkaConsumerService);
-        Collection<TopicPartition> partitionInfos = new ArrayList<>();
-        topics.forEach(topic -> {
-            partitionInfos.addAll(getTopicPartitionsByTopic(consumerHavAssignGroupService, topic));
-        });
-        consumerHavAssignGroupService.getKafkaConsumerService().assign(topics);
+        ConsumerHavGroupSubscribeService consumerHavAssignGroupService = new ConsumerHavGroupSubscribeService(kafkaConsumerService, topics);
         return consumerHavAssignGroupService;
     }
 
 
     /**
-     * 根据 partition 来获取下一个偏移量
+     * 查看订阅到的Partition
      */
-    public long getNextOffsetByTopicAndPartition(String topic, int partition) {
-        TopicPartition topicPartition = new TopicPartition(topic, partition);
-        super.kafkaConsumerService.assign(Arrays.asList(topicPartition));
-        return super.kafkaConsumerService.position(topicPartition);
+    public Set<String> getPartitionSubscribed() {
+        return this.getKafkaConsumerService().subscription();
     }
 
-
-    /**
-     * 根据 topic 来生成 TopicPartitions
-     */
-    private static Collection<TopicPartition> getTopicPartitionsByTopic(ConsumerService consumerHavAssignGroupService, String topic) {
-        Collection<PartitionInfo> partitionInfos = consumerHavAssignGroupService.getKafkaConsumerService().partitionsFor(topic);
-
-        List<TopicPartition> topicPartitions = new ArrayList<>();
-        partitionInfos.forEach(partitionInfo -> {
-            TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());
-            topicPartitions.add(topicPartition);
-        });
-        return topicPartitions;
-    }
 
 }

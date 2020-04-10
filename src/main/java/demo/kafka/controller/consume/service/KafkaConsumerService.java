@@ -143,7 +143,7 @@ public class KafkaConsumerService<K, V> implements Consumer<K, V> {
      */
     @Override
     public void resume(Collection<TopicPartition> partitions) {
-        kafkaConsumer.pause(partitions);
+        kafkaConsumer.resume(partitions);
     }
 
     /**
