@@ -17,6 +17,11 @@ import java.util.function.Consumer;
  * -> 特别容易丢offset!
  * <p>
  * 1.assign的初衷应该是 Partition(订阅的入口就是Partition )
+ *
+ * 1.操作Partition的分配(重新分配和获取当前被分配的Partition)
+ * 2.获取指定Partition的下一个要消费的offset
+ * 3.操作消费的Partition的offset(设置offset到开始,结尾,任意)
+ * 4.操作消费本身(暂停/恢复)
  */
 @Slf4j
 public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> implements ConsumerHavGroupService<K, V> {
@@ -49,18 +54,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
 
 
     /**
-     * 根据 partition 来获取下一个偏移量
-     * <p>
-     * !!!! 这里会检查是否是assign的分配的分区！ 不是就会抛出异常 （必须poll）
-     */
-    @Override
-    public long getNextOffsetByTopicAndPartition(String topic, int partition) {
-        TopicPartition topicPartition = new TopicPartition(topic, partition);
-        return super.kafkaConsumerService.position(topicPartition);
-    }
-
-
-    /**
      * 查看分配到的Partition
      */
     @Override
@@ -77,6 +70,17 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         Collection<TopicPartition> topicPartitionsToBeAssigned = super.getTopicPartitionsByTopic(topic);
         this.getKafkaConsumerService().assign(topicPartitionsToBeAssigned);
         return topicPartitionsToBeAssigned;
+    }
+
+    /**
+     * 根据 partition 来获取下一个偏移量
+     * <p>
+     * !!!! 这里会检查是否是assign的分配的分区！ 不是就会抛出异常 （必须poll）
+     */
+    @Override
+    public long getNextOffsetByTopicAndPartition(String topic, int partition) {
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        return super.kafkaConsumerService.position(topicPartition);
     }
 
     /**

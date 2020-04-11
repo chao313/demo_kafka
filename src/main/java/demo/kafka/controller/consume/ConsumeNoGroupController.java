@@ -37,7 +37,7 @@ public class ConsumeNoGroupController {
      */
     @ApiOperation(value = "获取全部的 topic")
     @GetMapping(value = "/getAllTopics")
-    public Set<String> getAllTopics(
+    public Object getAllTopics(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers) {
@@ -53,7 +53,7 @@ public class ConsumeNoGroupController {
      */
     @ApiOperation(value = "根据消费者来获取 partition")
     @GetMapping(value = "/getPartitionsByTopic")
-    public JSONArray getPartitionsByTopic(
+    public Object getPartitionsByTopic(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,

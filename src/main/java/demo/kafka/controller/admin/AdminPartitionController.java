@@ -19,7 +19,7 @@ public class AdminPartitionController {
 
     @ApiOperation(value = "增加topic的分区数量")
     @GetMapping(value = "/increasePartitions")
-    public boolean increasePartitions(
+    public Object increasePartitions(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,

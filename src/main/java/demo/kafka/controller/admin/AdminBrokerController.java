@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.util.AdminClusterService;
 import demo.kafka.controller.admin.util.AdminConfigsService;
+import demo.kafka.framework.Response;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class AdminBrokerController {
 
     @ApiOperation(value = "获取集群中的 Broker 信息")
     @GetMapping(value = "/getBrokersInCluster")
-    public JSONArray getBrokersInCluster(
+    public Object getBrokersInCluster(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
@@ -43,7 +44,7 @@ public class AdminBrokerController {
 
     @ApiOperation(value = "获取 topic 的配置")
     @GetMapping(value = "/getBrokerConfigs")
-    public JSONObject getBrokerConfigs(
+    public Object getBrokerConfigs(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,

@@ -23,7 +23,7 @@ public class AdminClusterController {
 
     @ApiOperation(value = "获取集群Cluster的信息")
     @GetMapping(value = "/getCluster")
-    public JSONObject getCluster(
+    public Object getCluster(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers

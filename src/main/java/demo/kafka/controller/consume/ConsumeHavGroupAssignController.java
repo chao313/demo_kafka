@@ -37,7 +37,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "获取一个实例(已经分配好 topic)")
     @GetMapping(value = "/getConsumerHavGroupAssignInstance")
-    public String getConsumerHavGroupAssignInstance(
+    public Object getConsumerHavGroupAssignInstance(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -62,7 +62,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "pollOnce")
     @GetMapping(value = "/pollOnce")
-    public JSONArray pollOnce() {
+    public Object pollOnce() {
         List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
         consumerHavGroupAssignService.pollOnce(consumerRecord -> {
             log.info("consumerRecord - offset:{} key:{} value:{}", consumerRecord.offset(), consumerRecord.key(), consumerRecord.value());
@@ -79,7 +79,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "根据 partition 来获取下一个偏移量")
     @GetMapping(value = "/getNextOffsetByTopicAndPartition")
-    public long getNextOffsetByTopicAndPartition(
+    public Object getNextOffsetByTopicAndPartition(
             @ApiParam(value = "需要查询的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
@@ -95,7 +95,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "查看分配到的Partition")
     @GetMapping(value = "/getPartitionAssigned")
-    public JSONArray getPartitionAssigned() {
+    public Object getPartitionAssigned() {
         Set<TopicPartition> partitionAssigned = consumerHavGroupAssignService.getPartitionAssigned();
         String JsonObject = new Gson().toJson(partitionAssigned);
         JSONArray result = JSONObject.parseArray(JsonObject);
@@ -108,7 +108,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "查看分配到的Partition")
     @GetMapping(value = "/updatePartitionAssign")
-    public JSONArray updatePartitionAssign(
+    public Object updatePartitionAssign(
             @ApiParam(value = "被分配的topic")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
@@ -127,7 +127,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部更新到 最开始 的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffsetToBeginning")
-    public JSONArray updatePartitionAssignedOffsetToBeginning() {
+    public Object updatePartitionAssignedOffsetToBeginning() {
         Collection<TopicPartition> partitionToBeSeekBegin
                 = consumerHavGroupAssignService.updatePartitionAssignedOffsetToBeginning();
         String JsonObject = new Gson().toJson(partitionToBeSeekBegin);
@@ -141,7 +141,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部更新到 最新 的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffsetToEnd")
-    public JSONArray updatePartitionAssignedOffsetToEnd() {
+    public Object updatePartitionAssignedOffsetToEnd() {
         Collection<TopicPartition> partitionToBeSeekEnd
                 = consumerHavGroupAssignService.updatePartitionAssignedOffsetToEnd();
         String JsonObject = new Gson().toJson(partitionToBeSeekEnd);
@@ -156,7 +156,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部更新到 指定的偏移量")
     @GetMapping(value = "/updatePartitionAssignedOffset")
-    public JSONArray updatePartitionAssignedOffset(
+    public Object updatePartitionAssignedOffset(
             @ApiParam(value = "指定的 offset")
             @RequestParam(name = "offset", defaultValue = "1")
                     long offset
@@ -176,7 +176,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部 暂停")
     @GetMapping(value = "/updatePartitionAssignedToBePause")
-    public JSONArray updatePartitionAssignedToBePause() {
+    public Object updatePartitionAssignedToBePause() {
         Collection<TopicPartition> partitionToBePause
                 = consumerHavGroupAssignService.updatePartitionAssignedToBePause();
         String JsonObject = new Gson().toJson(partitionToBePause);
@@ -191,7 +191,7 @@ public class ConsumeHavGroupAssignController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部 恢复")
     @GetMapping(value = "/updatePartitionAssignedToBeResume")
-    public JSONArray updatePartitionAssignedToBeResume() {
+    public Object updatePartitionAssignedToBeResume() {
         Collection<TopicPartition> partitionToBeResume
                 = consumerHavGroupAssignService.updatePartitionAssignedToBeResume();
         String JsonObject = new Gson().toJson(partitionToBeResume);

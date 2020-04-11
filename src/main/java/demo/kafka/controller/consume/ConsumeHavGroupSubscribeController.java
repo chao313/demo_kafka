@@ -70,7 +70,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "pollOnce")
     @GetMapping(value = "/pollOnce")
-    public JSONArray pollOnce() {
+    public Object pollOnce() {
         List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
         consumerHavGroupSubscribeService.pollOnce(consumerRecord -> {
             log.info("consumerRecord - offset:{} key:{} value:{}", consumerRecord.offset(), consumerRecord.key(), consumerRecord.value());
@@ -86,7 +86,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "查看订阅到的 Topic")
     @GetMapping(value = "/getTopicSubscribed")
-    public Collection getTopicSubscribed() {
+    public Object getTopicSubscribed() {
         Set<String> topicSubscribed = consumerHavGroupSubscribeService.getTopicSubscribed();
         return topicSubscribed;
     }
@@ -96,7 +96,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "update 订阅的主题")
     @GetMapping(value = "/updateTopicSubscribed")
-    public String getTopicSubscribed(
+    public Object getTopicSubscribed(
             @ApiParam(value = "需要更新的主题")
             @RequestParam(name = "topics", defaultValue = "Test,Test1")
                     List<String> topics
@@ -111,7 +111,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "根据 partition 来获取下一个偏移量")
     @GetMapping(value = "/getNextOffsetByTopicAndPartition")
-    public long getNextOffsetByTopicAndPartition(
+    public Object getNextOffsetByTopicAndPartition(
             @ApiParam(value = "需要查询的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
@@ -127,7 +127,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把订阅到的 topic 全部更新到最开始的偏移量")
     @GetMapping(value = "/updateTopicSubscribedOffsetToBeginning")
-    public JSONArray updateTopicSubscribedOffsetToBeginning() {
+    public Object updateTopicSubscribedOffsetToBeginning() {
         Collection<TopicPartition> topicSubscribedOffsetToBeginning
                 = consumerHavGroupSubscribeService.updateTopicSubscribedOffsetToBeginning();
         String JsonObject = new Gson().toJson(topicSubscribedOffsetToBeginning);
@@ -141,7 +141,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把订阅到的 partition 全部更新到最新的偏移量")
     @GetMapping(value = "/updatePartitionSubscribedOffsetToEnd")
-    public JSONArray updatePartitionSubscribedOffsetToEnd() {
+    public Object updatePartitionSubscribedOffsetToEnd() {
         Collection<TopicPartition> partitionToBeSeekBegin
                 = consumerHavGroupSubscribeService.updatePartitionSubscribedOffsetToEnd();
         String JsonObject = new Gson().toJson(partitionToBeSeekBegin);
@@ -156,7 +156,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把 订阅 到的 topic 全部更新到 指定的偏移量")
     @GetMapping(value = "/updatePartitionSubscribedOffset")
-    public JSONArray updatePartitionSubscribedOffset(
+    public Object updatePartitionSubscribedOffset(
             @ApiParam(value = "指定的 offset")
             @RequestParam(name = "offset", defaultValue = "1")
                     long offset
@@ -175,7 +175,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把 订阅 到的 topic (指定)更新到 指定的偏移量")
     @GetMapping(value = "/updatePartitionSubscribedOffsetByTopics")
-    public JSONArray updatePartitionSubscribedOffset(
+    public Object updatePartitionSubscribedOffset(
             @ApiParam(value = "需要更新的主题")
             @RequestParam(name = "topics", defaultValue = "Test,Test1")
                     List<String> topics,
@@ -197,7 +197,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部 暂停")
     @GetMapping(value = "/updatePartitionSubscribedToBePause")
-    public JSONArray updatePartitionSubscribedToBePause() {
+    public Object updatePartitionSubscribedToBePause() {
         Collection<TopicPartition> partitionToBePause
                 = consumerHavGroupSubscribeService.updatePartitionSubscribedToBePause();
         String JsonObject = new Gson().toJson(partitionToBePause);
@@ -212,7 +212,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "把 分配 到的 partition 全部 恢复")
     @GetMapping(value = "/updatePartitionSubscribedToBeResume")
-    public JSONArray updatePartitionSubscribedToBeResume() {
+    public Object updatePartitionSubscribedToBeResume() {
         Collection<TopicPartition> partitionToBeResume
                 = consumerHavGroupSubscribeService.updatePartitionSubscribedToBeResume();
         String JsonObject = new Gson().toJson(partitionToBeResume);

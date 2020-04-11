@@ -26,7 +26,7 @@ public class AdminConsumerGroupController {
 
 
     @GetMapping(value = "/getConsumerGroupIds")
-    public Collection<String> getConsumerGroupIds(
+    public Object getConsumerGroupIds(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers)
@@ -38,7 +38,7 @@ public class AdminConsumerGroupController {
     }
 
     @GetMapping(value = "/getConsumerGroups")
-    public JSONObject getConsumerGroups(
+    public Object getConsumerGroups(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers)
@@ -52,7 +52,7 @@ public class AdminConsumerGroupController {
     }
 
     @GetMapping(value = "/getConsumerGroupDescribe")
-    public JSONObject getConsumerGroupDescribe(
+    public Object getConsumerGroupDescribe(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -69,7 +69,7 @@ public class AdminConsumerGroupController {
     }
 
     @GetMapping(value = "/getConsumerGroupOffsets")
-    public JSONObject getConsumerGroupOffsets(
+    public Object getConsumerGroupOffsets(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -88,7 +88,7 @@ public class AdminConsumerGroupController {
 
     @ApiOperation(value = "删除指定的 consumerGroup")
     @DeleteMapping(value = "/deleteConsumerGroup")
-    public boolean deleteConsumerGroup(
+    public Object deleteConsumerGroup(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,

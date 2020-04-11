@@ -6,6 +6,15 @@ import org.apache.kafka.common.TopicPartition;
 
 import java.util.*;
 
+/**
+ * 1.读取全部的topic
+ * 2.读取全部的partition
+ * 3.获取全部partition的offset的最新和最旧的offset及(根据时间戳获取offset)
+ *
+ * @param <K>
+ * @param <V>
+ */
+
 public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
 
     ConsumerNoGroupService(KafkaConsumerService kafkaConsumerService) {
