@@ -69,9 +69,9 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
     }
 
     /**
-     * 获取全部的 TopicPartition
+     * 获取全部的 TopicPartition (多个topic)
      */
-    public Collection<TopicPartition> getTopicPartitionsByTopics(Collection<String> topics) {
+    public Collection<TopicPartition> getTopicPartitionsByTopic(Collection<String> topics) {
         List<TopicPartition> topicPartitions = new ArrayList<>();
         topics.forEach(topic -> {
             topicPartitions.addAll(this.getTopicPartitionsByTopic(topic));
@@ -80,19 +80,65 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
     }
 
     /**
+     * 根据获取全部的TopicPartitions
+     */
+    public Collection<TopicPartition> getAllTopicPartitions() {
+        Set<String> allTopics = this.getAllTopics();
+        return this.getTopicPartitionsByTopic(allTopics);
+    }
+
+
+    /**
      * 获取record的分区的真实偏移量
      */
-    public Map<TopicPartition, Long> getLastPartitionOffsetByTopic(String topic) {
+    public Map<TopicPartition, Long> getLastPartitionOffset(String topic) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
         Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 
+
     /**
-     * 获取record的最早的没有过期的偏移量
+     * 获取record的分区的真实偏移量(多个topic)
      */
-    public Map<TopicPartition, Long> getEarliestPartitionOffsetByTopic(String topic) {
+    public Map<TopicPartition, Long> getLastPartitionOffset(Collection<String> topics) {
+        Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topics);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
+        return topicPartitionLongMap;
+    }
+
+    /**
+     * 获取record的最早的没有过期的偏移量(根据 TopicPartition)
+     */
+    public Long getLastPartitionOffset(TopicPartition topicPartition) {
+        Map<TopicPartition, Long> topicPartitionLongMap =
+                super.kafkaConsumerService.endOffsets(Arrays.asList(topicPartition));
+        return topicPartitionLongMap.get(topicPartition);
+    }
+
+    /**
+     * 获取record的最早的没有过期的偏移量(根据 Topic)
+     */
+    public Map<TopicPartition, Long> getEarliestPartitionOffset(String topic) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.beginningOffsets(topicPartitions);
+        return topicPartitionLongMap;
+    }
+
+    /**
+     * 获取record的最早的没有过期的偏移量(根据 TopicPartition)
+     */
+    public Long getEarliestPartitionOffset(TopicPartition topicPartition) {
+        Map<TopicPartition, Long> topicPartitionLongMap =
+                super.kafkaConsumerService.beginningOffsets(Arrays.asList(topicPartition));
+        return topicPartitionLongMap.get(topicPartition);
+    }
+
+    /**
+     * 获取record的最早的没有过期的偏移量(多个topic)
+     */
+    public Map<TopicPartition, Long> getEarliestPartitionOffset(Collection<String> topics) {
+        Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topics);
         Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.beginningOffsets(topicPartitions);
         return topicPartitionLongMap;
     }

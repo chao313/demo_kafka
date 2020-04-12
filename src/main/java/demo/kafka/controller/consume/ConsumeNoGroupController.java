@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @Slf4j
@@ -57,13 +54,10 @@ public class ConsumeNoGroupController {
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
-            @ApiParam(value = "group")
-            @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
-                    String group_id,
             @ApiParam(value = "需要查询的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id);
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
         Collection<PartitionInfo> partitionsByTopic = consumerNoGroupService.getPartitionsByTopic(topic);
         String JsonObject = new Gson().toJson(partitionsByTopic);
@@ -77,14 +71,11 @@ public class ConsumeNoGroupController {
      */
     @ApiOperation(value = "获取全部的 partition")
     @GetMapping(value = "/getAllTopicAndPartitions")
-    public JSONObject getAllTopicAndPartitions(
+    public Object getAllTopicAndPartitions(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers,
-            @ApiParam(value = "group")
-            @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
-                    String group_id) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id);
+                    String bootstrap_servers) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
         Map<String, List<PartitionInfo>> topicAndPartitions = consumerNoGroupService.getAllTopicAndPartitions();
         String JsonObject = new Gson().toJson(topicAndPartitions);
@@ -93,21 +84,19 @@ public class ConsumeNoGroupController {
     }
 
 
-
-
     /**
      * 根据 topic 获取每个分区的真实 offset
      */
     @ApiOperation(value = "根据 topic 获取每个分区的真实 offset")
     @GetMapping(value = "/getLastPartitionOffsetByTopic")
-    public JSONObject getLastPartitionOffsetByTopic(
+    public Object getLastPartitionOffsetByTopic(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             String topic) {
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
-        Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getLastPartitionOffsetByTopic(topic);
+        Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getLastPartitionOffset(topic);
         String JsonObject = new Gson().toJson(offsetByTopicAndPartition);
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
@@ -118,14 +107,14 @@ public class ConsumeNoGroupController {
      */
     @ApiOperation(value = "根据 topic 获取record的最早的 真实有效的偏移量")
     @GetMapping(value = "/getEarliestPartitionOffsetByTopic")
-    public JSONObject getEarliestPartitionOffsetByTopic(
+    public Object getEarliestPartitionOffsetByTopic(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             String topic) {
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
-        Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getEarliestPartitionOffsetByTopic(topic);
+        Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getEarliestPartitionOffset(topic);
         String JsonObject = new Gson().toJson(offsetByTopicAndPartition);
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
@@ -136,7 +125,7 @@ public class ConsumeNoGroupController {
      */
     @ApiOperation(value = "获取 topic 的指定时间戳之后的第一个 offset")
     @GetMapping(value = "/getFirstPartitionOffsetAfterTimestamp")
-    public JSONObject getFirstPartitionOffsetAfterTimestamp(
+    public Object getFirstPartitionOffsetAfterTimestamp(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
@@ -155,6 +144,8 @@ public class ConsumeNoGroupController {
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
     }
+
+
 
 
 }

@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  * -> 特别容易丢offset!
  * <p>
  * 1.assign的初衷应该是 Partition(订阅的入口就是Partition )
- *
+ * <p>
  * 1.操作Partition的分配(重新分配和获取当前被分配的Partition)
  * 2.获取指定Partition的下一个要消费的offset
  * 3.操作消费的Partition的offset(设置offset到开始,结尾,任意)
@@ -32,10 +32,22 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         return new ConsumerHavGroupAssignService<>(kafkaConsumerService, topic);
     }
 
+    /**
+     * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
+     */
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, String topic, int partition) {
+        return new ConsumerHavGroupAssignService<>(kafkaConsumerService, topic, partition);
+    }
+
     ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic) {
         super(kafkaConsumerService);
         Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
         super.getKafkaConsumerService().assign(topicPartitionsByTopic);
+    }
+
+    ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic, int partition) {
+        super(kafkaConsumerService);
+        super.getKafkaConsumerService().assign(Arrays.asList(new TopicPartition(topic, partition)));
     }
 
 
@@ -50,6 +62,18 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
             consumer.accept(record);
         });
         log.info("尝试获取一批数据...:{}", records.count());
+    }
+
+
+    /**
+     * 直接获取一批数据
+     *
+     * @return
+     */
+    public ConsumerRecords<K, V> pollOnce() {
+        ConsumerRecords<K, V> records;
+        records = this.getKafkaConsumerService().poll(Duration.ofMillis(1000));
+        return records;
     }
 
 
@@ -104,6 +128,21 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         this.getKafkaConsumerService().seekToEnd(partitionToBeSeekEnd);
         return partitionToBeSeekEnd;
     }
+//
+//    /**
+//     * 把分配到的 partition 全部更新到最新的偏移量
+//     * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
+//     */
+//    public Collection<TopicPartition> getLastRecordByTopicPartition(TopicPartition topicPartition) {
+//        this.getKafkaConsumerService().seekToEnd(Arrays.asList(topicPartition));
+//        ConsumerRecords<K, V> consumerRecords = this.pollOnce();
+//        if (consumerRecords.){
+//            return null;
+//        }else {
+//            return consumerRecords
+//        }
+//        return consumerRecords;
+//    }
 
     /**
      * 把分配到的 partition 全部更新到 指定的偏移量

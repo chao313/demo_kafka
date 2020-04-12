@@ -70,7 +70,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * 注意：如果没有poll,就会报没有 assignment 异常
      */
     public Collection<TopicPartition> updateTopicSubscribedOffsetToBeginning() {
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(this.getTopicSubscribed());
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         this.getKafkaConsumerService().seekToBeginning(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
@@ -80,7 +80,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
     public Collection<TopicPartition> updatePartitionSubscribedOffsetToEnd() {
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(this.getTopicSubscribed());
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         this.getKafkaConsumerService().seekToEnd(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
@@ -91,7 +91,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * -> 设置的 offset 超过最大值后，似乎就会从头开始
      */
     public Collection<TopicPartition> updatePartitionSubscribedOffset(long offset) {
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(this.getTopicSubscribed());
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         allTopicSubscribedPartitions.forEach(partition -> {
             this.getKafkaConsumerService().seek(partition, offset);
         });
@@ -109,7 +109,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
             throw new RuntimeException("分配的topic不包含指定的topic,无法设置offset");
         }
 
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(topics);
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(topics);
         allTopicSubscribedPartitions.forEach(partition -> {
             this.getKafkaConsumerService().seek(partition, offset);
         });
@@ -121,7 +121,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * {@link #pollOnce(Consumer)} ()} 就会无法获取到值
      */
     public Collection<TopicPartition> updatePartitionSubscribedToBePause() {
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(this.getTopicSubscribed());
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         this.getKafkaConsumerService().pause(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
@@ -131,7 +131,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * {@link #pollOnce(Consumer)} ()}就会正常获取到值
      */
     public Collection<TopicPartition> updatePartitionSubscribedToBeResume() {
-        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopics(this.getTopicSubscribed());
+        Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         this.getKafkaConsumerService().resume(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }

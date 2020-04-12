@@ -22,7 +22,7 @@ import java.util.*;
 
 
 @Slf4j
-@RequestMapping(value = "/ConsumeHavAssignGroupController")
+@RequestMapping(value = "/ConsumeHavGroupSubscribeController")
 @RestController
 public class ConsumeHavGroupSubscribeController {
 
@@ -34,7 +34,7 @@ public class ConsumeHavGroupSubscribeController {
      */
     @ApiOperation(value = "获取一个实例(已经订阅好 topic)")
     @GetMapping(value = "/getConsumerHavGroupSubscribeInstance")
-    public String getConsumerHavGroupSubscribeInstance(
+    public Object getConsumerHavGroupSubscribeInstance(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,

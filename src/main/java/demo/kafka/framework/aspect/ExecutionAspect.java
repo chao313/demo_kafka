@@ -30,13 +30,13 @@ public class ExecutionAspect {
      */
     @Around(value = "pointCut()")
     public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
-        logger.info("第一步【执行Around：拦截方法的签名】joinPoint.getSignature() - > {}", joinPoint.getSignature());//Response demo.spring.boot.demospringboot.controller.pub.FrameworkController.framework(String,String)
-        logger.info("第一步【执行Around：拦截目标的对象】joinPoint.getTarget() - > {}", joinPoint.getTarget());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3f
-        logger.info("第一步【执行Around：获取链接点的静态部分】joinPoint.getStaticPart() - > {}", joinPoint.getStaticPart());//execution(Response demo.spring.boot.demospringboot.controller.pub.FrameworkController.framework(String,String))
-        logger.info("第一步【执行Around：拦截参数】joinPoint.getArgs() - > {}{}", joinPoint.getArgs());//王海潮123 | 注意这里要两个{}
-        logger.info("第一步【执行Around：拦截切面的类型】joinPoint.getKind() - > {}", joinPoint.getKind());//method-execution || exception-handler
-        logger.info("第一步【执行Around：拦截连接点方法所在类文件中的位置】joinPoint.getSourceLocation() - > {}", joinPoint.getSourceLocation());//org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint$SourceLocationImpl@6742526e
-        logger.info("第一步【执行Around：拦截AOP的当前执行对象】joinPoint.getThis() - > {}", joinPoint.getThis());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3
+//        logger.info("第一步【执行Around：拦截方法的签名】joinPoint.getSignature() - > {}", joinPoint.getSignature());//Response demo.spring.boot.demospringboot.controller.pub.FrameworkController.framework(String,String)
+//        logger.info("第一步【执行Around：拦截目标的对象】joinPoint.getTarget() - > {}", joinPoint.getTarget());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3f
+//        logger.info("第一步【执行Around：获取链接点的静态部分】joinPoint.getStaticPart() - > {}", joinPoint.getStaticPart());//execution(Response demo.spring.boot.demospringboot.controller.pub.FrameworkController.framework(String,String))
+//        logger.info("第一步【执行Around：拦截参数】joinPoint.getArgs() - > {}{}", joinPoint.getArgs());//王海潮123 | 注意这里要两个{}
+//        logger.info("第一步【执行Around：拦截切面的类型】joinPoint.getKind() - > {}", joinPoint.getKind());//method-execution || exception-handler
+//        logger.info("第一步【执行Around：拦截连接点方法所在类文件中的位置】joinPoint.getSourceLocation() - > {}", joinPoint.getSourceLocation());//org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint$SourceLocationImpl@6742526e
+//        logger.info("第一步【执行Around：拦截AOP的当前执行对象】joinPoint.getThis() - > {}", joinPoint.getThis());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3
 
         Response response = new Response<>();
         try {

@@ -1,5 +1,6 @@
 package demo.kafka.controller.consume.service;
 
+import demo.kafka.util.MapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.Metric;
@@ -124,5 +125,6 @@ public class KafkaConsumerSupService<K, V> {
         log.info("尝试获取一批数据...:{}", records.count());
         this.kvKafkaConsumerService.close();
     }
+
 
 }

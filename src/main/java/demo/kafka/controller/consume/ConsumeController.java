@@ -1,13 +1,17 @@
 package demo.kafka.controller.consume;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.consume.service.KafkaConsumerService;
-import demo.kafka.controller.consume.service.KafkaConsumerSupService;
+import demo.kafka.controller.consume.service.*;
+import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 
 
 @Slf4j
@@ -127,6 +130,185 @@ public class ConsumeController {
             OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
             log.info("offsetAndMetadata:{}", offsetAndMetadata);
         });
+    }
+
+    /**
+     * 获取每个分区的 最新和最早的offset
+     */
+    @ApiOperation(value = "获取每个分区的 最新和最早的offset")
+    @GetMapping(value = "/getTopicPartitionAndRealOffset")
+    public Object getTopicPartitionAndRealOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers
+    ) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+
+        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
+
+        Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
+        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(allTopicPartitions);
+        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getKafkaConsumerService().endOffsets(allTopicPartitions);
+
+
+        allTopicPartitions.forEach(topicPartition -> {
+            ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
+            vo.setTopic(topicPartition.topic());
+            vo.setPartition(topicPartition.partition());
+            vo.setEarliestOffset(beginningOffsets.get(topicPartition));
+            vo.setLastOffset(endOffsets.get(topicPartition));
+            vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
+            consumerTopicAndPartitionsAndOffsets.add(vo);
+        });
+        /**
+         * 排序
+         */
+        Collections.sort(consumerTopicAndPartitionsAndOffsets, new Comparator<ConsumerTopicAndPartitionsAndOffset>() {
+            @Override
+            public int compare(ConsumerTopicAndPartitionsAndOffset o1, ConsumerTopicAndPartitionsAndOffset o2) {
+
+                if (0 != o1.getTopic().compareTo(o2.getTopic())) {
+                    return o1.getTopic().compareTo(o2.getTopic());
+                } else {
+                    return o1.getPartition() - o2.getPartition();
+                }
+            }
+        });
+        return consumerTopicAndPartitionsAndOffsets;
+    }
+
+    /**
+     * 获取partition的详细的信息
+     */
+    @ApiOperation(value = "获取 partition 详情")
+    @GetMapping(value = "/getTopicPartitionAndRealOffsetDetail")
+    public Object getTopicPartitionAndRealOffsetDetail(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition
+
+    ) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
+
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        ConsumerRecord earliestOneRecord = consumerCommonService.getOneRecord(bootstrap_servers, topicPartition, earliestPartitionOffset);
+        ConsumerRecord lastOneRecord = consumerCommonService.getOneRecord(bootstrap_servers, topicPartition, lastPartitionOffset > 0 ? lastPartitionOffset - 1 : 0);
+
+        /**
+         * 获取最后10条记录的开始的offset
+         */
+        long offsetStart;
+        if ((lastPartitionOffset - earliestPartitionOffset) >= 10) {
+            offsetStart = lastPartitionOffset - 10;
+        } else {
+            offsetStart = earliestPartitionOffset;
+        }
+        List<ConsumerRecord> lastTenRecords = consumerCommonService.getRecord(bootstrap_servers, topicPartition, offsetStart, 10);
+
+        List<ConsumerRecord> consumerRecords = new ArrayList<>();
+        consumerRecords.addAll(lastTenRecords);
+        /**
+         * 排序
+         */
+        Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
+            @Override
+            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                return Long.valueOf(o2.offset() - o1.offset()).intValue();
+            }
+        });
+        /**
+         * 转换返回
+         */
+        ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
+        vo.setLastOffset(lastPartitionOffset);
+        vo.setEarliestOffset(earliestPartitionOffset);
+        vo.setTopic(topic);
+        vo.setPartition(partition);
+        vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
+        vo.setLastConsumerRecord(lastOneRecord);
+        vo.setEarliestConsumerRecord(earliestOneRecord);
+        vo.setLastTenConsumerRecords(consumerRecords);
+
+        String JsonObject = new Gson().toJson(vo);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据
+     */
+    @ApiOperation(value = "获取指定的offset(开始结束范围)的数据")
+    @GetMapping(value = "/getRecordByTopicPartitionOffset")
+    public Object getRecordByTopicPartitionOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition,
+            @ApiParam(value = "开始的offset")
+            @RequestParam(name = "startOffset", defaultValue = "0")
+                    int startOffset,
+            @ApiParam(value = "结束的offset")
+            @RequestParam(name = "endOffset", defaultValue = "0")
+                    int endOffset
+
+
+    ) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
+
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+
+        if (endOffset <= startOffset) {
+            throw new RuntimeException("endOffset应该>startOffset");
+        }
+
+        if (startOffset < earliestPartitionOffset) {
+            throw new RuntimeException("startOffset 应该>最早有效的offset:" + earliestPartitionOffset);
+        }
+
+        if (endOffset > lastPartitionOffset) {
+            throw new RuntimeException("endOffset 应该<最新的offset:" + lastPartitionOffset);
+        }
+
+
+        List<ConsumerRecord> lastTenRecords = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
+
+        List<ConsumerRecord> consumerRecords = new ArrayList<>();
+        consumerRecords.addAll(lastTenRecords);
+        /**
+         * 排序
+         */
+        Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
+            @Override
+            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                return Long.valueOf(o2.offset() - o1.offset()).intValue();
+            }
+        });
+
+        String JsonObject = new Gson().toJson(consumerRecords);
+        JSONArray result = JSONObject.parseArray(JsonObject);
+        return result;
+
     }
 
 

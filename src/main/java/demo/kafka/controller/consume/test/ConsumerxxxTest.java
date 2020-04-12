@@ -1,9 +1,11 @@
 package demo.kafka.controller.consume.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.KafkaConsumerCommonService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.consume.service.KafkaConsumerSupService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
@@ -193,6 +195,15 @@ public class ConsumerxxxTest {
 //                    log.info("record 的 timestampType:{}", record.timestampType());
 //                    log.info("record 的 headers:{}", record.headers());
 //                    log.info("record 的 leaderEpoch:{}", record.leaderEpoch());
+
+    @Test
+    public void getOneRecord() {
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        ConsumerRecord oneRecord = consumerCommonService.getOneRecord(Bootstrap.HONE_IP, new TopicPartition("Test", 0), 0);
+        ConsumerRecord lastOneRecord = consumerCommonService.getOneRecord(Bootstrap.HONE_IP, new TopicPartition("Test", 0), 53);
+        log.info("oneRecord:{}", oneRecord);
+        log.info("lastOneRecord:{}", lastOneRecord);
+    }
 
 
 }

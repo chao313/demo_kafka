@@ -161,7 +161,7 @@ public class ProduceController {
     @GetMapping(value = "/getPartitionsByTopic")
     public Object getPartitionsByTopic(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic) {
@@ -192,7 +192,7 @@ public class ProduceController {
     @GetMapping(value = "/sendSync")
     public Object sendSync(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
@@ -217,10 +217,10 @@ public class ProduceController {
      * 发送->忘记
      */
     @ApiOperation(value = "发送->忘记")
-    @GetMapping(value = "/SendForget")
+    @GetMapping(value = "/sendForget")
     public Object SendForget(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
@@ -246,7 +246,7 @@ public class ProduceController {
     @GetMapping(value = "/sendAsync")
     public Object sendAsync(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic,
