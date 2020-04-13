@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static demo.kafka.controller.consume.ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService;
 
 
 @Slf4j
@@ -134,13 +137,17 @@ public class ConsumeController {
 
     /**
      * 获取每个分区的 最新和最早的offset
+     * 1.加上正则
      */
     @ApiOperation(value = "获取每个分区的 最新和最早的offset")
-    @GetMapping(value = "/getTopicPartitionAndRealOffset")
-    public Object getTopicPartitionAndRealOffset(
+    @GetMapping(value = "/getTopicPartitionAndRealOffsetList")
+    public Object getTopicPartitionAndRealOffsetList(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers
+                    String bootstrap_servers,
+            @ApiParam(value = "topic_pattern")
+            @RequestParam(name = "topic_pattern", defaultValue = ".*")
+                    String topic_pattern
     ) {
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
@@ -148,11 +155,22 @@ public class ConsumeController {
         List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
 
         Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
-        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(allTopicPartitions);
-        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getKafkaConsumerService().endOffsets(allTopicPartitions);
+
+        /**
+         * 过滤正则
+         */
+        List<TopicPartition> filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
+            return topicPartition.topic().matches(topic_pattern);
+        }).collect(Collectors.toList());
+
+        /**
+         * 获取最早和最晚的offset
+         */
+        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(filterCollect);
+        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getKafkaConsumerService().endOffsets(filterCollect);
 
 
-        allTopicPartitions.forEach(topicPartition -> {
+        filterCollect.forEach(topicPartition -> {
             ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
             vo.setTopic(topicPartition.topic());
             vo.setPartition(topicPartition.partition());
@@ -309,6 +327,39 @@ public class ConsumeController {
         JSONArray result = JSONObject.parseArray(JsonObject);
         return result;
 
+    }
+
+
+    /**
+     * 把 指定 到的 partition 更新到 指定的偏移量
+     */
+    @ApiOperation(value = "把 分配 到的 partition 全部更新到 指定的偏移量")
+    @GetMapping(value = "/updatePartitionToOffset")
+    public Object updatePartitionAssignedOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "指定的 offset")
+            @RequestParam(name = "group.id")
+                    String group_id,
+            @ApiParam(value = "指定的 topic")
+            @RequestParam(name = "topic", defaultValue = "1")
+                    String topic,
+            @ApiParam(value = "指定的 partition")
+            @RequestParam(name = "partition", defaultValue = "1")
+                    int partition,
+            @ApiParam(value = "指定的 offset")
+            @RequestParam(name = "seekOffset", defaultValue = "1")
+                    long seekOffset
+    ) {
+        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id, MapUtil.$());
+
+
+        ConsumerHavGroupSubscribeService<String, String> instance = ConsumerHavGroupSubscribeService.getInstance(consumerService, Arrays.asList(topic));
+        instance.getKafkaConsumerService().poll(0);
+        instance.updatePartitionSubscribedOffset(new TopicPartition(topic, partition), seekOffset);
+        instance.getKafkaConsumerService().poll(0);
+        return "调整结束";
     }
 
 

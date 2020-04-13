@@ -66,6 +66,18 @@ public class ConsumeHavGroupSubscribeController {
     }
 
     /**
+     * 获取一个实例
+     */
+    @ApiOperation(value = "关闭")
+    @GetMapping(value = "/close")
+    public Object close() {
+        ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getKafkaConsumerService().close();
+        ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService = null;
+        return "关闭成功";
+    }
+
+
+    /**
      * 消费一次
      */
     @ApiOperation(value = "pollOnce")

@@ -117,6 +117,18 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
     }
 
     /**
+     * 把 指定的到的 topic （指定）更新到 指定的偏移量
+     * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
+     */
+    public Collection<TopicPartition> updatePartitionSubscribedOffset(TopicPartition topicPartition, long offset) {
+        if (!this.getTopicSubscribed().contains(topicPartition.topic())) {
+            throw new RuntimeException("分配的topic不包含指定的topic,无法设置offset");
+        }
+        this.getKafkaConsumerService().seek(topicPartition, offset);
+        return Arrays.asList(topicPartition);
+    }
+
+    /**
      * 把订阅到的 topic 全部 暂停
      * {@link #pollOnce(Consumer)} ()} 就会无法获取到值
      */

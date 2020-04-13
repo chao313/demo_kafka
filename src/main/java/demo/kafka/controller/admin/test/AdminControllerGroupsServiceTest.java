@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
-public class AdminConsumerGroupsServiceTest {
+public class AdminControllerGroupsServiceTest {
 
 
     AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(Bootstrap.MY.getIp());
