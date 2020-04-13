@@ -359,6 +359,7 @@ public class ConsumeController {
         instance.getKafkaConsumerService().poll(0);
         instance.updatePartitionSubscribedOffset(new TopicPartition(topic, partition), seekOffset);
         instance.getKafkaConsumerService().poll(0);
+        instance.getKafkaConsumerService().close();
         return "调整结束";
     }
 
