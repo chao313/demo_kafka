@@ -20,7 +20,7 @@ public class ExecutionAspect {
     /**
      * 定义切面执行的方法
      */
-    @Pointcut("execution(* demo.kafka.controller.*.*Controller.*(..))")
+    @Pointcut("execution(* demo.kafka.controller..*Controller.*(..))")
     private void pointCut() {
     }
 

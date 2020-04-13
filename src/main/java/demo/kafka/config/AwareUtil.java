@@ -5,11 +5,12 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.context.*;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AwareUtil implements BeanNameAware, BeanFactoryAware, ApplicationContextAware, MessageSourceAware, ApplicationEventPublisherAware, ResourceLoaderAware {
+public class AwareUtil implements BeanNameAware, BeanFactoryAware, ApplicationContextAware, MessageSourceAware, ApplicationEventPublisherAware, ResourceLoaderAware, EnvironmentAware {
 
     public static String beanName;
     public static BeanFactory beanFactory;
@@ -17,6 +18,7 @@ public class AwareUtil implements BeanNameAware, BeanFactoryAware, ApplicationCo
     public static ApplicationEventPublisher applicationEventPublisher;
     public static MessageSource messageSource;
     public static ResourceLoader resourceLoader;
+    public static Environment environment;
 
     /**
      * BeanNameAware
@@ -82,4 +84,8 @@ public class AwareUtil implements BeanNameAware, BeanFactoryAware, ApplicationCo
     }
 
 
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
 }
