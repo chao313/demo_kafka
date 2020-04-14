@@ -193,7 +193,7 @@ public class ConsumeController {
                 }
             }
         });
-        consumerService.cl
+        consumerService.close();
         return consumerTopicAndPartitionsAndOffsets;
     }
 
