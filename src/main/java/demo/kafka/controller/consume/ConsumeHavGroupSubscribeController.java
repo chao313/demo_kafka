@@ -72,7 +72,6 @@ public class ConsumeHavGroupSubscribeController {
     @GetMapping(value = "/close")
     public Object close() {
         ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getKafkaConsumerService().close();
-        ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService = null;
         return "关闭成功";
     }
 

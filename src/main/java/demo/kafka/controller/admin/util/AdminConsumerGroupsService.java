@@ -87,6 +87,7 @@ public class AdminConsumerGroupsService extends AdminService {
 
     /**
      * 根据 groupid 获取订阅的TopicPartition
+     * 只有客户端没有close才行(正在被订阅的)
      */
     public Set<TopicPartition> getConsumerSubscribedTopicsByGroupId(String groupId) throws ExecutionException, InterruptedException {
         Set<TopicPartition> set = new HashSet<>();

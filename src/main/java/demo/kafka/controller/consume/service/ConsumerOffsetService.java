@@ -12,27 +12,60 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.requests.OffsetFetchRequest;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.acl.Group;
 import java.util.*;
 
 @Slf4j
 public class ConsumerOffsetService<K, V> {
 
-    KafkaConsumerService<K, V> kafkaConsumerService;
+//    KafkaConsumerService<K, V> kafkaConsumerService;
+//
+//    ConsumerOffsetService(KafkaConsumerService<K, V> kafkaConsumerService) {
+//        this.kafkaConsumerService = kafkaConsumerService;
+//    }
+//
+//    private ConsumerOffsetService() {
+//    }
+//
+//    public KafkaConsumerService<K, V> getKafkaConsumerService() {
+//        return kafkaConsumerService;
+//    }
 
-    ConsumerOffsetService(KafkaConsumerService<K, V> kafkaConsumerService) {
-        this.kafkaConsumerService = kafkaConsumerService;
+    @Test
+    public void xx() {
+        this.parseOffset(Bootstrap.HONE_IP, "consumer-test3");
     }
 
-    private ConsumerOffsetService() {
+
+    public static String hashKeyForDisk(String key) {
+        String cacheKey;
+        try {
+            final MessageDigest mDigest = MessageDigest.getInstance("MD5");
+            mDigest.update(key.getBytes());
+            cacheKey = bytesToHexString(mDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            cacheKey = String.valueOf(key.hashCode());
+        }
+        return cacheKey;
     }
 
-    public KafkaConsumerService<K, V> getKafkaConsumerService() {
-        return kafkaConsumerService;
+    private static String bytesToHexString(byte[] bytes) {
+        // http://stackoverflow.com/questions/332079
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            String hex = Integer.toHexString(0xFF & bytes[i]);
+            if (hex.length() == 1) {
+                sb.append('0');
+            }
+            sb.append(hex);
+        }
+        return sb.toString();
     }
-
 
     /**
      * 获取指定group的消费状况
@@ -50,43 +83,28 @@ public class ConsumerOffsetService<K, V> {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         KafkaConsumer<byte[], byte[]> consumer = new KafkaConsumer(props);
 
-
-//        OffsetFetchRequest
+        int partition = Math.abs(group_id.hashCode() % 50);//确地group对应的partition
 
         String topic = "__consumer_offsets";
         /**
          * 获取指定主题的所有分区
          */
-        List<PartitionInfo> partitionInfos = consumer.partitionsFor(topic);
-        List<TopicPartition> topicPartitions = new ArrayList<>();
-        partitionInfos.forEach(partitionInfo -> {
-            TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());//新建topic分区
-            topicPartitions.add(topicPartition);//加入list
-        });
-        consumer.assign(topicPartitions);//把topic分区的list分配给消费者
+        consumer.assign(Arrays.asList(new TopicPartition(topic, partition)));//分配分区
         try {
             while (true) {
                 ConsumerRecords<byte[], byte[]> records
                         = consumer.poll(100);
                 records.forEach(record -> {
                     try {
-                        log.info("主题:{} , 分区:{} , 偏移量:{},key:{},value:{}", record.topic(),
-                                record.partition(),
-                                record.offset(),
-                                record.key(),
-                                record.value());
                         BaseKey key = GroupMetadataManager.readMessageKey(ByteBuffer.wrap(record.key()));
-                        OffsetAndMetadata value = GroupMetadataManager.readOffsetMessageValue(ByteBuffer.wrap(record.value()));
-                        if (null == record.value()) {
-                            System.out.println("null");
-                            return;
+                        OffsetAndMetadata value = null;
+                        if (null != record.value()) {
+                            value = GroupMetadataManager.readOffsetMessageValue(ByteBuffer.wrap(record.value()));
+//                            value = GroupMetadataManager.offsetCommitValue(ByteBuffer.wrap(record.value()));
                         }
 
                         System.out.println(key);
                         System.out.println(value);
-                        String topic1 = ((GroupTopicPartition) key.key()).topicPartition().topic();
-                        int partition = ((GroupTopicPartition) key.key()).topicPartition().partition();
-                        System.out.println(consumer.endOffsets(Arrays.asList(new TopicPartition(topic1, partition))));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

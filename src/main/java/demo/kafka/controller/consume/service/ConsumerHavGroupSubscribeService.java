@@ -50,6 +50,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
         records.forEach(record -> {
             consumer.accept(record);
         });
+        this.getKafkaConsumerService().commitSync();
         log.info("尝试获取一批数据...:{}", records.count());
     }
 
