@@ -70,11 +70,30 @@ public class AdminConsumerGroupsService extends AdminService {
      * 3.均衡器  coordinator
      * 4.分区选择器 partitionAssignor
      * 5.成员:Members
+     * !!! 可以获取每个消费者成员订阅的数据
      */
     public ConsumerGroupDescription getConsumerGroupDescribe(String groupId) throws ExecutionException, InterruptedException {
         DescribeConsumerGroupsResult describeConsumerGroupsResult = super.client.describeConsumerGroups(Arrays.asList(groupId));
         Map<String, ConsumerGroupDescription> stringConsumerGroupDescriptionMap = describeConsumerGroupsResult.all().get();
         return stringConsumerGroupDescriptionMap.get(groupId);
+    }
+
+    /**
+     * 根据 groupid 获取组的成员 和 每个成员订阅的主题
+     */
+    public Collection<MemberDescription> getConsumerMembersAndSubscribeTopicsByGroupId(String groupId) throws ExecutionException, InterruptedException {
+        return this.getConsumerGroupDescribe(groupId).members();
+    }
+
+    /**
+     * 根据 groupid 获取订阅的TopicPartition
+     */
+    public Set<TopicPartition> getConsumerSubscribedTopicsByGroupId(String groupId) throws ExecutionException, InterruptedException {
+        Set<TopicPartition> set = new HashSet<>();
+        this.getConsumerGroupDescribe(groupId).members().forEach(memberDescription -> {
+            set.addAll(memberDescription.assignment().topicPartitions());
+        });
+        return set;
     }
 
     /**
@@ -87,6 +106,30 @@ public class AdminConsumerGroupsService extends AdminService {
     public Map<TopicPartition, OffsetAndMetadata> getConsumerGroupOffsets(String groupId) throws ExecutionException, InterruptedException {
         ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = super.client.listConsumerGroupOffsets(groupId);
         Map<TopicPartition, OffsetAndMetadata> topicPartitionOffsetAndMetadataMap = listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().get();
+        return topicPartitionOffsetAndMetadataMap;
+    }
+
+    /**
+     * 根据 groupId 获取偏移量()
+     * ！！！ 这里只有一个
+     *
+     * @param listConsumerGroupOffsetsOptions 参数，包含需要获取的partition
+     *                                        <p></p>
+     * @return topic的主题的指定分区的偏移量
+     * key:TP_01009404-0  value:OffsetAndMetadata{offset=0, leaderEpoch=null, metadata=''}
+     * @throws UnsupportedVersionException The broker only supports OffsetFetchRequest v1, but we need v2 or newer to request all topic partitions.
+     */
+    public Map<TopicPartition, OffsetAndMetadata> getConsumerGroupOffsets(String groupId, ListConsumerGroupOffsetsOptions listConsumerGroupOffsetsOptions) throws ExecutionException, InterruptedException {
+        ListConsumerGroupOffsetsResult listConsumerGroupOffsetsResult = super.client.listConsumerGroupOffsets(groupId, listConsumerGroupOffsetsOptions);
+        Map<TopicPartition, OffsetAndMetadata> topicPartitionOffsetAndMetadataMap;
+        try {
+            topicPartitionOffsetAndMetadataMap = listConsumerGroupOffsetsResult.partitionsToOffsetAndMetadata().get();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            topicPartitionOffsetAndMetadataMap = new HashMap<>();
+            topicPartitionOffsetAndMetadataMap.put(listConsumerGroupOffsetsOptions.topicPartitions().get(0), new OffsetAndMetadata(0));
+        }
         return topicPartitionOffsetAndMetadataMap;
     }
 

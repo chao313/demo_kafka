@@ -12,6 +12,7 @@ import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -47,8 +50,19 @@ public class AdminController {
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
 
         AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(bootstrap_servers);
-        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
 
+
+        /**
+         * 兼容老版本
+         * 新版本是一句代码 ： Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
+         */
+        //获取订阅的topic
+        Set<TopicPartition> topicPartitions = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId(group);
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+        for (TopicPartition partition : topicPartitions) {
+            metadataMap.putAll(adminConsumerGroupsService
+                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
+        }
 
         Map<TopicPartition, Long> beginningOffsets
                 = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(metadataMap.keySet());

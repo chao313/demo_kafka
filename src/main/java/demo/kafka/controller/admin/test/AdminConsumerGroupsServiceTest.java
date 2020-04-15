@@ -1,22 +1,25 @@
 package demo.kafka.controller.admin.test;
 
 import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
+import demo.kafka.util.MapUtil;
+import kafka.coordinator.group.GroupOverview;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
-public class AdminControllerGroupsServiceTest {
+public class AdminConsumerGroupsServiceTest {
 
 
-    AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(Bootstrap.MY.getIp());
+    AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(Bootstrap.DEV_WIND.getIp());
 
 
     /**
@@ -116,6 +119,33 @@ public class AdminControllerGroupsServiceTest {
     }
 
     /**
+     * 根据 groupid 获取组的成员 和 每个成员订阅的主题
+     */
+    @Test
+    public void getConsumerMembersAndSubscribeTopicsByGroupId() throws ExecutionException, InterruptedException {
+        Collection<MemberDescription> memberDescriptions =
+                adminConsumerGroupsService.getConsumerMembersAndSubscribeTopicsByGroupId("common_imp_db_test");
+
+        memberDescriptions.forEach(memberDescription -> {
+            log.info("topicPartition:{}", memberDescription);
+        });
+
+    }
+
+    /**
+     * 据 groupid 获取订阅的TopicPartition
+     */
+    @Test
+    public void getConsumerSubscribedTopicsByGroupId() throws ExecutionException, InterruptedException {
+        Set<TopicPartition> topicPartitionsSet = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId("common_imp_db_test");
+
+        topicPartitionsSet.forEach(topicPartition -> {
+            log.info("topicPartition:{}", topicPartition);
+        });
+
+    }
+
+    /**
      * 测试获取 groupId 的的消费偏移量
      */
     @Test
@@ -127,5 +157,21 @@ public class AdminControllerGroupsServiceTest {
         });
 
     }
+
+    /**
+     * 测试获取 groupId 的的消费偏移量
+     */
+    @Test
+    public void listConsumerGroupOffsetsListConsumerGroupOffsetsOptions() throws ExecutionException, InterruptedException {
+        ListConsumerGroupOffsetsOptions offsetsOptions = new ListConsumerGroupOffsetsOptions();
+        offsetsOptions.topicPartitions(Arrays.asList(new TopicPartition("TP_BDG_PEVC_PEVC_BISIMPORTDB", 0)));
+        Map<TopicPartition, OffsetAndMetadata> map = adminConsumerGroupsService.getConsumerGroupOffsets("common_imp_db_test1", offsetsOptions);
+        map.forEach((key, value) -> {
+            log.info("key:{}", key);
+            log.info("value:{}", value);
+        });
+
+    }
+
 
 }

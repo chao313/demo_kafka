@@ -10,13 +10,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -78,7 +78,17 @@ public class AdminConsumerGroupController {
     )
             throws ExecutionException, InterruptedException {
         AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(bootstrap_servers);
-        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
+        /**
+         * 兼容老版本
+         * 新版本是一句代码 ： Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
+         */
+        //获取订阅的topic
+        Set<TopicPartition> topicPartitions = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId(group);
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+        for (TopicPartition partition : topicPartitions) {
+            metadataMap.putAll(adminConsumerGroupsService
+                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
+        }
         log.info("listConsumerGroupsResult:{}", metadataMap);
         String JsonObject = new GsonBuilder().serializeNulls().create().toJson(metadataMap);
         JSONObject jsonObject = JSONObject.parseObject(JsonObject);

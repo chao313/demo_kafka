@@ -11,8 +11,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.requests.OffsetFetchRequest;
 
 import java.nio.ByteBuffer;
+import java.security.acl.Group;
 import java.util.*;
 
 @Slf4j
@@ -32,7 +34,14 @@ public class ConsumerOffsetService<K, V> {
     }
 
 
-    public Map parseOffset(String bootstrap_servers) {
+    /**
+     * 获取指定group的消费状况
+     *
+     * @param bootstrap_servers
+     * @param group_id
+     * @return
+     */
+    public Map parseOffset(String bootstrap_servers, String group_id) {
         Properties props = new Properties();
         /*配置broker*/
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);//服务器ip:端口号，集群用逗号分隔
@@ -40,6 +49,9 @@ public class ConsumerOffsetService<K, V> {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         KafkaConsumer<byte[], byte[]> consumer = new KafkaConsumer(props);
+
+
+//        OffsetFetchRequest
 
         String topic = "__consumer_offsets";
         /**
@@ -89,5 +101,6 @@ public class ConsumerOffsetService<K, V> {
         }
 
 
+        return null;
     }
 }
