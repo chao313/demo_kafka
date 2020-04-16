@@ -57,12 +57,13 @@ public class AdminController {
          * 新版本是一句代码 ： Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
          */
         //获取订阅的topic
-        Set<TopicPartition> topicPartitions = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId(group);
-        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
-        for (TopicPartition partition : topicPartitions) {
-            metadataMap.putAll(adminConsumerGroupsService
-                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
-        }
+//        Set<TopicPartition> topicPartitions = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId(group);
+//        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+//        for (TopicPartition partition : topicPartitions) {
+//            metadataMap.putAll(adminConsumerGroupsService
+//                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
+//        }
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
 
         Map<TopicPartition, Long> beginningOffsets
                 = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(metadataMap.keySet());

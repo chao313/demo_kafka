@@ -659,6 +659,16 @@ public class KafkaConsumerService<K, V> implements Consumer<K, V> {
     }
 
     @Override
+    public Map<TopicPartition, OffsetAndMetadata> committed(Set<TopicPartition> set) {
+        return null;
+    }
+
+    @Override
+    public Map<TopicPartition, OffsetAndMetadata> committed(Set<TopicPartition> set, Duration duration) {
+        return null;
+    }
+
+    @Override
     public Map<MetricName, ? extends Metric> metrics() {
         return kafkaConsumer.metrics();
     }

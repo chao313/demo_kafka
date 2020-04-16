@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
+import demo.kafka.controller.response.ConsumerRecordResponse;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -309,24 +310,54 @@ public class ConsumeController {
             throw new RuntimeException("endOffset 应该<最新的offset:" + lastPartitionOffset);
         }
 
+        if (topic.equalsIgnoreCase(KafkaConsumerCommonService.__consumer_offsets)) {
+            /**
+             * __consumer_offsets 专享
+             */
 
-        List<ConsumerRecord> lastTenRecords = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
+            List<ConsumerRecord<byte[], byte[]>> records
+                    = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset,
+                    MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
+                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer")
+            );
 
-        List<ConsumerRecord> consumerRecords = new ArrayList<>();
-        consumerRecords.addAll(lastTenRecords);
-        /**
-         * 排序
-         */
-        Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
-            @Override
-            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                return Long.valueOf(o2.offset() - o1.offset()).intValue();
-            }
-        });
 
-        String JsonObject = new Gson().toJson(consumerRecords);
-        JSONArray result = JSONObject.parseArray(JsonObject);
-        return result;
+            List<ConsumerRecord<byte[], byte[]>> consumerRecords = new ArrayList<>();
+            consumerRecords.addAll(records);
+            /**
+             * 排序
+             */
+            Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
+                @Override
+                public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
+                }
+            });
+
+            List<ConsumerRecordResponse> list = ConsumerRecordResponse.getList(consumerRecords);
+
+            String JsonObject = new Gson().toJson(list);
+            JSONArray result = JSONObject.parseArray(JsonObject);
+            return result;
+        } else {
+            List<ConsumerRecord<String, String>> records
+                    = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
+            List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
+            consumerRecords.addAll(records);
+            /**
+             * 排序
+             */
+            Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
+                @Override
+                public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
+                }
+            });
+            String JsonObject = new Gson().toJson(consumerRecords);
+            JSONArray result = JSONObject.parseArray(JsonObject);
+            return result;
+        }
+
 
     }
 
