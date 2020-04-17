@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
-import demo.kafka.controller.response.ConsumerRecordResponse;
+import demo.kafka.controller.response.OffsetRecordResponse;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static demo.kafka.controller.consume.ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService;
 
 
 @Slf4j
@@ -334,7 +332,7 @@ public class ConsumeController {
                 }
             });
 
-            List<ConsumerRecordResponse> list = ConsumerRecordResponse.getList(consumerRecords);
+            List<OffsetRecordResponse> list = OffsetRecordResponse.getList(consumerRecords);
 
             String JsonObject = new Gson().toJson(list);
             JSONArray result = JSONObject.parseArray(JsonObject);

@@ -1,6 +1,5 @@
 package demo.kafka.controller.response;
 
-import kafka.common.OffsetAndMetadata;
 import kafka.coordinator.group.BaseKey;
 import kafka.coordinator.group.GroupMetadataKey;
 import kafka.coordinator.group.GroupMetadataManager;
@@ -15,8 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 用于解析 offset 提交的数据
+ */
 @Data
-public class ConsumerRecordResponse {
+public class OffsetRecordResponse {
+
+    public static final String TypeGroupMetadataKey = "GroupMetadataKey";
+    public static final String TypeBaseKey = "BaseKey";
+    public static final String TypeNULL = "NULL";
+
+    private String type;//自定义的属性，记录当前的offset的类型是 GroupMetadataKey | BaseKey
 
     private String topic;
     private int partition;
@@ -31,7 +39,7 @@ public class ConsumerRecordResponse {
     private Object value;
     private Optional<Integer> leaderEpoch;
 
-    public ConsumerRecordResponse(ConsumerRecord<byte[], byte[]> consumerRecord) {
+    public OffsetRecordResponse(ConsumerRecord<byte[], byte[]> consumerRecord) {
         this.topic = consumerRecord.topic();
         this.partition = consumerRecord.partition();
         this.offset = consumerRecord.offset();
@@ -41,16 +49,21 @@ public class ConsumerRecordResponse {
         this.headers = consumerRecord.headers();
         this.baseKey = GroupMetadataManager.readMessageKey(ByteBuffer.wrap(consumerRecord.key()));
         this.key = this.baseKey.toString();
+        this.leaderEpoch = consumerRecord.leaderEpoch();
         if (null != consumerRecord.value()) {
             if (this.baseKey instanceof GroupMetadataKey) {
                 /**key 的格式为 GroupMetadataKey -> value是各个消费者信息 */
                 this.value = GroupMetadataManager.readGroupMessageValue(((GroupMetadataKey) this.baseKey).key(), ByteBuffer.wrap(consumerRecord.value()), Time.SYSTEM);
+                this.type = TypeGroupMetadataKey;
             } else {
                 /**key 的格式为 BaseKey -> value对应的消费者各个Partition的offset */
                 this.value = GroupMetadataManager.readOffsetMessageValue(ByteBuffer.wrap(consumerRecord.value()));
+                this.type = TypeBaseKey;
             }
+        } else {
+            //这个是Value为null的情况
+            this.type = TypeNULL;
         }
-        this.leaderEpoch = consumerRecord.leaderEpoch();
     }
 
     /**
@@ -59,10 +72,10 @@ public class ConsumerRecordResponse {
      * @param consumerRecords
      * @return
      */
-    public static List<ConsumerRecordResponse> getList(List<ConsumerRecord<byte[], byte[]>> consumerRecords) {
-        List<ConsumerRecordResponse> result = new ArrayList<>();
+    public static List<OffsetRecordResponse> getList(List<ConsumerRecord<byte[], byte[]>> consumerRecords) {
+        List<OffsetRecordResponse> result = new ArrayList<>();
         consumerRecords.forEach(consumerRecord -> {
-            result.add(new ConsumerRecordResponse(consumerRecord));
+            result.add(new OffsetRecordResponse(consumerRecord));
         });
         return result;
     }

@@ -38,7 +38,7 @@ public class ConsumerOffsetService<K, V> {
 
     @Test
     public void xx() {
-        this.parseOffset(Bootstrap.HONE_IP, "consumer-test3");
+        this.parseOffset(Bootstrap.HONE_IP, "common_imp_db_test");
     }
 
 

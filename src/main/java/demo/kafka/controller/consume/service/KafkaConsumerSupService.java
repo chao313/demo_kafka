@@ -126,59 +126,18 @@ public class KafkaConsumerSupService<K, V> {
         this.kvKafkaConsumerService.close();
     }
 
-    /**
-     * 获取consumer_offset的
-     */
-    public List<ConsumerRecord> getRecordByTopicPartitionOffset_consumer_offset(
-            String bootstrap_servers,
-            String topic,
-            int partition,
-            int startOffset,
-            int endOffset) {
-
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers,
-                MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-                        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer")
-        );
-        ConsumerHavGroupAssignService<byte[], byte[]> consumerHavGroupAssignService
-                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
-
-        TopicPartition topicPartition = new TopicPartition(topic, partition);
-        Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
-        Long lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
-        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
-
-        if (endOffset <= startOffset) {
-            throw new RuntimeException("endOffset应该>startOffset");
-        }
-
-        if (startOffset < earliestPartitionOffset) {
-            throw new RuntimeException("startOffset 应该>最早有效的offset:" + earliestPartitionOffset);
-        }
-
-        if (endOffset > lastPartitionOffset) {
-            throw new RuntimeException("endOffset 应该<最新的offset:" + lastPartitionOffset);
-        }
-
-
-        List<ConsumerRecord> lastTenRecords = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
-
-        List<ConsumerRecord> consumerRecords = new ArrayList<>();
-        consumerRecords.addAll(lastTenRecords);
-        /**
-         * 排序
-         */
-        Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
-            @Override
-            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                return Long.valueOf(o2.offset() - o1.offset()).intValue();
-            }
-        });
-
-        return consumerRecords;
-
-
-    }
+//    /**
+//     * 获取consumer_offset的
+//     */
+//    public List<ConsumerRecord> getRecordByTopicPartitionOffset_consumer_offset(
+//            String bootstrap_servers,
+//            String topic,
+//            int partition,
+//            int startOffset,
+//            int endOffset) {
+//
+//
+//    }
 
     /**
      * 获取consumer_offset的
