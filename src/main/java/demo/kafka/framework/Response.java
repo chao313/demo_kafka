@@ -29,6 +29,17 @@ public class Response<T> {
         this.content = content;
     }
 
+    public Response(String code, String msg) {
+        this.code = code;
+        this.msg = msg;
+    }
+
+    public Response(String code, T content) {
+        this.code = code;
+        this.content = content;
+    }
+
+
     public String getCode() {
         return code;
     }
@@ -67,5 +78,13 @@ public class Response<T> {
 
     public void setContent(T content) {
         this.content = content;
+    }
+
+    public static Response fail(String msg) {
+        return new Response(Code.System.FAIL, msg);
+    }
+
+    public static Response Ok(Object content) {
+        return new Response(Code.System.OK, content);
     }
 }

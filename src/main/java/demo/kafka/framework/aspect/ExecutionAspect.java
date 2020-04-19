@@ -38,6 +38,9 @@ public class ExecutionAspect {
 //        logger.info("第一步【执行Around：拦截连接点方法所在类文件中的位置】joinPoint.getSourceLocation() - > {}", joinPoint.getSourceLocation());//org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint$SourceLocationImpl@6742526e
 //        logger.info("第一步【执行Around：拦截AOP的当前执行对象】joinPoint.getThis() - > {}", joinPoint.getThis());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3
 
+
+
+
         Response response = new Response<>();
         try {
             response.setCode(Code.System.OK);
