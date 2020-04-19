@@ -8,6 +8,7 @@ import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
 import demo.kafka.framework.Response;
 import demo.kafka.util.InetAddressUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -107,24 +108,31 @@ public class WebConfig implements WebMvcConfigurer {
                         try {
                             //如果是需要拦截的参数名称 10.202.16.136:9092
                             String value = request.getParameter(InterceptorParameterRealName);
-                            if (BootstrapServersConfig.getMapUseFul().containsValue(value)) {
+                            if (!BootstrapServersConfig.getMapUseFul().containsValue(value)) {
                                 /**
                                  * 如果不包含指定的ip的话，需要测试
                                  */
                                 log.info("value:{}", value);
-                                String ip = value.substring(0, value.indexOf(":"));
-                                String port = value.substring(value.indexOf(":") + 1);
-                                boolean result = InetAddressUtil.isHostPortConnectable(ip, Integer.valueOf(port));
-                                if (result == false) {
+                                if (StringUtils.isNotBlank(value)) {
+                                    String ip = value.substring(0, value.indexOf(":"));
+                                    String port = value.substring(value.indexOf(":") + 1);
+                                    boolean result = InetAddressUtil.isHostPortConnectable(ip, Integer.valueOf(port));
+                                    if (result == false) {
+                                        //如果ping不通
+                                        response.setCharacterEncoding("UTF-8");
+                                        response.getWriter().print(JSONObject.toJSONString(JSON.toJSON(Response.fail("指定ip指定端口无法连接:" + value))));
+                                        return false;
+                                    } else {
+                                        /**
+                                         * 加入
+                                         */
+                                        BootstrapServersConfig.getMapUseFul().put(value, value);
+                                    }
+                                } else {
                                     //如果ping不通
                                     response.setCharacterEncoding("UTF-8");
-                                    response.getWriter().print(JSONObject.toJSONString(JSON.toJSON(Response.fail("指定ip指定端口无法连接:" + value))));
+                                    response.getWriter().print(JSONObject.toJSONString(JSON.toJSON(Response.fail("传递的参数为null:"))));
                                     return false;
-                                } else {
-                                    /**
-                                     * 加入
-                                     */
-                                    BootstrapServersConfig.getMapUseFul().put(value, value);
                                 }
                             }
                         } catch (Exception e) {
@@ -142,7 +150,6 @@ public class WebConfig implements WebMvcConfigurer {
          */
         @Override
         public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
-            System.out.println("请求完成后---------");
         }
 
         /**
@@ -151,7 +158,6 @@ public class WebConfig implements WebMvcConfigurer {
          */
         @Override
         public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) throws Exception {
-            log.info("Exception：{}", ex);
         }
 
     }
