@@ -56,9 +56,11 @@
    * 单个consumer的订阅topic的list
    * 单个consumer的订阅的每个topic的具体的offset
    * 单个consumer的订阅的每个topic的offset的seek
-6. producer
+6. producer(注意字符串的转义，目标为转成BASE64)
    * 发送指定Topic的消息
    * 发送指定Partition的消息
+   * 需要支持上传文件，按行上传
+   * 需要支持上传多个文件，转码后上传
 
 
 
