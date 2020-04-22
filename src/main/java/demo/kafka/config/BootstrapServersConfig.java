@@ -24,19 +24,23 @@ public class BootstrapServersConfig {
     private Map<String, String> map;
 
     @PostConstruct
-    private void init() {
-        map.forEach((profile, ipAndPort) -> {
+    private void init() throws Exception {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            String profile = entry.getKey();
+            String ipAndPort = entry.getValue();
             String ip = ipAndPort.substring(0, ipAndPort.indexOf(":"));
             String port = ipAndPort.substring(ipAndPort.indexOf(":") + 1);
 //                            boolean result = InetAddressUtil.result(ip, 200);
 
-            if (InetAddressUtil.isHostPortConnectable(ip, Integer.valueOf(port))) {
-                /**
-                 * 正常
-                 */
-                mapUseFul.put(profile, ipAndPort);
+            if (InetAddressUtil.ping(ip, 100)) {
+                if (InetAddressUtil.isHostPortConnectable(ip, Integer.valueOf(port))) {
+                    /**
+                     * 正常
+                     */
+                    mapUseFul.put(profile, ipAndPort);
+                }
             }
-        });
+        }
     }
 
     public static Map<String, String> getMapUseFul() {

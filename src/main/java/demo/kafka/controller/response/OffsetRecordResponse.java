@@ -43,6 +43,7 @@ public class OffsetRecordResponse {
         this.topic = consumerRecord.topic();
         this.partition = consumerRecord.partition();
         this.offset = consumerRecord.offset();
+        this.timestamp = consumerRecord.timestamp();
         this.timestampType = consumerRecord.timestampType();
         this.serializedKeySize = consumerRecord.serializedKeySize();
         this.serializedValueSize = consumerRecord.serializedValueSize();
