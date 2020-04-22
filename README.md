@@ -5,6 +5,12 @@
 [index.html](http://localhost:8787/demo_kafka/index.html)
 
 
+注意:
+* 缺少配置的CRUD及解释
+* 缺少流式处理
+* 缺少命令行
+* 缺少监控指标
+* 缺少connect数据ETL(Mysql->ES)
 
 目标功能
 1. cluster

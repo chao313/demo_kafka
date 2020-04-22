@@ -28,7 +28,7 @@ public class InetAddressUtil {
     public static boolean isHostPortConnectable(String host, int port) {
         Socket socket = new Socket();
         try {
-            log.error("测试连接 {}:{} ...", host, port);
+            log.info("测试连接 {}:{} ...", host, port);
             socket.connect(new InetSocketAddress(host, port));
         } catch (IOException e) {
             log.error("{}:{} -> 连接失败：{}", host, port, e.toString());
@@ -40,7 +40,7 @@ public class InetAddressUtil {
                 e.printStackTrace();
             }
         }
-        log.error("{}:{} -> 连接成功", host, port);
+        log.info("{}:{} -> 连接成功", host, port);
         return true;
     }
 
