@@ -60,7 +60,10 @@ public class MyKStream<K, V> implements KStream<K, V> {
      * The provided {@link KeyValueMapper} is applied to each input record and computes a new key for it.
      * Thus, an input record {@code <K,V>} can be transformed into an output record {@code <K':V>}.
      * This is a stateless record-by-record operation.
-     *
+     * 为每一个输入的record 设置一个新的key(可能是新的类型)
+     * 提供的{@link KeyValueMapper}被应用于每一个输入的的record，并且为它计算一个新的key
+     * 从而,一个输入record比如  {@code <K,V>} 可以被转化为输出 {@code <K':V>}
+     * 这个是逐条的操作
      * <p>
      * For example, you can use this transformation to set a key for a key-less input record {@code <null,V>} by
      * extracting a key from the value within your {@link KeyValueMapper}. The example below computes the new key as the
@@ -75,6 +78,18 @@ public class MyKStream<K, V> implements KStream<K, V> {
      * }</pre>
      * Setting a new key might result in an internal data redistribution if a key based operator (like an aggregation or
      * join) is applied to the result {@code KStream}.
+     * 举例，你可以使用这个转换器去为缺失key的输入record {@code <null,V>} 去设置一个key
+     * 这个key可以从value中提取(当然也能随机生成)，
+     * 举例取计算一个新的key，按照value的长度来计算key
+     * <pre>
+     * KStream<Byte[], String> keyLessStream = builder.stream("key-less-topic");
+     * KStream<Integer, String> keyedStream = keyLessStream.selectKey(new KeyValueMapper<Byte[], String, Integer> {
+     *     Integer apply(Byte[] key, String value) {
+     *         return value.length();
+     *     }
+     * });
+     * </pre>
+     * 设置一个新的key可能会导致内部的重新分配（如果key是聚合或者join）被应用到结果中
      *
      * @param mapper a {@link KeyValueMapper} that computes a new key for each record
      * @param <KR>   the new key type of the result stream
