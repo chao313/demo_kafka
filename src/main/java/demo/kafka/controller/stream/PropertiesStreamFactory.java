@@ -9,7 +9,7 @@ import java.util.Properties;
 /**
  * properties的构建工厂
  */
-public class PropertiesFactoryStream {
+public class PropertiesStreamFactory {
 
     static final String earliest = "earliest";
 

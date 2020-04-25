@@ -2,14 +2,17 @@ package demo.kafka.controller.stream.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.stream.KStreamModel;
-import demo.kafka.controller.stream.PropertiesFactoryStream;
+import demo.kafka.controller.stream.PropertiesStreamFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.RecordContext;
+import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.processor.TopicNameExtractor;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
@@ -42,7 +45,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 "output",
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         KStream<String, String> resultKStream = kStream.selectKey(new KeyValueMapper<String, String, String>() {
@@ -69,7 +72,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 "output",
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         KStream<String, String> resultKStream = kStream.map(new KeyValueMapper<String, String, KeyValue<? extends String, ? extends String>>() {
@@ -98,7 +101,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 "output",
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         KStream<String, String> resultKStream = kStream.mapValues(new ValueMapper<String, String>() {
@@ -125,7 +128,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 "output",
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         KStream<String, String> resultKStream = kStream.mapValues(new ValueMapperWithKey<String, String, String>() {
@@ -153,7 +156,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 "output",
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         KStream<String, String> resultKStream = kStream.flatMap(new KeyValueMapper<String, String, Iterable<? extends KeyValue<? extends String, ? extends String>>>() {
@@ -187,7 +190,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 Printed.toSysOut(),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         return kStream;
@@ -212,7 +215,7 @@ public class KStreamModelTest extends KStreamBase {
                 Arrays.asList("Test"),
                 Printed.toFile("topic"),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()), new Function<KStream<String, String>, KStream<String, String>>() {
                     @Override
                     public KStream<String, String> apply(KStream<String, String> kStream) {
                         return kStream;
@@ -233,7 +236,7 @@ public class KStreamModelTest extends KStreamBase {
         kStreamModel.streamNoTo(
                 Arrays.asList("Test"),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()),
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()),
                 new Consumer<KStream<String, String>>() {
                     @Override
                     public void accept(KStream<String, String> kStream) {
@@ -267,7 +270,7 @@ public class KStreamModelTest extends KStreamBase {
         kStreamModel.streamNoTo(
                 Arrays.asList("Test"),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()),
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()),
                 new Consumer<KStream<String, String>>() {
                     @Override
                     public void accept(KStream<String, String> kStream) {
@@ -307,7 +310,7 @@ public class KStreamModelTest extends KStreamBase {
         kStreamModel.streamNoTo(
                 Arrays.asList("Test"),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()),
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()),
                 new Consumer<KStream<String, String>>() {
                     @Override
                     public void accept(KStream<String, String> kStream) {
@@ -328,7 +331,7 @@ public class KStreamModelTest extends KStreamBase {
         kStreamModel.streamNoTo(
                 Arrays.asList("Test"),
                 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp()),
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp()),
                 new Consumer<KStream<String, String>>() {
                     @Override
                     public void accept(KStream<String, String> kStream) {
@@ -354,20 +357,30 @@ public class KStreamModelTest extends KStreamBase {
         );
     }
 
-    /**
-     * 测试 动态的发送到topic
-     * !! 时候时间戳无法改变
-     */
+//    /**
+//     * 测试 动态的发送到topic
+//     * !! 时候时间戳无法改变
+//     */
 //    @Test
 //    public void transformTest() throws InterruptedException {
+//        String key = "myTransformState";
 //
 //        StoreBuilder<KeyValueStore<String, String>> keyValueStoreBuilder =
-//                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore("myTransformState"),
+//                Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore(key),
 //                        Serdes.String(),
 //                        Serdes.String());
 //        // register store 注册存储
 //        builder.addStateStore(keyValueStoreBuilder);
-//        KStream outputStream = inputStream.transform(new TransformerSupplier() {  }, "myTransformState");
+//        KStream<Object, Object> kStream = builder.stream("Test");
+//
+//        KStream<String,String> outputStream = kStream.transform(new TransformerSupplier<String, String, String>() {
+//
+//
+//            @Override
+//            public Transformer<String, String, String> get() {
+//                return null;
+//            }
+//        }, "myTransformState");
 //    }
 
 

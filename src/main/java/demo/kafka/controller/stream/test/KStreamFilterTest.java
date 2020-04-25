@@ -2,11 +2,8 @@ package demo.kafka.controller.stream.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.stream.KStreamFilter;
-import demo.kafka.controller.stream.PropertiesFactoryStream;
-import org.apache.kafka.streams.KafkaStreams;
+import demo.kafka.controller.stream.PropertiesStreamFactory;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Predicate;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -34,7 +31,7 @@ public class KStreamFilterTest extends KStreamBase {
                 Pattern.compile("\\d{3}"),
                 Pattern.compile(".*"),
                 "output", 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp())
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp())
         );
     }
 
@@ -52,7 +49,7 @@ public class KStreamFilterTest extends KStreamBase {
                 null,
                 null,
                 "output", 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp())
+                PropertiesStreamFactory.create("id", Bootstrap.HONE.getIp())
         );
     }
 

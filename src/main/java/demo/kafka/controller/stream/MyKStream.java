@@ -473,17 +473,21 @@ public class MyKStream<K, V> implements KStream<K, V> {
      * ----------------------------------------------------------------------------------------------------
      * 提供的{@link TransformerSupplier}的{@link Transformer}被应用于输入record,返回->0 || 多条
      * 从而 {@code <K,V>}可以转换为 {@code <K':V'>}
+     * ----------------------------------------------------------------------------------------------------
      * This is a stateful record-by-record operation (cf. {@link #map(KeyValueMapper) map()}).
      * Furthermore, via {@link org.apache.kafka.streams.processor.Punctuator#punctuate(long) Punctuator#punctuate()},
      * the processing progress can be observed and additional periodic actions can be performed.
      * ----------------------------------------------------------------------------------------------------
      * 这个是有状态的逐条的操作，比较{@link #map(KeyValueMapper)
      * 此外，通过{@link Punctuator#punctuate(long)} 可以观察到处理进程，并且可以执行额外的定时操作
+     * ----------------------------------------------------------------------------------------------------
      * <p>
      * In order to assign a state, the state must be created and registered beforehand (it's not required to connect
      * global state stores; read-only access to global state stores is available by default):
+     * ----------------------------------------------------------------------------------------------------
      * 为了分配状态，状态必须预先被创建和注册
      * 不需要连接全局的状态存储,默认全局的state存储是只读的
+     * ----------------------------------------------------------------------------------------------------
      * <pre>{@code
      * // create store 创建存储
      * StoreBuilder<KeyValueStore<String,String>> keyValueStoreBuilder =
@@ -496,12 +500,23 @@ public class MyKStream<K, V> implements KStream<K, V> {
      * KStream outputStream = inputStream.transform(new TransformerSupplier() { ... }, "myTransformState");
      * }</pre>
      * Within the {@link Transformer}, the state is obtained via the {@link ProcessorContext}.
+     * ----------------------------------------------------------------------------------------------------
+     * 在{@link Transformer}中,state通过{@link ProcessorContext}来存储
+     * ----------------------------------------------------------------------------------------------------
      * To trigger periodic actions via {@link org.apache.kafka.streams.processor.Punctuator#punctuate(long) punctuate()},
      * a schedule must be registered.
+     * ----------------------------------------------------------------------------------------------------
+     * 注册周期性的action通过{@link Punctuator#punctuate(long) punctuate()}
+     * 一个schedule必须被注册
+     * ----------------------------------------------------------------------------------------------------
      * The {@link Transformer} must return a {@link KeyValue} type in {@link Transformer#transform(Object, Object)
      * transform()}.
      * The return value of {@link Transformer#transform(Object, Object) Transformer#transform()} may be {@code null},
      * in which case no record is emitted.
+     * ----------------------------------------------------------------------------------------------------
+     * {@link Transformer} 必须返回一个{@link KeyValue} tyoe 在transform 函数中
+     * transform 函数返回的值可能为null(当没有record被发送)
+     * ----------------------------------------------------------------------------------------------------
      * <pre>{@code
      * new TransformerSupplier() {
      *     Transformer get() {
