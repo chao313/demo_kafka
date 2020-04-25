@@ -33,7 +33,7 @@ public class WordCountExample {
          * 指定kafka的地址
          * 1.Streams也把kafka作为协调工具
          */
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.MY.getIp());
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, Bootstrap.HONE.getIp());
         /**
          * 指定 key 和 value 的序列化
          * 1.读写数据时，应用程序需要对消息进行序列化和反序列化 -> 提供了默认的序列化和反序列化的类
@@ -118,7 +118,7 @@ public class WordCountExample {
          * 这个流处理实例会永远的运行
          * 这个例子中，只需要运行一点时间，因为输入数据很少
          */
-        // usually the stream application would be running forever,
+        // usually the streamToTopic application would be running forever,
         // in this example we just let it run for some time and stop since the input data is finite.
         Thread.sleep(5000L);
 

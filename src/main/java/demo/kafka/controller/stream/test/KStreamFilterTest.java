@@ -26,7 +26,7 @@ public class KStreamFilterTest extends KStreamBase {
      * @throws InterruptedException
      */
     @Test
-    public void filter() throws InterruptedException {
+    public void filterMatch() throws InterruptedException {
 
         KStreamFilter kStreamFilter = new KStreamFilter();
         kStreamFilter.filterMatch(
@@ -34,7 +34,25 @@ public class KStreamFilterTest extends KStreamBase {
                 Pattern.compile("\\d{3}"),
                 Pattern.compile(".*"),
                 "output", 5000L,
-                PropertiesFactoryStream.create("id", Bootstrap.MY.getIp())
+                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp())
+        );
+    }
+
+    /**
+     * 测试过滤符合要求的value的值，转发到另一个topic
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    public void filterContain() throws InterruptedException {
+
+        KStreamFilter kStreamFilter = new KStreamFilter();
+        kStreamFilter.filterContain(
+                Arrays.asList("Test"),
+                null,
+                null,
+                "output", 5000L,
+                PropertiesFactoryStream.create("id", Bootstrap.HONE.getIp())
         );
     }
 
