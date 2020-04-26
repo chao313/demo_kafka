@@ -166,8 +166,7 @@ public class ProduceController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic) {
 
-        KafkaProducer<String, String> kafkaProducer = KafkaProduceService.getProducerInstance(bootstrap_servers);
-        KafkaProduceDefaultService<String, String> kafkaProduceDefaultService = KafkaProduceDefaultService.getInstance(kafkaProducer);
+        KafkaProduceDefaultService<String, String> kafkaProduceDefaultService = ProduceFactory.getProducerInstance(bootstrap_servers).getKafkaProduceDefaultService();
         List<PartitionInfo> partitionInfos = kafkaProduceDefaultService.getPartitionsByTopic(topic);
         String JsonObject = new Gson().toJson(partitionInfos);
         JSONArray result = JSONObject.parseArray(JsonObject);
@@ -206,8 +205,9 @@ public class ProduceController {
                     String key,
             @RequestParam(name = "value", defaultValue = "value")
                     String value) throws ExecutionException, InterruptedException {
-        KafkaProduceSendSyncService<String, String> kafkaProduceSendSyncService = KafkaProduceSendSyncService
-                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        KafkaProduceSendSyncService<String, String> kafkaProduceSendSyncService =
+                ProduceFactory.getProducerInstance(bootstrap_servers)
+                        .getKafkaProduceSendSyncService();
         RecordMetadataResponse recordMetadataResponse = kafkaProduceSendSyncService.sendSync(topic, partition, timestamp, key, value);
         kafkaProduceSendSyncService.getKafkaProducer().close();
         return recordMetadataResponse;
@@ -234,8 +234,8 @@ public class ProduceController {
                     String key,
             @RequestParam(name = "value", defaultValue = "value")
                     String value) {
-        KafkaProduceSendForgetService<String, String> producer = KafkaProduceSendForgetService
-                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        KafkaProduceSendForgetService<String, String> producer = ProduceFactory.getProducerInstance(bootstrap_servers)
+                .getKafkaProduceSendForgetService();
         producer.sendForget(topic, partition, timestamp, key, value);
         producer.getKafkaProducer().close();
         return "发送结束";
@@ -259,8 +259,8 @@ public class ProduceController {
             @RequestParam(name = "value", defaultValue = "value")
                     String value
     ) throws ExecutionException, InterruptedException {
-        KafkaProduceSendAsyncService<String, String> producer = KafkaProduceSendAsyncService
-                .getInstance(KafkaProduceSendSyncService.getProducerInstance(bootstrap_servers));
+        KafkaProduceSendAsyncService<String, String> producer
+                = ProduceFactory.getProducerInstance(bootstrap_servers).getKafkaProduceSendAsyncService();
         producer.sendAsync(topic, partition, timestamp, key, value, new Callback() {
             @Override
             public void onCompletion(RecordMetadata metadata, Exception exception) {

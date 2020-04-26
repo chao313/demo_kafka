@@ -15,40 +15,6 @@ import java.util.concurrent.ExecutionException;
 public abstract class KafkaProduceService<K, V> {
 
 
-    /**
-     * 构造函数(直接注入 properties)
-     */
-    public static <K, V> KafkaProducer<K, V> getProducerInstance(Properties properties) {
-        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(properties);//创建生产者
-        return kafkaProducer;
-    }
-
-    /**
-     * 构造函数(使用默认的方式 除了 bootstrap_servers)
-     */
-    public static <K, V> KafkaProducer<K, V> getProducerInstance(String bootstrap_servers) {
-        Properties kafkaProps = new Properties(); //新建一个Properties对象
-        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
-        kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
-        kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
-        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-        return kafkaProducer;
-    }
-
-    /**
-     * 构造函数(使用默认的方式 除了 bootstrap_servers)(这里添加了覆盖属性的方式)
-     */
-    public static <K, V> KafkaProducer<K, V> getProducerInstance(String bootstrap_servers, Map<String, String> mapOver) {
-        Properties kafkaProps = new Properties(); //新建一个Properties对象
-        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
-        kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//key准备是String -> 使用了内置的StringSerializer
-        kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");//value准备是String -> 使用了内置的StringSerializer
-        kafkaProps.putAll(mapOver);
-        KafkaProducer kafkaProducer = new KafkaProducer<String, String>(kafkaProps);//创建生产者
-        return kafkaProducer;
-    }
-
-
     private KafkaProduceService() {
 
     }

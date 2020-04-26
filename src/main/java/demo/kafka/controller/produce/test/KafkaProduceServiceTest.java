@@ -3,6 +3,7 @@ package demo.kafka.controller.produce.test;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceDefaultService;
 import demo.kafka.controller.produce.service.KafkaProduceService;
+import demo.kafka.controller.produce.service.ProduceFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.PartitionInfo;
@@ -22,7 +23,8 @@ public class KafkaProduceServiceTest {
      */
     @Test
     public void partitionsFor() {
-        List<PartitionInfo> list = KafkaProduceService.getProducerInstance(Bootstrap.HONE.getIp()).partitionsFor("Test");
+        List<PartitionInfo> list
+                = ProduceFactory.getProducerInstance(Bootstrap.MY.getIp()).getKafkaProduceDefaultService().getPartitionsByTopic("Test");
 
         list.forEach(partitionInfo -> {
             log.info("首领分区在的节点  : partitionInfo.leader:{}", partitionInfo.leader());
@@ -39,7 +41,8 @@ public class KafkaProduceServiceTest {
      */
     @Test
     public void metricGroupNameMap() {
-        Map<String, List<Metric>> metricNameMap = KafkaProduceDefaultService.getInstance(KafkaProduceDefaultService.getProducerInstance(Bootstrap.HONE.getIp())).metricGroupNameMap();
+        Map<String, List<Metric>> metricNameMap =
+                ProduceFactory.getProducerInstance(Bootstrap.HONE.getIp()).getKafkaProduceDefaultService().metricGroupNameMap();
 
         metricNameMap.forEach((groupName, metrics) -> {
             log.info("groupName:{}", groupName);

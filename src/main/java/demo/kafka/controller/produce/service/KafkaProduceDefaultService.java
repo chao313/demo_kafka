@@ -11,9 +11,10 @@ public class KafkaProduceDefaultService<K, V> extends KafkaProduceService {
 
 
     /**
-     * 构造函数(直接注入 kafkaProducer)
+     * 获取实例 ( 不对外开放，由工厂来获取 )
+     * {@link ProduceFactory#getKafkaProduceDefaultService()}
      */
-    public static <K, V> KafkaProduceDefaultService<K, V> getInstance(KafkaProducer kafkaProducer) {
+    protected static <K, V> KafkaProduceDefaultService<K, V> getInstance(KafkaProducer kafkaProducer) {
         return new KafkaProduceDefaultService(kafkaProducer);
     }
 

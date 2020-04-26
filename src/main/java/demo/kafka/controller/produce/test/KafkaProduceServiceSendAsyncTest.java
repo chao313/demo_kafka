@@ -2,6 +2,7 @@ package demo.kafka.controller.produce.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendAsyncService;
+import demo.kafka.controller.produce.service.ProduceFactory;
 import demo.kafka.controller.response.RecordMetadataResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Callback;
@@ -18,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 public class KafkaProduceServiceSendAsyncTest {
 
     KafkaProduceSendAsyncService<String, String> kafkaProduceService
-            = KafkaProduceSendAsyncService.getInstance(KafkaProduceSendAsyncService.getProducerInstance(Bootstrap.HONE.getIp()));
+            = ProduceFactory.getProducerInstance(Bootstrap.HONE.getIp()).getKafkaProduceSendAsyncService();
 
     public static boolean flag = false;
 

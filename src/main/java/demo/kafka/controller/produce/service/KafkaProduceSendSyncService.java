@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 
 /**
- * 发送就忘记 - 不关心是否发生成功
+ * 同步发送
  *
  * @return
  */
@@ -21,9 +21,10 @@ public class KafkaProduceSendSyncService<K, V> extends KafkaProduceService {
 
 
     /**
-     * 构造函数(直接注入 kafkaProducer)
+     * 获取实例 ( 不对外开放，由工厂来获取 )
+     * {@link ProduceFactory#getKafkaProduceSendSyncService()}
      */
-    public static <K, V> KafkaProduceSendSyncService<K, V> getInstance(KafkaProducer kafkaProducer) {
+    protected static <K, V> KafkaProduceSendSyncService<K, V> getInstance(KafkaProducer kafkaProducer) {
         return new KafkaProduceSendSyncService(kafkaProducer);
     }
 

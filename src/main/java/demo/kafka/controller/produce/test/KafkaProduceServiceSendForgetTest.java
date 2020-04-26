@@ -2,6 +2,7 @@ package demo.kafka.controller.produce.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendForgetService;
+import demo.kafka.controller.produce.service.ProduceFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,9 @@ import java.util.Date;
 public class KafkaProduceServiceSendForgetTest {
 
 
-    KafkaProduceSendForgetService<String, String> kafkaProduceService = KafkaProduceSendForgetService.getInstance(KafkaProduceSendForgetService.getProducerInstance(Bootstrap.HONE.getIp()));
+    KafkaProduceSendForgetService<String, String> kafkaProduceService
+            = ProduceFactory.getProducerInstance(Bootstrap.HONE.getIp()).
+            getKafkaProduceSendForgetService();
 
     /**
      * 测试 发送 value

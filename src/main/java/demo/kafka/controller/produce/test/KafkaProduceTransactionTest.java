@@ -3,6 +3,7 @@ package demo.kafka.controller.produce.test;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceDefaultService;
 import demo.kafka.controller.produce.service.KafkaProduceSendAsyncService;
+import demo.kafka.controller.produce.service.ProduceFactory;
 import demo.kafka.util.MapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -17,11 +18,11 @@ import java.util.Arrays;
 @Slf4j
 public class KafkaProduceTransactionTest {
 
-    KafkaProduceDefaultService<String, String> kafkaProduceDefaultService = KafkaProduceDefaultService.getInstance(
-            KafkaProduceSendAsyncService.getProducerInstance(
+    KafkaProduceDefaultService<String, String> kafkaProduceDefaultService =
+            ProduceFactory.getProducerInstance(
                     Bootstrap.HONE.getIp(),
                     MapUtil.$(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "transactionId", ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true"))
-    );
+                    .getKafkaProduceDefaultService();
 
     /**
      * 测试 事务
