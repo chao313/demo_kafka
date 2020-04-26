@@ -289,9 +289,19 @@ public class ConsumeController {
                     int startOffset,
             @ApiParam(value = "结束的offset")
             @RequestParam(name = "endOffset", defaultValue = "0")
-                    int endOffset
-
-
+                    int endOffset,
+            @ApiParam(value = "key的正则")
+            @RequestParam(name = "keyRegex", defaultValue = ".*")
+                    String keyRegex,
+            @ApiParam(value = "value的正则")
+            @RequestParam(name = "valueRegex", defaultValue = ".*")
+                    String valueRegex,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "0")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "0")
+                    int timeEnd
     ) {
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService =

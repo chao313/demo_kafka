@@ -65,7 +65,10 @@ public class KafkaConsumerCommonService<K, V> {
     /**
      * 获取 指定offset的 指定数量的 record
      */
-    public List<ConsumerRecord<K, V>> getRecord(String bootstrap_servers, TopicPartition topicPartition, long offset, int recordsNum) {
+    public List<ConsumerRecord<K, V>> getRecord(String bootstrap_servers,
+                                                TopicPartition topicPartition,
+                                                long offset,
+                                                int recordsNum) {
 
         /**
          * 获取一个消费者实例
@@ -94,6 +97,79 @@ public class KafkaConsumerCommonService<K, V> {
         instance.close();
         return records.records(topicPartition);
     }
+
+    /**
+     * 获取 指定offset的 指定数量的 record
+     */
+    public List<ConsumerRecord<String, String>> getRecord(String bootstrap_servers,
+                                                          TopicPartition topicPartition,
+                                                          long startOffset,
+                                                          long endOffset,
+                                                          String keyRegex,
+                                                          String valueRegex,
+                                                          Long timeStart,
+                                                          Long timeEnd
+
+    ) {
+
+
+        /**
+         * 获取一个消费者实例 (设置一次性读取出全部的record)
+         */
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers,
+                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(endOffset - startOffset))
+        );
+        KafkaConsumer<String, String> instance = consumerFactory.getKafkaConsumer();
+        /**分配 topicPartition*/
+        instance.assign(Arrays.asList(topicPartition));
+        /**设置偏移量*/
+        instance.seek(topicPartition, startOffset);
+        /**获取记录*/
+        ConsumerRecords<String, String> records = instance.poll(1000);
+        List<ConsumerRecord<String, String>> result = new ArrayList<>();
+        records.records(topicPartition).forEach(record -> {
+            boolean keyRegexFlag = false,
+                    valueRegexFlag = false,
+                    timeStartFlag = false,
+                    timeEndFlag = false;
+            if (null == keyRegex) {
+                keyRegexFlag = true;
+            } else {
+                String key = record.key();
+                keyRegexFlag = key.matches(keyRegex);
+            }
+            if (null == valueRegex) {
+                valueRegexFlag = true;
+            } else {
+                String value = record.value();
+                valueRegexFlag = value.matches(valueRegex);
+            }
+            if (null == timeStart) {
+                timeStartFlag = true;
+            } else {
+                long time = record.timestamp();
+                timeStartFlag = time > timeStart;
+            }
+            if (null == timeEnd) {
+                timeEndFlag = true;
+            } else {
+                long time = record.timestamp();
+                timeStartFlag = time < timeEnd;
+            }
+            if (keyRegexFlag && valueRegexFlag && timeStartFlag && timeEndFlag) {
+                /**
+                 * 全部符合要求
+                 */
+                result.add(record);
+            }
+        });
+
+
+        instance.close();
+        return result;
+    }
+
 
     /**
      * 获取 指定offset的 指定数量的 record
