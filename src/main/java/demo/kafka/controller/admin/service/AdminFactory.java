@@ -9,8 +9,7 @@ public class AdminFactory {
      * 生产 AdminClusterService 相关的
      */
     public static AdminClusterService getAdminClusterService(String bootstrap_servers) {
-        return AdminClusterService.getIn:
-        stance(bootstrap_servers);
+        return AdminClusterService.getInstance(bootstrap_servers);
     }
 
     /**
