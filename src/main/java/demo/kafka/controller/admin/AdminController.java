@@ -4,7 +4,8 @@ package demo.kafka.controller.admin;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.GsonBuilder;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
+import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.response.ConsumerGroupOffsetsAndRealOffset;
@@ -46,7 +47,7 @@ public class AdminController {
         KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
 
-        AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(bootstrap_servers);
+        AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
 
 
         /**

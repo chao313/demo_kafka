@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminMetricService;
+import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminMetricService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -14,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 public class AdminMetricTest {
 
-    private static AdminMetricService adminMetricService = AdminMetricService.getInstance(Bootstrap.MY.getIp());
+    private static AdminMetricService adminMetricService = AdminFactory.getAdminMetricService(Bootstrap.MY.getIp());
 
 
     @Test

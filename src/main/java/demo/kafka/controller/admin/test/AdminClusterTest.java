@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminClusterService;
+import demo.kafka.controller.admin.service.AdminClusterService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
@@ -12,7 +13,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class AdminClusterTest {
 
-    AdminClusterService adminClusterService = AdminClusterService.getInstance(Bootstrap.PROD_WIND.getIp());
+    AdminClusterService adminClusterService = AdminFactory.getAdminClusterService(Bootstrap.PROD_WIND.getIp());
 
     /**
      * 获取集群的信息(可以获取节点的信息)

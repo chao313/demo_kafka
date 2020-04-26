@@ -5,8 +5,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.admin.util.AdminConfigsService;
-import demo.kafka.controller.admin.util.AdminTopicService;
+import demo.kafka.controller.admin.service.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminTopicService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class AdminTopicController {
             @RequestParam(name = "replicationFactor", defaultValue = "1")
                     short replicationFactor
     ) throws Exception {
-        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         boolean bool = adminTopicService.addTopic(topic, numPartitions, replicationFactor);
         log.info("添加topic:{}", bool);
         return bool;
@@ -54,7 +55,7 @@ public class AdminTopicController {
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
-        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         Set<String> topicNames = adminTopicService.getTopicNames();
         log.info("获取 topicNames :{}", topicNames);
         return topicNames;
@@ -67,7 +68,7 @@ public class AdminTopicController {
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
-        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         Collection<TopicListing> topicsResults = adminTopicService.getTopicsResults();
         String JsonObject = new Gson().toJson(topicsResults);
         JSONArray result = JSONObject.parseArray(JsonObject);
@@ -85,7 +86,7 @@ public class AdminTopicController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws Exception {
-        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         TopicDescription topicDescription = adminTopicService.getTopicDescription(topic);
         String JsonObject = new Gson().toJson(topicDescription);
         JSONObject result = JSONObject.parseObject(JsonObject);
@@ -103,7 +104,7 @@ public class AdminTopicController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws ExecutionException, InterruptedException {
-        AdminTopicService adminTopicService = AdminTopicService.getInstance(bootstrap_servers);
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         boolean bool = adminTopicService.deleteTopic(topic);
         log.info("删除topic:{}", bool);
         return bool;
@@ -119,7 +120,7 @@ public class AdminTopicController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws Exception {
-        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(bootstrap_servers);
         Config topicConfigs = adminConfigsService.getTopicConfigs(topic);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);

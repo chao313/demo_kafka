@@ -2,7 +2,8 @@ package demo.kafka.controller.admin;
 
 
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.admin.util.AdminPartitionsService;
+import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminPartitionsService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class AdminPartitionController {
             @RequestParam(name = "totalPartition", defaultValue = "2")
                     int totalPartition
     ) throws Exception {
-        AdminPartitionsService adminPartitionsService = AdminPartitionsService.getInstance(bootstrap_servers);
+        AdminPartitionsService adminPartitionsService = AdminFactory.getAdminPartitionsService(bootstrap_servers);
         boolean isSuccess = adminPartitionsService.increasePartitions(topic, totalPartition);
         log.info("increasePartitions:{}", isSuccess);
         return isSuccess;

@@ -5,9 +5,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.admin.util.AdminClusterService;
-import demo.kafka.controller.admin.util.AdminConfigsService;
-import demo.kafka.framework.Response;
+import demo.kafka.controller.admin.service.AdminClusterService;
+import demo.kafka.controller.admin.service.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class AdminBrokerController {
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers
     ) throws Exception {
-        AdminClusterService adminClusterService = AdminClusterService.getInstance(bootstrap_servers);
+        AdminClusterService adminClusterService = AdminFactory.getAdminClusterService(bootstrap_servers);
         Collection<Node> nodes = adminClusterService.getBrokersInCluster();
         String JsonObject = new Gson().toJson(nodes);
         JSONArray result = JSONObject.parseArray(JsonObject);
@@ -52,7 +52,7 @@ public class AdminBrokerController {
             @RequestParam(name = "broker.id", defaultValue = "0")
                     int broker_id
     ) throws Exception {
-        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(bootstrap_servers);
         Config topicConfigs = adminConfigsService.getBrokerConfigs(broker_id);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);

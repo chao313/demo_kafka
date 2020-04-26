@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminTopicService;
+import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminTopicService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -15,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 public class AdminTopicTest {
 
 
-    AdminTopicService adminTopicService = AdminTopicService.getInstance(Bootstrap.MY.getIp());
+    AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(Bootstrap.MY.getIp());
 
 
     /**

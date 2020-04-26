@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AlterConfigOp;
 import org.apache.kafka.clients.admin.Config;
@@ -16,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class AdminConfigsServiceTest {
 
-    AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(Bootstrap.MY.getIp());
+    AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(Bootstrap.MY.getIp());
 
 
     /**

@@ -1,8 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
-import demo.kafka.util.MapUtil;
-import kafka.coordinator.group.GroupOverview;
+import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -19,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 public class AdminConsumerGroupsServiceTest {
 
 
-    AdminConsumerGroupsService adminConsumerGroupsService = AdminConsumerGroupsService.getInstance(Bootstrap.DEV_WIND.getIp());
+    AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(Bootstrap.DEV_WIND.getIp());
 
 
     /**

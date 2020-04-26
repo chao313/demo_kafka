@@ -4,7 +4,8 @@ package demo.kafka.controller.admin;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
-import demo.kafka.controller.admin.util.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminConfigsService;
+import demo.kafka.controller.admin.service.AdminFactory;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class AdminConfigController {
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic
     ) throws Exception {
-        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(bootstrap_servers);
         Config topicConfigs = adminConfigsService.getTopicConfigs(topic);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);
@@ -46,7 +47,7 @@ public class AdminConfigController {
             @RequestParam(name = "broker.id", defaultValue = "0")
                     int broker_id
     ) throws Exception {
-        AdminConfigsService adminConfigsService = AdminConfigsService.getInstance(bootstrap_servers);
+        AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(bootstrap_servers);
         Config topicConfigs = adminConfigsService.getBrokerConfigs(broker_id);
         String JsonObject = new Gson().toJson(topicConfigs);
         JSONObject result = JSONObject.parseObject(JsonObject);

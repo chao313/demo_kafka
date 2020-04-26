@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin.test;
 
-import demo.kafka.controller.admin.util.AdminRecordsService;
+import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminRecordsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.common.TopicPartition;
@@ -12,7 +13,7 @@ import java.util.concurrent.ExecutionException;
 
 public class AdminRecordTest {
 
-    private AdminRecordsService adminRecordsService = AdminRecordsService.getInstance(Bootstrap.MY.getIp());
+    private AdminRecordsService adminRecordsService = AdminFactory.getAdminRecordsService(Bootstrap.MY.getIp());
 
 
     /**
