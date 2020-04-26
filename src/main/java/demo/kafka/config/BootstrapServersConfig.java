@@ -20,6 +20,7 @@ public class BootstrapServersConfig {
     public static Map<String, String> mapUseFul = new HashMap<>();//有用的
 
 
+
     @Value("#{${bootstrap_servers}}")
     private Map<String, String> map;
 

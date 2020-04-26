@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -63,7 +60,22 @@ public class AdminController {
 //            metadataMap.putAll(adminConsumerGroupsService
 //                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
 //        }
-        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
+
+        Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+        for (TopicPartition partition : allTopicPartitions) {
+            metadataMap.putAll(adminConsumerGroupsService
+                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition))));
+        }
+        Map<TopicPartition, OffsetAndMetadata> metadataResultMap = new HashMap<>();
+        metadataMap.forEach((topicPartition, offsetAndMetadata) -> {
+            if (null != offsetAndMetadata) {
+                metadataResultMap.put(topicPartition, offsetAndMetadata);
+            }
+        });
+        metadataMap.clear();
+        metadataMap.putAll(metadataResultMap);
+//        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
 
         Map<TopicPartition, Long> beginningOffsets
                 = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(metadataMap.keySet());
