@@ -2,13 +2,13 @@ package demo.kafka.controller.consume.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
-import demo.kafka.controller.consume.service.KafkaConsumerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class ConsumerTopicsTest {

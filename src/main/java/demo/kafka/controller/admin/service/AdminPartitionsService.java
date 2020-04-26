@@ -1,5 +1,6 @@
 package demo.kafka.controller.admin.service;
 
+import demo.kafka.controller.admin.service.base.AdminService;
 import org.apache.kafka.clients.admin.CreatePartitionsResult;
 import org.apache.kafka.clients.admin.NewPartitions;
 

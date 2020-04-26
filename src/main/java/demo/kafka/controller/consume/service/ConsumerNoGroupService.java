@@ -1,5 +1,6 @@
 package demo.kafka.controller.consume.service;
 
+import demo.kafka.controller.consume.service.base.ConsumerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;

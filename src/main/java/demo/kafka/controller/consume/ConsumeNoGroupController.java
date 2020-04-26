@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
-import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -21,7 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @Slf4j

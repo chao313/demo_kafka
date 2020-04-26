@@ -4,7 +4,7 @@
 //import demo.kafka.controller.admin.util.AdminConsumerGroupsService;
 //import demo.kafka.controller.consume.service.ConsumerHavGroupAssignService;
 //import demo.kafka.controller.consume.service.ConsumerNoGroupService;
-//import demo.kafka.controller.consume.service.KafkaConsumerService;
+//import demo.kafka.controller.consume.service.base.KafkaConsumerService;
 //import demo.kafka.util.MapUtil;
 //import lombok.extern.slf4j.Slf4j;
 //import org.apache.kafka.clients.consumer.ConsumerConfig;

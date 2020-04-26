@@ -126,20 +126,7 @@ public class KafkaConsumerSupService<K, V> {
         log.info("尝试获取一批数据...:{}", records.count());
         this.kafkaConsumer.close();
     }
-
-//    /**
-//     * 获取consumer_offset的
-//     */
-//    public List<ConsumerRecord> getRecordByTopicPartitionOffset_consumer_offset(
-//            String bootstrap_servers,
-//            String topic,
-//            int partition,
-//            int startOffset,
-//            int endOffset) {
-//
-//
-//    }
-
+    
     /**
      * 获取consumer_offset的
      */

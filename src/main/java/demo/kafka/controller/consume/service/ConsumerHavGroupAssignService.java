@@ -25,15 +25,15 @@ import java.util.function.Consumer;
  * 4.操作消费本身(暂停/恢复)
  */
 @Slf4j
-public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> implements ConsumerHavGroupService<K, V> {
+public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> {
     /**
      * 获取实例 ( 不对外开放，由工厂来获取 )
      */
-    protected static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer) {
+    protected static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer) {
         return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer);
     }
 
-    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer) {
+    ConsumerHavGroupAssignService(KafkaConsumer<K, V> kafkaConsumer) {
         super(kafkaConsumer);
     }
 
@@ -41,25 +41,25 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
-    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer, String topic) {
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer, String topic) {
         return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topic);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
-    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer, String topic, int partition) {
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer, String topic, int partition) {
         return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topic, partition);
     }
 
-    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer, String topic) {
+    ConsumerHavGroupAssignService(KafkaConsumer<K, V> kafkaConsumer, String topic) {
         super(kafkaConsumer);
         Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
         super.getConsumer().assign(topicPartitionsByTopic);
     }
 
 
-    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer, String topic, int partition) {
+    ConsumerHavGroupAssignService(KafkaConsumer<K, V> kafkaConsumer, String topic, int partition) {
         super(kafkaConsumer);
         super.getConsumer().assign(Arrays.asList(new TopicPartition(topic, partition)));
     }
@@ -68,7 +68,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     /**
      * 普通的监听函数(只一次)
      */
-    @Override
     public void pollOnce(Consumer<ConsumerRecord<K, V>> consumer) {
         ConsumerRecords<K, V> records;
         records = this.getConsumer().poll(Duration.ofMillis(1000));
@@ -94,7 +93,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     /**
      * 查看分配到的Partition
      */
-    @Override
     public Set<TopicPartition> getPartitionAssigned() {
         return this.getConsumer().assignment();
     }
@@ -103,7 +101,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * update新的Partition
      * -> 调用之后 {@link #getPartitionAssigned()}  就会改变
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssign(String topic) {
         Collection<TopicPartition> topicPartitionsToBeAssigned = super.getTopicPartitionsByTopic(topic);
         this.getConsumer().assign(topicPartitionsToBeAssigned);
@@ -115,7 +112,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * <p>
      * !!!! 这里会检查是否是assign的分配的分区！ 不是就会抛出异常 （必须poll）
      */
-    @Override
     public long getNextOffsetByTopicAndPartition(String topic, int partition) {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
         return super.consumer.position(topicPartition);
@@ -125,7 +121,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * 把分配到的 partition 全部更新到最开始的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToBeginning() {
         Set<TopicPartition> partitionToBeSeekBegin = this.getPartitionAssigned();
         this.getConsumer().seekToBeginning(partitionToBeSeekBegin);
@@ -136,7 +131,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * 把分配到的 partition 全部更新到最新的偏移量
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToEnd() {
         Set<TopicPartition> partitionToBeSeekEnd = this.getPartitionAssigned();
         this.getConsumer().seekToEnd(partitionToBeSeekEnd);
@@ -163,7 +157,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * -> 调用之后 {@link #getNextOffsetByTopicAndPartition(String, int)} 就会改变
      * -> 设置的 offset 超过最大值后，似乎就会从头开始
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssignedOffset(long offset) {
         Set<TopicPartition> partitionToBeSeek = this.getPartitionAssigned();
         partitionToBeSeek.forEach(partition -> {
@@ -177,7 +170,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * 把 分配 到的 partition 全部 暂停
      * {@link #pollOnce(Consumer)} ()} 就会无法获取到值
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssignedToBePause() {
         Set<TopicPartition> partitionToBePause = this.getPartitionAssigned();
         this.getConsumer().pause(partitionToBePause);
@@ -188,7 +180,6 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * 把 分配 到的 partition 全部 恢复
      * {@link #pollOnce(Consumer)} ()}就会正常获取到值
      */
-    @Override
     public Collection<TopicPartition> updatePartitionAssignedToBeResume() {
         Set<TopicPartition> partitionToBeResume = this.getPartitionAssigned();
         this.getConsumer().resume(partitionToBeResume);

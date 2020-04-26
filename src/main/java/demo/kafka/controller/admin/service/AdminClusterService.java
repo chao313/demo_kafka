@@ -1,5 +1,6 @@
 package demo.kafka.controller.admin.service;
 
+import demo.kafka.controller.admin.service.base.AdminService;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.Node;
 

@@ -3,12 +3,11 @@ package demo.kafka.controller.admin;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.GsonBuilder;
-import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
 import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
-import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.response.ConsumerGroupOffsetsAndRealOffset;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**

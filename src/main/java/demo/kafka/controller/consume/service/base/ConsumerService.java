@@ -1,12 +1,12 @@
-package demo.kafka.controller.consume.service;
+package demo.kafka.controller.consume.service.base;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 public class ConsumerService<K, V> {
 
-    KafkaConsumer<K, V> consumer;
+    protected KafkaConsumer<K, V> consumer;
 
-    ConsumerService(KafkaConsumer<K, V> consumer) {
+    protected ConsumerService(KafkaConsumer<K, V> consumer) {
         this.consumer = consumer;
     }
 

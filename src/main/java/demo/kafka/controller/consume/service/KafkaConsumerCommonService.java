@@ -35,11 +35,10 @@ public class KafkaConsumerCommonService<K, V> {
          * 获取一个消费者实例
          */
 
-        Map map = new HashMap();
-        map.putAll(MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"));
+        ConsumerFactory<K, V> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"));
         KafkaConsumer<K, V> instance
-                = ConsumerFactory.getInstance(bootstrap_servers, map).getKafkaConsumer();
-
+                = consumerFactory.getKafkaConsumer();
         /**
          * 分配 topicPartition
          */
@@ -71,11 +70,11 @@ public class KafkaConsumerCommonService<K, V> {
         /**
          * 获取一个消费者实例
          */
-        Map map = new HashMap();
-        map.putAll(MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(recordsNum)));
-        KafkaConsumer<K, V> instance = ConsumerFactory
-                .getInstance(bootstrap_servers, map)
-                .getKafkaConsumer();
+        ConsumerFactory<K, V> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers,
+                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(recordsNum))
+        );
+        KafkaConsumer<K, V> instance = consumerFactory.getKafkaConsumer();
 
         /**
          * 分配 topicPartition
@@ -104,12 +103,11 @@ public class KafkaConsumerCommonService<K, V> {
         /**
          * 获取一个消费者实例
          */
-        Map map = new HashMap();
-        map.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(recordsNum));
-        map.putAll(overMap);
-
-        KafkaConsumer<K, V> instance = ConsumerFactory.getInstance(bootstrap_servers, map).getKafkaConsumer();
-
+        ConsumerFactory<K, V> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers,
+                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(recordsNum))
+        );
+        KafkaConsumer<K, V> instance = consumerFactory.getKafkaConsumer();
         /**
          * 分配 topicPartition
          */

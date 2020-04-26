@@ -1,4 +1,4 @@
-package demo.kafka.controller.consume.service;
+package demo.kafka.controller.consume.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
 import kafka.common.OffsetAndMetadata;
@@ -21,7 +21,7 @@ import java.security.acl.Group;
 import java.util.*;
 
 @Slf4j
-public class ConsumerOffsetService<K, V> {
+public class ConsumerOffsetServiceTest<K, V> {
 
 //    KafkaConsumerService<K, V> kafkaConsumerService;
 //

@@ -1,4 +1,4 @@
-package demo.kafka.controller.admin.service;
+package demo.kafka.controller.admin.service.base;
 
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -10,8 +10,7 @@ import java.util.Properties;
  */
 public class AdminService {
 
-
-    AdminClient client;
+    protected AdminClient client;
 
     private AdminService() {
     }
@@ -20,15 +19,12 @@ public class AdminService {
      * 构造函数(bootstrap_servers) 使用default来指定
      */
 
-    AdminService(String bootstrap_servers) {
+    protected AdminService(String bootstrap_servers) {
         Properties properties = new Properties(); //新建一个Properties对象
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrap_servers);
         AdminClient adminClient = AdminClient.create(properties);
         this.client = adminClient;
     }
-
-
-
 
 
 }

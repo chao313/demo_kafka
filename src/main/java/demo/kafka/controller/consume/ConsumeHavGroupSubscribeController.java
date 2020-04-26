@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerHavGroupSubscribeService;
-import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
