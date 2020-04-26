@@ -2,6 +2,7 @@ package demo.kafka.controller.consume.service;
 
 import demo.kafka.util.MapUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -133,13 +134,13 @@ public class KafkaConsumerCommonService<K, V> {
                     valueRegexFlag = false,
                     timeStartFlag = false,
                     timeEndFlag = false;
-            if (null == keyRegex) {
+            if (StringUtils.isBlank(keyRegex)) {
                 keyRegexFlag = true;
             } else {
                 String key = record.key();
                 keyRegexFlag = key.matches(keyRegex);
             }
-            if (null == valueRegex) {
+            if (StringUtils.isBlank(valueRegex)) {
                 valueRegexFlag = true;
             } else {
                 String value = record.value();
@@ -155,7 +156,7 @@ public class KafkaConsumerCommonService<K, V> {
                 timeEndFlag = true;
             } else {
                 long time = record.timestamp();
-                timeStartFlag = time < timeEnd;
+                timeEndFlag = time < timeEnd;
             }
             if (keyRegexFlag && valueRegexFlag && timeStartFlag && timeEndFlag) {
                 /**

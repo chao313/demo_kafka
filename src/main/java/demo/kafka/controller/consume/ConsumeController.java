@@ -11,6 +11,8 @@ import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -291,18 +294,18 @@ public class ConsumeController {
             @RequestParam(name = "endOffset", defaultValue = "0")
                     int endOffset,
             @ApiParam(value = "key的正则")
-            @RequestParam(name = "keyRegex", defaultValue = ".*")
+            @RequestParam(name = "keyRegex", defaultValue = "")
                     String keyRegex,
             @ApiParam(value = "value的正则")
-            @RequestParam(name = "valueRegex", defaultValue = ".*")
+            @RequestParam(name = "valueRegex", defaultValue = "")
                     String valueRegex,
             @ApiParam(value = "消息start的时间")
-            @RequestParam(name = "timeStart", defaultValue = "0")
+            @RequestParam(name = "timeStart", defaultValue = "")
                     String timeStart,
             @ApiParam(value = "消息end的时间")
-            @RequestParam(name = "timeEnd", defaultValue = "0")
-                    int timeEnd
-    ) {
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd
+    ) throws ParseException {
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService =
                 consumerFactory.getConsumerHavGroupAssignService(topic, partition);
@@ -354,8 +357,26 @@ public class ConsumeController {
             JSONArray result = JSONObject.parseArray(JsonObject);
             return result;
         } else {
+//            List<ConsumerRecord<String, String>> records
+//                    = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
+            FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+            Long timeStartTimeStamp = null;
+            Long timeEndTimeStamp = null;
+            if (StringUtils.isNotBlank(timeStart)) {
+                timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+            }
+            if (StringUtils.isNotBlank(timeEnd)) {
+                timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+            }
             List<ConsumerRecord<String, String>> records
-                    = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset);
+                    = consumerCommonService.getRecord(bootstrap_servers,
+                    topicPartition,
+                    startOffset,
+                    endOffset,
+                    keyRegex,
+                    valueRegex,
+                    timeStartTimeStamp,
+                    timeEndTimeStamp);
             List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
             consumerRecords.addAll(records);
             /**
