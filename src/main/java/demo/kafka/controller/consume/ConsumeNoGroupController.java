@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
@@ -38,10 +39,9 @@ public class ConsumeNoGroupController {
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Set<String> topics = consumerNoGroupService.getAllTopics();
-
         return topics;
     }
 
@@ -57,8 +57,8 @@ public class ConsumeNoGroupController {
             @ApiParam(value = "需要查询的 topic ")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Collection<PartitionInfo> partitionsByTopic = consumerNoGroupService.getPartitionsByTopic(topic);
         String JsonObject = new Gson().toJson(partitionsByTopic);
         JSONArray result = JSONObject.parseArray(JsonObject);
@@ -75,8 +75,8 @@ public class ConsumeNoGroupController {
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Map<String, List<PartitionInfo>> topicAndPartitions = consumerNoGroupService.getAllTopicAndPartitions();
         String JsonObject = new Gson().toJson(topicAndPartitions);
         JSONObject result = JSONObject.parseObject(JsonObject);
@@ -94,8 +94,8 @@ public class ConsumeNoGroupController {
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             String topic) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getLastPartitionOffset(topic);
         String JsonObject = new Gson().toJson(offsetByTopicAndPartition);
         JSONObject result = JSONObject.parseObject(JsonObject);
@@ -112,8 +112,8 @@ public class ConsumeNoGroupController {
             @RequestParam(name = "bootstrap_servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
             String topic) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Map<TopicPartition, Long> offsetByTopicAndPartition = consumerNoGroupService.getEarliestPartitionOffset(topic);
         String JsonObject = new Gson().toJson(offsetByTopicAndPartition);
         JSONObject result = JSONObject.parseObject(JsonObject);
@@ -134,9 +134,8 @@ public class ConsumeNoGroupController {
             @RequestParam(name = "dateFormat", defaultValue = "2020-02-22 10:10:10")
                     String dateFormat
     ) throws ParseException {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
-
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Map<TopicPartition, OffsetAndTimestamp> partitionOffsetBeforeTimestamp
                 = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topic,
                 FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss").parse(dateFormat).getTime());
@@ -144,8 +143,6 @@ public class ConsumeNoGroupController {
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
     }
-
-
 
 
 }

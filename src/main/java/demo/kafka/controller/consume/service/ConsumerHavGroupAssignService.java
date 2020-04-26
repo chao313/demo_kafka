@@ -3,6 +3,7 @@ package demo.kafka.controller.consume.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
@@ -26,28 +27,41 @@ import java.util.function.Consumer;
 @Slf4j
 public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<K, V> implements ConsumerHavGroupService<K, V> {
     /**
+     * 获取实例 ( 不对外开放，由工厂来获取 )
+     */
+    protected static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer) {
+        return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer);
+    }
+
+    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer) {
+        super(kafkaConsumer);
+    }
+
+
+    /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
-    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, String topic) {
-        return new ConsumerHavGroupAssignService<>(kafkaConsumerService, topic);
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer, String topic) {
+        return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topic);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
-    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, String topic, int partition) {
-        return new ConsumerHavGroupAssignService<>(kafkaConsumerService, topic, partition);
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer, String topic, int partition) {
+        return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topic, partition);
     }
 
-    ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic) {
-        super(kafkaConsumerService);
+    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer, String topic) {
+        super(kafkaConsumer);
         Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
-        super.getKafkaConsumerService().assign(topicPartitionsByTopic);
+        super.getConsumer().assign(topicPartitionsByTopic);
     }
 
-    ConsumerHavGroupAssignService(KafkaConsumerService kafkaConsumerService, String topic, int partition) {
-        super(kafkaConsumerService);
-        super.getKafkaConsumerService().assign(Arrays.asList(new TopicPartition(topic, partition)));
+
+    ConsumerHavGroupAssignService(KafkaConsumer<K,V> kafkaConsumer, String topic, int partition) {
+        super(kafkaConsumer);
+        super.getConsumer().assign(Arrays.asList(new TopicPartition(topic, partition)));
     }
 
 
@@ -57,7 +71,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public void pollOnce(Consumer<ConsumerRecord<K, V>> consumer) {
         ConsumerRecords<K, V> records;
-        records = this.getKafkaConsumerService().poll(Duration.ofMillis(1000));
+        records = this.getConsumer().poll(Duration.ofMillis(1000));
         records.forEach(record -> {
             consumer.accept(record);
         });
@@ -72,7 +86,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      */
     public ConsumerRecords<K, V> pollOnce() {
         ConsumerRecords<K, V> records;
-        records = this.getKafkaConsumerService().poll(Duration.ofMillis(1000));
+        records = this.getConsumer().poll(Duration.ofMillis(1000));
         return records;
     }
 
@@ -82,7 +96,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      */
     @Override
     public Set<TopicPartition> getPartitionAssigned() {
-        return this.getKafkaConsumerService().assignment();
+        return this.getConsumer().assignment();
     }
 
     /**
@@ -92,7 +106,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public Collection<TopicPartition> updatePartitionAssign(String topic) {
         Collection<TopicPartition> topicPartitionsToBeAssigned = super.getTopicPartitionsByTopic(topic);
-        this.getKafkaConsumerService().assign(topicPartitionsToBeAssigned);
+        this.getConsumer().assign(topicPartitionsToBeAssigned);
         return topicPartitionsToBeAssigned;
     }
 
@@ -104,7 +118,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public long getNextOffsetByTopicAndPartition(String topic, int partition) {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
-        return super.kafkaConsumerService.position(topicPartition);
+        return super.consumer.position(topicPartition);
     }
 
     /**
@@ -114,7 +128,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToBeginning() {
         Set<TopicPartition> partitionToBeSeekBegin = this.getPartitionAssigned();
-        this.getKafkaConsumerService().seekToBeginning(partitionToBeSeekBegin);
+        this.getConsumer().seekToBeginning(partitionToBeSeekBegin);
         return partitionToBeSeekBegin;
     }
 
@@ -125,7 +139,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public Collection<TopicPartition> updatePartitionAssignedOffsetToEnd() {
         Set<TopicPartition> partitionToBeSeekEnd = this.getPartitionAssigned();
-        this.getKafkaConsumerService().seekToEnd(partitionToBeSeekEnd);
+        this.getConsumer().seekToEnd(partitionToBeSeekEnd);
         return partitionToBeSeekEnd;
     }
 //
@@ -153,7 +167,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     public Collection<TopicPartition> updatePartitionAssignedOffset(long offset) {
         Set<TopicPartition> partitionToBeSeek = this.getPartitionAssigned();
         partitionToBeSeek.forEach(partition -> {
-            this.getKafkaConsumerService().seek(partition, offset);
+            this.getConsumer().seek(partition, offset);
         });
         return partitionToBeSeek;
     }
@@ -166,7 +180,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public Collection<TopicPartition> updatePartitionAssignedToBePause() {
         Set<TopicPartition> partitionToBePause = this.getPartitionAssigned();
-        this.getKafkaConsumerService().pause(partitionToBePause);
+        this.getConsumer().pause(partitionToBePause);
         return partitionToBePause;
     }
 
@@ -177,7 +191,7 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     @Override
     public Collection<TopicPartition> updatePartitionAssignedToBeResume() {
         Set<TopicPartition> partitionToBeResume = this.getPartitionAssigned();
-        this.getKafkaConsumerService().resume(partitionToBeResume);
+        this.getConsumer().resume(partitionToBeResume);
         return partitionToBeResume;
     }
 

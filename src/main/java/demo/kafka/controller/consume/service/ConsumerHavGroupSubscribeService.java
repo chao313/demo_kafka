@@ -3,6 +3,7 @@ package demo.kafka.controller.consume.service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
@@ -12,16 +13,16 @@ import java.util.function.Consumer;
 @Slf4j
 public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupService<K, V> {
 
-    ConsumerHavGroupSubscribeService(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
-        super(kafkaConsumerService);
-        super.getKafkaConsumerService().subscribe(topics);
+    ConsumerHavGroupSubscribeService(KafkaConsumer<K,V> kafkaConsumer, Collection<String> topics) {
+        super(kafkaConsumer);
+        super.getConsumer().subscribe(topics);
     }
 
     /**
      * 构造函数(直接注入 kafkaConsumer)
      */
-    public static <K, V> ConsumerHavGroupSubscribeService<K, V> getInstance(KafkaConsumerService kafkaConsumerService, Collection<String> topics) {
-        ConsumerHavGroupSubscribeService consumerHavAssignGroupService = new ConsumerHavGroupSubscribeService(kafkaConsumerService, topics);
+    public static <K, V> ConsumerHavGroupSubscribeService<K, V> getInstance(KafkaConsumer<K,V> kafkaConsumer, Collection<String> topics) {
+        ConsumerHavGroupSubscribeService consumerHavAssignGroupService = new ConsumerHavGroupSubscribeService(kafkaConsumer, topics);
         return consumerHavAssignGroupService;
     }
 
@@ -30,7 +31,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * 查看订阅到的 topic
      */
     public Set<String> getTopicSubscribed() {
-        return this.getKafkaConsumerService().subscription();
+        return this.getConsumer().subscription();
     }
 
 
@@ -38,7 +39,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      * update 订阅的主题
      */
     public void updateTopicSubscribed(Collection<String> topics) {
-        this.getKafkaConsumerService().subscribe(topics);
+        this.getConsumer().subscribe(topics);
     }
 
     /**
@@ -46,11 +47,11 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public void pollOnce(Consumer<ConsumerRecord<K, V>> consumer) {
         ConsumerRecords<K, V> records;
-        records = this.getKafkaConsumerService().poll(Duration.ofMillis(1000));
+        records = this.getConsumer().poll(Duration.ofMillis(1000));
         records.forEach(record -> {
             consumer.accept(record);
         });
-        this.getKafkaConsumerService().commitSync();
+        this.getConsumer().commitSync();
         log.info("尝试获取一批数据...:{}", records.count());
     }
 
@@ -62,7 +63,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public long getNextOffsetByTopicAndPartition(String topic, int partition) {
         TopicPartition topicPartition = new TopicPartition(topic, partition);
-        return super.kafkaConsumerService.position(topicPartition);
+        return super.consumer.position(topicPartition);
     }
 
     /**
@@ -72,7 +73,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public Collection<TopicPartition> updateTopicSubscribedOffsetToBeginning() {
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
-        this.getKafkaConsumerService().seekToBeginning(allTopicSubscribedPartitions);
+        this.getConsumer().seekToBeginning(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
 
@@ -82,7 +83,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public Collection<TopicPartition> updatePartitionSubscribedOffsetToEnd() {
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
-        this.getKafkaConsumerService().seekToEnd(allTopicSubscribedPartitions);
+        this.getConsumer().seekToEnd(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
 
@@ -94,7 +95,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
     public Collection<TopicPartition> updatePartitionSubscribedOffset(long offset) {
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
         allTopicSubscribedPartitions.forEach(partition -> {
-            this.getKafkaConsumerService().seek(partition, offset);
+            this.getConsumer().seek(partition, offset);
         });
         return allTopicSubscribedPartitions;
     }
@@ -112,7 +113,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
 
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(topics);
         allTopicSubscribedPartitions.forEach(partition -> {
-            this.getKafkaConsumerService().seek(partition, offset);
+            this.getConsumer().seek(partition, offset);
         });
         return allTopicSubscribedPartitions;
     }
@@ -125,7 +126,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
         if (!this.getTopicSubscribed().contains(topicPartition.topic())) {
             throw new RuntimeException("分配的topic不包含指定的topic,无法设置offset");
         }
-        this.getKafkaConsumerService().seek(topicPartition, offset);
+        this.getConsumer().seek(topicPartition, offset);
         return Arrays.asList(topicPartition);
     }
 
@@ -135,7 +136,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public Collection<TopicPartition> updatePartitionSubscribedToBePause() {
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
-        this.getKafkaConsumerService().pause(allTopicSubscribedPartitions);
+        this.getConsumer().pause(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
 
@@ -145,7 +146,7 @@ public class ConsumerHavGroupSubscribeService<K, V> extends ConsumerNoGroupServi
      */
     public Collection<TopicPartition> updatePartitionSubscribedToBeResume() {
         Collection<TopicPartition> allTopicSubscribedPartitions = this.getTopicPartitionsByTopic(this.getTopicSubscribed());
-        this.getKafkaConsumerService().resume(allTopicSubscribedPartitions);
+        this.getConsumer().resume(allTopicSubscribedPartitions);
         return allTopicSubscribedPartitions;
     }
 

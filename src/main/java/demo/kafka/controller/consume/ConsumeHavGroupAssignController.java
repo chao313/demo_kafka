@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerHavGroupAssignService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
@@ -50,10 +51,10 @@ public class ConsumeHavGroupAssignController {
             @ApiParam(value = "一次poll的最大的数量")
             @RequestParam(name = "max.poll.records", defaultValue = "2")
                     String max_poll_records) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers,
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers,
                 MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, auto_offset_reset,
                         ConsumerConfig.MAX_POLL_RECORDS_CONFIG, max_poll_records));
-        ConsumeHavGroupAssignController.consumerHavGroupAssignService = ConsumerHavGroupAssignService.getInstance(consumerService, topic);
+        ConsumeHavGroupAssignController.consumerHavGroupAssignService = consumerFactory.getConsumerHavGroupAssignService(topic);
         return "创建ConsumerHavGroupAssignService成功";
     }
 

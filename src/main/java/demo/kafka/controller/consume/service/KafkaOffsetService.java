@@ -6,13 +6,11 @@ import kafka.coordinator.group.GroupMetadata;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class KafkaOffsetService {
@@ -35,13 +33,6 @@ public class KafkaOffsetService {
             String bootstrap_servers,
             String groupId) {
 
-        KafkaConsumerService<byte[], byte[]> instance
-                = KafkaConsumerService.getInstance(bootstrap_servers,
-                MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-                        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-                        ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"
-                ));
-
         /**算出group所属分区*/
         int partition = Math.abs(groupId.hashCode() % _consumer_offsets_size);//确地group对应的partition
         /**
@@ -49,8 +40,21 @@ public class KafkaOffsetService {
          */
         TopicPartition topicPartition = new TopicPartition(_consumer_offsets, partition);
 
+        Map map = new HashMap();
+        map.putAll(MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
+                ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"));
+
+        ConsumerFactory consumerFactory = ConsumerFactory.getInstance(bootstrap_servers,
+                map);
+        KafkaConsumer<byte[], byte[]> instance
+                = consumerFactory.getKafkaConsumer();
+
+
+
+
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
-                = ConsumerHavGroupAssignService.getInstance(instance, _consumer_offsets, partition);
+                = consumerFactory.getConsumerHavGroupAssignService(_consumer_offsets, partition);
 
 
         Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);

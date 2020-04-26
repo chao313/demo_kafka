@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
@@ -26,18 +27,18 @@ public class KafkaConsumerSupService<K, V> {
     /**
      * 构造函数(直接注入 kafkaConsumer)
      */
-    public static <K, V> KafkaConsumerSupService<K, V> getInstance(KafkaConsumerService kvKafkaConsumerService) {
-        return new KafkaConsumerSupService(kvKafkaConsumerService);
+    public static <K, V> KafkaConsumerSupService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer) {
+        return new KafkaConsumerSupService(kafkaConsumer);
     }
 
-    private KafkaConsumerService<K, V> kvKafkaConsumerService;
+    private KafkaConsumer<K, V> kafkaConsumer;
 
 
     private KafkaConsumerSupService() {
     }
 
-    private KafkaConsumerSupService(KafkaConsumerService<K, V> kvKafkaConsumerService) {
-        this.kvKafkaConsumerService = kvKafkaConsumerService;
+    private KafkaConsumerSupService(KafkaConsumer<K, V> kafkaConsumer) {
+        this.kafkaConsumer = kafkaConsumer;
     }
 
 
@@ -45,9 +46,9 @@ public class KafkaConsumerSupService<K, V> {
      * 普通的监听函数
      */
     public void listener(Collection<String> topics, Consumer<ConsumerRecord<K, V>> consumer) {
-        this.kvKafkaConsumerService.subscribe(topics);
+        this.kafkaConsumer.subscribe(topics);
         while (true) {
-            ConsumerRecords<K, V> records = kvKafkaConsumerService.poll(Duration.ofMillis(100));
+            ConsumerRecords<K, V> records = kafkaConsumer.poll(Duration.ofMillis(100));
             records.forEach(record -> {
                 consumer.accept(record);
             });
@@ -58,14 +59,14 @@ public class KafkaConsumerSupService<K, V> {
      * 普通的监听函数(只一次)
      */
     public void listenerOnce(Collection<String> topics, Consumer<ConsumerRecord<K, V>> consumer) {
-        this.kvKafkaConsumerService.subscribe(topics);
+        this.kafkaConsumer.subscribe(topics);
         ConsumerRecords<K, V> records;
-        records = this.kvKafkaConsumerService.poll(Duration.ofMillis(1000));
+        records = this.kafkaConsumer.poll(Duration.ofMillis(1000));
         records.forEach(record -> {
             consumer.accept(record);
         });
         log.info("尝试获取一批数据...:{}", records.count());
-        this.kvKafkaConsumerService.wakeup();
+        this.kafkaConsumer.wakeup();
     }
 
     /**
@@ -74,7 +75,7 @@ public class KafkaConsumerSupService<K, V> {
      * @return
      */
     public Collection<PartitionInfo> getPartitionInfosByTopic(String topic) {
-        return this.kvKafkaConsumerService.partitionsFor(topic);
+        return this.kafkaConsumer.partitionsFor(topic);
     }
 
 
@@ -84,7 +85,7 @@ public class KafkaConsumerSupService<K, V> {
      * @return
      */
     public Collection<TopicPartition> getTopicPartitionsByTopic(String topic) {
-        List<PartitionInfo> partitionInfos = this.kvKafkaConsumerService.partitionsFor(topic);
+        List<PartitionInfo> partitionInfos = this.kafkaConsumer.partitionsFor(topic);
         List<TopicPartition> topicPartitions = new ArrayList<>();
         partitionInfos.forEach(partitionInfo -> {
             TopicPartition topicPartition = new TopicPartition(partitionInfo.topic(), partitionInfo.partition());
@@ -97,7 +98,7 @@ public class KafkaConsumerSupService<K, V> {
      * 获取最新的 record (每个分区的)
      */
     public void getLastRecordEachPartition(String topic, Consumer<ConsumerRecord<K, V>> consumer) {
-        List<PartitionInfo> partitionInfos = this.kvKafkaConsumerService.partitionsFor(topic);
+        List<PartitionInfo> partitionInfos = this.kafkaConsumer.partitionsFor(topic);
 
         List<TopicPartition> topicPartitions = new ArrayList<>();
         partitionInfos.forEach(partitionInfo -> {
@@ -106,24 +107,24 @@ public class KafkaConsumerSupService<K, V> {
         });
 
 
-        this.kvKafkaConsumerService.assign(topicPartitions);
+        this.kafkaConsumer.assign(topicPartitions);
 
-        Map<TopicPartition, Long> topicPartitionLongMap = this.kvKafkaConsumerService.endOffsets(topicPartitions);
+        Map<TopicPartition, Long> topicPartitionLongMap = this.kafkaConsumer.endOffsets(topicPartitions);
 
         topicPartitionLongMap.forEach((topicPartition, offsetSize) -> {
-            this.kvKafkaConsumerService.seek(topicPartition, offsetSize > 0 ? offsetSize - 1 : 0);
+            this.kafkaConsumer.seek(topicPartition, offsetSize > 0 ? offsetSize - 1 : 0);
         });
 
         ConsumerRecords<K, V> records;
-        records = this.kvKafkaConsumerService.poll(100);
+        records = this.kafkaConsumer.poll(100);
         while (records.isEmpty()) {
-            records = this.kvKafkaConsumerService.poll(100);
+            records = this.kafkaConsumer.poll(100);
         }
         records.forEach(record -> {
             consumer.accept(record);
         });
         log.info("尝试获取一批数据...:{}", records.count());
-        this.kvKafkaConsumerService.close();
+        this.kafkaConsumer.close();
     }
 
 //    /**
@@ -149,12 +150,16 @@ public class KafkaConsumerSupService<K, V> {
             int startOffset,
             int endOffset) {
 
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers,
-                MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer",
-                        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
-        );
+
+        Map map = new HashMap();
+        map.putAll(MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer",
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer"));
+
+        KafkaConsumer<String, String> consumer = ConsumerFactory.getInstance(bootstrap_servers,
+                map
+        ).getKafkaConsumer();
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
-                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
+                = ConsumerHavGroupAssignService.getInstance(consumer, topic, partition);
 
         TopicPartition topicPartition = new TopicPartition(topic, partition);
         Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);

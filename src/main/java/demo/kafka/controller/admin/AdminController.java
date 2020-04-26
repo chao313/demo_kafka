@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
 import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.response.ConsumerGroupOffsetsAndRealOffset;
@@ -44,8 +45,8 @@ public class AdminController {
     )
             throws ExecutionException, InterruptedException {
 
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService =   consumerFactory.getConsumerNoGroupService();
 
         AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
 
@@ -79,9 +80,9 @@ public class AdminController {
 //        Map<TopicPartition, OffsetAndMetadata> metadataMap = adminConsumerGroupsService.getConsumerGroupOffsets(group);
 
         Map<TopicPartition, Long> beginningOffsets
-                = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(metadataMap.keySet());
+                = consumerNoGroupService.getConsumer().beginningOffsets(metadataMap.keySet());
         Map<TopicPartition, Long> endOffsets
-                = consumerNoGroupService.getKafkaConsumerService().endOffsets(metadataMap.keySet());
+                = consumerNoGroupService.getConsumer().endOffsets(metadataMap.keySet());
 
         /**
          * 处理结果

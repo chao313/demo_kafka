@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerHavGroupSubscribeService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
@@ -50,18 +51,17 @@ public class ConsumeHavGroupSubscribeController {
             @ApiParam(value = "一次poll的最大的数量")
             @RequestParam(name = "max.poll.records", defaultValue = "2")
                     String max_poll_records) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id,
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, group_id,
                 MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, auto_offset_reset,
-                        ConsumerConfig.MAX_POLL_RECORDS_CONFIG, max_poll_records)
-        );
+                        ConsumerConfig.MAX_POLL_RECORDS_CONFIG, max_poll_records));
         if (null != ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService) {
             /**
              * 如果不为空就关闭
              */
-            ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getKafkaConsumerService().close();
+            ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getConsumer().close();
         }
         ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService
-                = ConsumerHavGroupSubscribeService.getInstance(consumerService, Arrays.asList(topic));
+                = consumerFactory.getConsumerHavGroupSubscribeService(Arrays.asList(topic));
         return "创建 ConsumerHavGroupSubscribeService 成功";
     }
 
@@ -71,7 +71,7 @@ public class ConsumeHavGroupSubscribeController {
     @ApiOperation(value = "关闭")
     @GetMapping(value = "/close")
     public Object close() {
-        ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getKafkaConsumerService().close();
+        ConsumeHavGroupSubscribeController.consumerHavGroupSubscribeService.getConsumer().close();
         return "关闭成功";
     }
 

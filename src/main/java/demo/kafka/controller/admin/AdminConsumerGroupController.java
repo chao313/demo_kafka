@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
 import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.util.MapUtil;
@@ -88,8 +89,8 @@ public class AdminConsumerGroupController {
          */
         //获取订阅的topic
 //        Set<TopicPartition> topicPartitions = adminConsumerGroupsService.getConsumerSubscribedTopicsByGroupId(group);
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
         Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
         for (TopicPartition partition : allTopicPartitions) {

@@ -1,8 +1,10 @@
 package demo.kafka.controller.consume.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +13,12 @@ import java.util.*;
 @Slf4j
 public class ConsumerTopicsTest {
 
-    KafkaConsumerService<String, String> kafkaConsumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "test");
+    private static KafkaConsumer<String, String> kafkaConsumer;
+
+    static {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(Bootstrap.HONE.getIp(), "test");
+        kafkaConsumer = consumerFactory.getKafkaConsumer();
+    }
 
     /**
      * 测试消费者获取topic
@@ -20,7 +27,7 @@ public class ConsumerTopicsTest {
     @Test
     public void listTopics() {
 
-        Map<String, List<PartitionInfo>> stringListMap = kafkaConsumerService.listTopics();
+        Map<String, List<PartitionInfo>> stringListMap = kafkaConsumer.listTopics();
 
         stringListMap.forEach((key, partitionInfos) -> {
             log.info("key:{}", key);

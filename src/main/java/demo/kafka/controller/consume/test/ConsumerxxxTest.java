@@ -1,40 +1,44 @@
 package demo.kafka.controller.consume.test;
 
 import demo.kafka.controller.admin.test.Bootstrap;
+import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.KafkaConsumerCommonService;
 import demo.kafka.controller.consume.service.KafkaConsumerService;
 import demo.kafka.controller.consume.service.KafkaConsumerSupService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 @Slf4j
 public class ConsumerxxxTest {
 
-    public KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
+    public static KafkaConsumer<String, String> kafkaConsumer;
+    public static KafkaConsumerSupService<String, String> kafkaConsumerSupService;
 
-    public KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+    static {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
+        kafkaConsumer = consumerFactory.getKafkaConsumer();
+        kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerFactory.getKafkaConsumer());
+    }
 
     /**
      * 测试 订阅 topic
      */
     @Test
     public void subscribe() {
-        consumerService.subscribe(Pattern.compile(".*"));
-        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-        Set<String> topics = consumerService.subscription();
+        kafkaConsumer.subscribe(Pattern.compile(".*"));
+        kafkaConsumer.poll(0);//必须要 poll一次才行(不然不会send到server端)
+        Set<String> topics = kafkaConsumer.subscription();
         log.info("已经订阅的 topic:{}", topics);
     }
 
@@ -68,17 +72,16 @@ public class ConsumerxxxTest {
      */
     @Test
     public void seekToBeginning() {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
-        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+
         Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test");
         topicPartitions.forEach(topicPartition -> {
             log.info("partitionInfo:{}", topicPartition);
         });
-        consumerService.subscribe(Arrays.asList("Test"));
-        consumerService.poll(0);
-        Set<TopicPartition> assignment = consumerService.assignment();
-        consumerService.seekToBeginning(assignment);
-        consumerService.commitSync();
+        kafkaConsumer.subscribe(Arrays.asList("Test"));
+        kafkaConsumer.poll(0);
+        Set<TopicPartition> assignment = kafkaConsumer.assignment();
+        kafkaConsumer.seekToBeginning(assignment);
+        kafkaConsumer.commitSync();
     }
 
 
@@ -87,16 +90,15 @@ public class ConsumerxxxTest {
      */
     @Test
     public void seekToBeginning_Assign() {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "common_imp_db_test");
-        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+
         Collection<TopicPartition> topicPartitions = kafkaConsumerSupService.getTopicPartitionsByTopic("Test");
         topicPartitions.forEach(topicPartition -> {
             log.info("partitionInfo:{}", topicPartition);
         });
-        consumerService.assign(topicPartitions);
-        Set<TopicPartition> assignment = consumerService.assignment();
-        consumerService.seekToBeginning(assignment);
-        consumerService.commitSync();
+        kafkaConsumer.assign(topicPartitions);
+        Set<TopicPartition> assignment = kafkaConsumer.assignment();
+        kafkaConsumer.seekToBeginning(assignment);
+        kafkaConsumer.commitSync();
     }
 
     /**
@@ -108,10 +110,10 @@ public class ConsumerxxxTest {
         topicPartitions.forEach(topicPartition -> {
             log.info("partitionInfo:{}", topicPartition);
         });
-        consumerService.assign(topicPartitions);
-        consumerService.poll(0);
+        kafkaConsumer.assign(topicPartitions);
+        kafkaConsumer.poll(0);
         topicPartitions.forEach(topicPartition -> {
-            OffsetAndMetadata offsetAndMetadata = consumerService.committed(topicPartition);
+            OffsetAndMetadata offsetAndMetadata = kafkaConsumer.committed(topicPartition);
             log.info("offsetAndMetadata:{}", offsetAndMetadata);
         });
 
@@ -134,7 +136,7 @@ public class ConsumerxxxTest {
      */
     @Test
     public void subscribeTest() {
-        consumerService.subscribe(Arrays.asList("Test11"));//订阅一个topic
+        kafkaConsumer.subscribe(Arrays.asList("Test11"));//订阅一个topic
 //        this.poll(consumerService);
     }
 
@@ -170,17 +172,17 @@ public class ConsumerxxxTest {
      */
     @Test
     public void subscribexx() {
-        consumerService.subscribe(Arrays.asList("Test11"));
-        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-        Set<TopicPartition> assignments = consumerService.assignment();
+        kafkaConsumer.subscribe(Arrays.asList("Test11"));
+        kafkaConsumer.poll(0);//必须要 poll一次才行(不然不会send到server端)
+        Set<TopicPartition> assignments = kafkaConsumer.assignment();
         log.info("已经订阅的 assignment:{}", assignments);
         assignments.forEach(assignment -> {
-            OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
+            OffsetAndMetadata offsetAndMetadata = kafkaConsumer.committed(assignment);
             log.info("offsetAndMetadata:{}", offsetAndMetadata);
         });
 
-        consumerService.seekToBeginning(assignments);
-        ConsumerRecords<String, String> consumerRecords = consumerService.poll(0);
+        kafkaConsumer.seekToBeginning(assignments);
+        ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(0);
         this.listener();
 
     }

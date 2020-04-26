@@ -5,14 +5,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
-import demo.kafka.controller.response.OffsetRecordResponse;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
+import demo.kafka.controller.response.OffsetRecordResponse;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,15 +49,14 @@ public class ConsumeController {
             @ApiParam(value = "需要调拨的Topic的消费者groupId")
             @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
                     String group_id) {
-
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id);
-
-        consumerService.subscribe(Arrays.asList(topic));
-        consumerService.poll(10);//必须要 poll一次才行(不然不会send到server端)
-        Set<TopicPartition> assignments = consumerService.assignment();
-        consumerService.seekToBeginning(assignments);
-        consumerService.poll(10);//必须要 poll一次才行(不然不会send到server端)
-        consumerService.wakeup();
+        ConsumerFactory<String, String> kafkaConsumer = ConsumerFactory.getInstance(bootstrap_servers, group_id);
+        KafkaConsumer<String, String> consumer = kafkaConsumer.getKafkaConsumer();
+        consumer.subscribe(Arrays.asList(topic));
+        consumer.poll(10);//必须要 poll一次才行(不然不会send到server端)
+        Set<TopicPartition> assignments = consumer.assignment();
+        consumer.seekToBeginning(assignments);
+        consumer.poll(10);//必须要 poll一次才行(不然不会send到server端)
+        consumer.wakeup();
     }
 
     /**
@@ -74,9 +74,10 @@ public class ConsumeController {
             @ApiParam(value = "需要消费的Topic的消费者groupId")
             @RequestParam(name = "group_id", defaultValue = "common_imp_db_test")
                     String group_id) {
-
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
-        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers, group_id, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
+        KafkaConsumer<String, String> consumer = consumerFactory.getKafkaConsumer();
+        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumer);
 
         kafkaConsumerSupService.listenerOnce(Arrays.asList(topic), consumerRecord -> {
             log.info("offset:{} value:{}", consumerRecord.offset(), consumerRecord.value());
@@ -96,9 +97,9 @@ public class ConsumeController {
             @ApiParam(value = "需要消费的的Topic")
             @RequestParam(name = "topic", defaultValue = "Test")
                     String topic) {
-
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
-        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(consumerService);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"));
+        KafkaConsumer<String, String> kafkaConsumer = consumerFactory.getKafkaConsumer();
+        KafkaConsumerSupService<String, String> kafkaConsumerSupService = KafkaConsumerSupService.getInstance(kafkaConsumer);
 
         kafkaConsumerSupService.getLastRecordEachPartition(topic, consumerRecord -> {
             log.info("offset:{} value:{}", consumerRecord.offset(), consumerRecord.value());
@@ -122,14 +123,16 @@ public class ConsumeController {
 
     @GetMapping(value = "/OffsetAndMetadata")
     public void OffsetAndMetadata() {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(Bootstrap.HONE.getIp(), "test");
-        consumerService.subscribe(Arrays.asList("Test11"));
-        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-        Set<TopicPartition> assignments = consumerService.assignment();
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(Bootstrap.HONE.getIp(), "test");
+        ConsumerFactory.getInstance(Bootstrap.HONE.getIp(), "test");
+        KafkaConsumer<String, String> consumer = consumerFactory.getKafkaConsumer();
+        consumer.subscribe(Arrays.asList("Test11"));
+        consumer.poll(0);//必须要 poll一次才行(不然不会send到server端)
+        Set<TopicPartition> assignments = consumer.assignment();
 
-        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
+        consumer.poll(0);//必须要 poll一次才行(不然不会send到server端)
         assignments.forEach(assignment -> {
-            OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
+            OffsetAndMetadata offsetAndMetadata = consumer.committed(assignment);
             log.info("offsetAndMetadata:{}", offsetAndMetadata);
         });
     }
@@ -148,9 +151,10 @@ public class ConsumeController {
             @RequestParam(name = "topic_pattern", defaultValue = ".*")
                     String topic_pattern
     ) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = ConsumerNoGroupService.getInstance(consumerService);
 
+
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
 
         Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
@@ -165,8 +169,8 @@ public class ConsumeController {
         /**
          * 获取最早和最晚的offset
          */
-        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getKafkaConsumerService().beginningOffsets(filterCollect);
-        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getKafkaConsumerService().endOffsets(filterCollect);
+        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
+        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
 
 
         filterCollect.forEach(topicPartition -> {
@@ -192,7 +196,7 @@ public class ConsumeController {
                 }
             }
         });
-        consumerService.close();
+        consumerFactory.getKafkaConsumer().close();
         return consumerTopicAndPartitionsAndOffsets;
     }
 
@@ -212,9 +216,11 @@ public class ConsumeController {
                     int partition
 
     ) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+
+
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
-                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
+                = consumerFactory.getConsumerHavGroupAssignService(topic, partition);
 
         TopicPartition topicPartition = new TopicPartition(topic, partition);
         Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
@@ -287,9 +293,9 @@ public class ConsumeController {
 
 
     ) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
-                = ConsumerHavGroupAssignService.getInstance(consumerService, topic, partition);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService =
+                consumerFactory.getConsumerHavGroupAssignService(topic, partition);
 
         TopicPartition topicPartition = new TopicPartition(topic, partition);
         Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
@@ -382,14 +388,12 @@ public class ConsumeController {
             @RequestParam(name = "seekOffset", defaultValue = "1")
                     long seekOffset
     ) {
-        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getInstance(bootstrap_servers, group_id, MapUtil.$());
-
-
-        ConsumerHavGroupSubscribeService<String, String> instance = ConsumerHavGroupSubscribeService.getInstance(consumerService, Arrays.asList(topic));
-        instance.getKafkaConsumerService().poll(0);
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, group_id, MapUtil.$());
+        ConsumerHavGroupSubscribeService<String, String> instance = consumerFactory.getConsumerHavGroupSubscribeService(Arrays.asList(topic));
+        instance.getConsumer().poll(0);
         instance.updatePartitionSubscribedOffset(new TopicPartition(topic, partition), seekOffset);
-        instance.getKafkaConsumerService().poll(0);
-        instance.getKafkaConsumerService().close();
+        instance.getConsumer().poll(0);
+        instance.getConsumer().close();
         return "调整结束";
     }
 

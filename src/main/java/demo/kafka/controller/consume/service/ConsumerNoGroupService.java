@@ -1,5 +1,6 @@
 package demo.kafka.controller.consume.service;
 
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
@@ -17,22 +18,22 @@ import java.util.*;
 
 public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
 
-    ConsumerNoGroupService(KafkaConsumerService kafkaConsumerService) {
-        super(kafkaConsumerService);
+    ConsumerNoGroupService(KafkaConsumer<K, V> kafkaConsumer) {
+        super(kafkaConsumer);
     }
 
     /**
-     * 构造函数(直接注入 kafkaConsumer)
+     * 获取实例 ( 不对外开放，由工厂来获取 )
      */
-    public static <K, V> ConsumerNoGroupService<K, V> getInstance(KafkaConsumerService kafkaConsumerService) {
-        return new ConsumerNoGroupService(kafkaConsumerService);
+    protected static <K, V> ConsumerNoGroupService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer) {
+        return new ConsumerNoGroupService(kafkaConsumer);
     }
 
     /**
      * 根据 获取全部的 Topic 和Partitions
      */
     public Map<String, List<PartitionInfo>> getAllTopicAndPartitions() {
-        return super.kafkaConsumerService.listTopics();
+        return super.consumer.listTopics();
 
     }
 
@@ -40,7 +41,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      * 获取全部的 topic
      */
     public Set<String> getAllTopics() {
-        return super.kafkaConsumerService.listTopics().keySet();
+        return super.consumer.listTopics().keySet();
 
     }
 
@@ -48,7 +49,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      * 根据 topic 获取 partitions
      */
     public Collection<PartitionInfo> getPartitionsByTopic(String topic) {
-        List<PartitionInfo> partitionInfos = super.kafkaConsumerService.partitionsFor(topic);
+        List<PartitionInfo> partitionInfos = super.consumer.partitionsFor(topic);
         return partitionInfos;
 
     }
@@ -93,7 +94,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Map<TopicPartition, Long> getLastPartitionOffset(String topic) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
-        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.consumer.endOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 
@@ -103,7 +104,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Map<TopicPartition, Long> getLastPartitionOffset(Collection<String> topics) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topics);
-        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.endOffsets(topicPartitions);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.consumer.endOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 
@@ -112,7 +113,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Long getLastPartitionOffset(TopicPartition topicPartition) {
         Map<TopicPartition, Long> topicPartitionLongMap =
-                super.kafkaConsumerService.endOffsets(Arrays.asList(topicPartition));
+                super.consumer.endOffsets(Arrays.asList(topicPartition));
         return topicPartitionLongMap.get(topicPartition);
     }
 
@@ -121,7 +122,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Map<TopicPartition, Long> getEarliestPartitionOffset(String topic) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topic);
-        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.beginningOffsets(topicPartitions);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.consumer.beginningOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 
@@ -130,7 +131,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Long getEarliestPartitionOffset(TopicPartition topicPartition) {
         Map<TopicPartition, Long> topicPartitionLongMap =
-                super.kafkaConsumerService.beginningOffsets(Arrays.asList(topicPartition));
+                super.consumer.beginningOffsets(Arrays.asList(topicPartition));
         return topicPartitionLongMap.get(topicPartition);
     }
 
@@ -139,7 +140,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      */
     public Map<TopicPartition, Long> getEarliestPartitionOffset(Collection<String> topics) {
         Collection<TopicPartition> topicPartitions = this.getTopicPartitionsByTopic(topics);
-        Map<TopicPartition, Long> topicPartitionLongMap = super.kafkaConsumerService.beginningOffsets(topicPartitions);
+        Map<TopicPartition, Long> topicPartitionLongMap = super.consumer.beginningOffsets(topicPartitions);
         return topicPartitionLongMap;
     }
 
@@ -155,7 +156,7 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
         });
 
         Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
-                = super.kafkaConsumerService.offsetsForTimes(timestampsToSearch);
+                = super.consumer.offsetsForTimes(timestampsToSearch);
         return topicPartitionOffsetAndTimestampMap;
     }
 }

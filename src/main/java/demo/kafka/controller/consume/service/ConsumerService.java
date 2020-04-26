@@ -1,17 +1,19 @@
 package demo.kafka.controller.consume.service;
 
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+
 public class ConsumerService<K, V> {
 
-    KafkaConsumerService<K, V> kafkaConsumerService;
+    KafkaConsumer<K, V> consumer;
 
-    ConsumerService(KafkaConsumerService<K, V> kafkaConsumerService) {
-        this.kafkaConsumerService = kafkaConsumerService;
+    ConsumerService(KafkaConsumer<K, V> consumer) {
+        this.consumer = consumer;
     }
 
     private ConsumerService() {
     }
 
-    public KafkaConsumerService<K, V> getKafkaConsumerService() {
-        return kafkaConsumerService;
+    public KafkaConsumer<K, V> getConsumer() {
+        return consumer;
     }
 }
