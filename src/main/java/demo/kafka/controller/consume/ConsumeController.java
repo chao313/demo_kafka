@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
+import demo.kafka.controller.response.EChartsVo;
 import demo.kafka.controller.response.OffsetRecordResponse;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -392,6 +393,92 @@ public class ConsumeController {
             JSONArray result = JSONObject.parseArray(JsonObject);
             return result;
         }
+
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据
+     */
+    @ApiOperation(value = "获取指定的offset(开始结束范围)的数据")
+    @GetMapping(value = "/getRecordEChartsByTopicPartitionOffset")
+    public Object getRecordEChartsByTopicPartitionOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition,
+            @ApiParam(value = "开始的offset")
+            @RequestParam(name = "startOffset", defaultValue = "0")
+                    int startOffset,
+            @ApiParam(value = "结束的offset")
+            @RequestParam(name = "endOffset", defaultValue = "0")
+                    int endOffset,
+            @ApiParam(value = "key的正则")
+            @RequestParam(name = "keyRegex", defaultValue = "")
+                    String keyRegex,
+            @ApiParam(value = "value的正则")
+            @RequestParam(name = "valueRegex", defaultValue = "")
+                    String valueRegex,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd,
+            @ApiParam(value = "画图的级别")
+            @RequestParam(name = "level", defaultValue = "DAY")
+                    String level
+    ) throws ParseException {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService =
+                consumerFactory.getConsumerHavGroupAssignService(topic, partition);
+
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        Long earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+
+        if (endOffset <= startOffset) {
+            throw new RuntimeException("endOffset应该>startOffset");
+        }
+
+        if (startOffset < earliestPartitionOffset) {
+            throw new RuntimeException("startOffset 应该>最早有效的offset:" + earliestPartitionOffset);
+        }
+
+        if (endOffset > lastPartitionOffset) {
+            throw new RuntimeException("endOffset 应该<最新的offset:" + lastPartitionOffset);
+        }
+
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+        }
+
+        EChartsVo recordECharts = consumerCommonService.getRecordECharts(bootstrap_servers,
+                topicPartition,
+                startOffset,
+                endOffset,
+                keyRegex,
+                valueRegex,
+                timeStartTimeStamp,
+                timeEndTimeStamp,
+                KafkaConsumerCommonService.Level.valueOf(level.toUpperCase()));
+
+
+        String JsonObject = new Gson().toJson(recordECharts);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
 
 
     }

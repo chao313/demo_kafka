@@ -160,4 +160,15 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
                 = super.consumer.offsetsForTimes(timestampsToSearch);
         return topicPartitionOffsetAndTimestampMap;
     }
+
+    /**
+     * 获取 topicPartition 的指定时间戳之后的第一个 offset
+     */
+    public OffsetAndTimestamp getFirstPartitionOffsetAfterTimestamp(TopicPartition topicPartition, Long timestamp) {
+        Map<TopicPartition, Long> timestampsToSearch = new HashMap<>();
+        timestampsToSearch.put(topicPartition, timestamp);
+        Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
+                = super.consumer.offsetsForTimes(timestampsToSearch);
+        return topicPartitionOffsetAndTimestampMap.get(topicPartition);
+    }
 }
