@@ -321,7 +321,7 @@ public class KafkaConsumerCommonService<K, V> {
                         /**
                          * 如果不存在就 赋值 0
                          */
-                        resultMap.put(dateStr, new Integer(0));
+                        resultMap.put(dateStr, new Integer(1));
                     }
                 }
             }
