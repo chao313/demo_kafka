@@ -289,14 +289,22 @@ public class KafkaConsumerCommonService<K, V> {
                 if (StringUtils.isBlank(keyRegex)) {
                     keyRegexFlag = true;
                 } else {
-                    String key = record.key();
-                    keyRegexFlag = key.matches(keyRegex);
+                    if (StringUtils.isBlank(record.key())) {
+                        keyRegexFlag = false;
+                    } else {
+                        String key = record.key();
+                        keyRegexFlag = key.matches(keyRegex);
+                    }
                 }
                 if (StringUtils.isBlank(valueRegex)) {
                     valueRegexFlag = true;
                 } else {
-                    String value = record.value();
-                    valueRegexFlag = value.matches(valueRegex);
+                    if (StringUtils.isBlank(record.value())) {
+                        valueRegexFlag = false;
+                    } else {
+                        String value = record.value();
+                        valueRegexFlag = value.matches(valueRegex);
+                    }
                 }
                 if (record.offset() > endOffset) {
                     /**
