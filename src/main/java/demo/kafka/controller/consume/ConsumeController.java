@@ -519,7 +519,6 @@ public class ConsumeController {
         if (!consumerGroupDescribe.state().equals(ConsumerGroupState.EMPTY)) {
             throw new RuntimeException("当前消费者的状态不是EMPTY,无法seek --> 当前状态是:" + consumerGroupDescribe.state());
         }
-
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, group_id, MapUtil.$());
         ConsumerHavGroupSubscribeService<String, String> instance = consumerFactory.getConsumerHavGroupSubscribeService(Arrays.asList(topic));
         instance.getConsumer().poll(0);
