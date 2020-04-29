@@ -3,6 +3,7 @@ package demo.kafka.controller.consume;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
+import demo.kafka.controller.admin.service.AdminFactory;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
@@ -14,10 +15,12 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 
@@ -505,7 +509,17 @@ public class ConsumeController {
             @ApiParam(value = "指定的 offset")
             @RequestParam(name = "seekOffset", defaultValue = "1")
                     long seekOffset
-    ) {
+    ) throws ExecutionException, InterruptedException {
+        /**
+         * seek前判断 : consumer的状态必须是 empty才行
+         */
+        ConsumerGroupDescription consumerGroupDescribe =
+                AdminFactory.getAdminConsumerGroupsService(bootstrap_servers).getConsumerGroupDescribe(group_id);
+
+        if (!consumerGroupDescribe.state().equals(ConsumerGroupState.EMPTY)) {
+            throw new RuntimeException("当前消费者的状态不是EMPTY,无法seek --> 当前状态是:" + consumerGroupDescribe.state());
+        }
+
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, group_id, MapUtil.$());
         ConsumerHavGroupSubscribeService<String, String> instance = consumerFactory.getConsumerHavGroupSubscribeService(Arrays.asList(topic));
         instance.getConsumer().poll(0);
