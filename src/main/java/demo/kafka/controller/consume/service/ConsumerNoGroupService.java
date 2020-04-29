@@ -1,6 +1,8 @@
 package demo.kafka.controller.consume.service;
 
 import demo.kafka.controller.consume.service.base.ConsumerService;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
@@ -170,5 +172,59 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
         Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
                 = super.consumer.offsetsForTimes(timestampsToSearch);
         return topicPartitionOffsetAndTimestampMap.get(topicPartition);
+    }
+
+    /**
+     * 获取record的最早的没有过期的Record (根据 TopicPartition)
+     */
+    public ConsumerRecord<K, V> getEarliestRecord(TopicPartition topicPartition) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        super.consumer.seek(topicPartition, earliestPartitionOffset);//调整到最新
+        ConsumerRecords<K, V> records = super.consumer.poll(0);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 获取record的最后的的没有过期的偏移量(根据 TopicPartition)
+     */
+    public ConsumerRecord<K, V> getLatestRecord(TopicPartition topicPartition) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = this.getLastPartitionOffset(topicPartition);
+        Long offset = earliestPartitionOffset;//默认为最新
+        if (lastPartitionOffset > earliestPartitionOffset) {
+            offset = lastPartitionOffset - 1;//移动到前一个
+        }
+        super.consumer.seek(topicPartition, offset);//调整到最后
+        ConsumerRecords<K, V> records = super.consumer.poll(0);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 根据 Offset Record
+     */
+    public ConsumerRecord<K, V> getRecordByOffset(TopicPartition topicPartition, Long offset) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = this.getLastPartitionOffset(topicPartition);
+
+        if (offset < earliestPartitionOffset) {
+            throw new RuntimeException("偏移量小于最小值:" + earliestPartitionOffset);
+        }
+
+        if (offset > lastPartitionOffset) {
+            throw new RuntimeException("偏移量大于最大值" + lastPartitionOffset);
+        }
+
+        super.consumer.seek(topicPartition, offset - 1);//调整到最后
+        ConsumerRecords<K, V> records = super.consumer.poll(0);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
     }
 }

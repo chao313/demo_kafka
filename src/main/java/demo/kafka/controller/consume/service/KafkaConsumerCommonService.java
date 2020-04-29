@@ -10,6 +10,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import scala.collection.immutable.HashMapBuilder;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
@@ -349,6 +350,109 @@ public class KafkaConsumerCommonService<K, V> {
         return builder.end();
     }
 
+    public enum LevelSimple {
+        YEAR("yyyy"),
+        MONTH("yyyyMM"),
+        DAY("yyyyMMdd"),
+        HOUR("yyyyMMddHH"),
+        MINUTES("yyyyMMddHHmm"),
+        SECONDS("yyyyMMddHHmmss"),
+        MILLISECOND("yyyyMMddHHmmssS");
+        private String format;
+
+        LevelSimple(String format) {
+            this.format = format;
+        }
+    }
+
+    /**
+     * 获取简单级别的画图
+     * 这里以时间来作为区分点！！！
+     */
+    public EChartsVo getRecordSimpleECharts(String bootstrap_servers,
+                                            TopicPartition topicPartition,
+                                            Long timeStart,
+                                            Long timeEnd,
+                                            LevelSimple levelSimple //画图的级别
+
+    ) throws ParseException {
+
+        /**
+         * 参数有
+         * 开始的时间
+         * 结束的时间
+         */
+
+
+        Map<String, Integer> resultMap = new HashMap<>();
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance(levelSimple.format);
+
+        /**
+         * 获取一个消费者实例
+         */
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        /**
+         * 根据时间来限制范围
+         */
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        /**获取最早的时间*/
+        ConsumerRecord<String, String> earliestRecord = consumerNoGroupService.getEarliestRecord(topicPartition);
+        /**获取最晚的时间*/
+        ConsumerRecord<String, String> latestRecord = consumerNoGroupService.getLatestRecord(topicPartition);
+
+        if (null != timeStart && earliestRecord.timestamp() > timeStart) {
+            /**
+             * 选择出范围小的时间
+             */
+            timeStart = earliestRecord.timestamp();
+        }
+
+        if (null != timeEnd && latestRecord.timestamp() < timeEnd) {
+            /**
+             * 选择出范围小的时间
+             */
+            timeEnd = latestRecord.timestamp();
+        }
+
+        Integer timeStartInt = Integer.valueOf(fastDateFormat.format(timeStart));//开始的时间 -> 用作循环
+        Integer timeEndInt = Integer.valueOf(fastDateFormat.format(timeEnd));//结束的时间 ->用作循环
+
+        Map<Integer, Long> timeToOffset = new HashMap<>();
+        for (int i = timeStartInt; i < timeEndInt; i++) {
+            OffsetAndTimestamp first
+                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i)).getTime());
+            OffsetAndTimestamp send
+                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i + 1)).getTime());
+            /**
+             * 获取时间节点的 偏移量
+             */
+            timeToOffset.put(i, offsetAndTimestamp.offset());
+        }
+        timeToOffset.put(timeStartInt - 1, earliestRecord.offset());//补全开始的偏移量
+        timeToOffset.put(timeEndInt + 1, latestRecord.offset());//补全开始的偏移量
+
+        timeToOffset.forEach((time, offset) -> {
+            if (time == timeStartInt - 1) {
+
+            }
+        });
+
+        /**
+         * 排序
+         */
+        resultMap = this.sortHashMap(resultMap);
+
+        EChartsVo builder = EChartsVo.builder("msg消费图", "msg消费", "bar");
+
+        builder.addXAxisData(resultMap.keySet());//添加x轴数据
+
+        builder.addSeriesData(resultMap.values());//添加x轴数据
+
+        instance.close();
+        return builder.end();
+    }
+
 
     /**
      * 获取 指定offset的 指定数量的 record
@@ -402,6 +506,32 @@ public class KafkaConsumerCommonService<K, V> {
             linkedHashMap.put(entry.getKey(), entry.getValue());
         }
         return linkedHashMap;
+    }
+
+    /**
+     * @param map
+     * @return
+     */
+    private List<Map.Entry<Integer, String>> sortHashMapToList(Map<Integer, String> map) {
+        //從HashMap中恢復entry集合，得到全部的鍵值對集合
+        Set<Map.Entry<Integer, String>> entey = map.entrySet();
+        //將Set集合轉為List集合，為了實用工具類的排序方法
+        List<Map.Entry<Integer, String>> list = new ArrayList<Map.Entry<String, Integer>>(entey);
+        //使用Collections工具類對list進行排序
+        Collections.sort(list, new Comparator<Map.Entry<Integer, String>>() {
+            @Override
+            public int compare(Map.Entry<Integer, String> o1, Map.Entry<Integer, String> o2) {
+                //按照age倒敘排列
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+        //創建一個HashMap的子類LinkedHashMap集合
+        List<Map.Entry<Integer, String>> result = new ArrayList<>();
+        //將list中的數據存入LinkedHashMap中
+        for (Map.Entry<Integer, String> entry : list) {
+            result.add(entry);
+        }
+        return result;
     }
 
 }

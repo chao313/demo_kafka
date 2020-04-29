@@ -81,6 +81,17 @@ public class AdminConsumerGroupsService extends AdminService {
     }
 
     /**
+     * 根据 groupids 获取详细描述 是map
+     * 参考 {@link #getConsumerGroupDescribe(String)}
+     * <p>
+     */
+    public Map<String, ConsumerGroupDescription> getConsumerGroupDescribe(Collection<String> groupIds) throws ExecutionException, InterruptedException {
+        DescribeConsumerGroupsResult describeConsumerGroupsResult = super.client.describeConsumerGroups(groupIds);
+        Map<String, ConsumerGroupDescription> stringConsumerGroupDescriptionMap = describeConsumerGroupsResult.all().get();
+        return stringConsumerGroupDescriptionMap;
+    }
+
+    /**
      * 根据 groupid 获取组的成员 和 每个成员订阅的主题
      */
     public Collection<MemberDescription> getConsumerMembersAndSubscribeTopicsByGroupId(String groupId) throws ExecutionException, InterruptedException {

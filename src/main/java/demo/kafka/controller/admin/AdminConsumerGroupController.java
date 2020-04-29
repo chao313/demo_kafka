@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin;
 
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -44,6 +45,14 @@ public class AdminConsumerGroupController {
         return consumerGroupIds;
     }
 
+    /**
+     * 获取全部的描述
+     *
+     * @param bootstrap_servers
+     * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     @GetMapping(value = "/getConsumerGroups")
     public Object getConsumerGroups(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
@@ -51,11 +60,11 @@ public class AdminConsumerGroupController {
                     String bootstrap_servers)
             throws ExecutionException, InterruptedException {
         AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
-        ListConsumerGroupsResult listConsumerGroupsResult = adminConsumerGroupsService.getConsumerGroups();
-        log.info("listConsumerGroupsResult:{}", listConsumerGroupsResult);
-        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(listConsumerGroupsResult);
-        JSONObject jsonObject = JSONObject.parseObject(JsonObject);
-        return jsonObject;
+        Collection<String> consumerGroupIds = adminConsumerGroupsService.getConsumerGroupIds();
+        Map<String, ConsumerGroupDescription> groupIdToConsumerGroupDescribes = adminConsumerGroupsService.getConsumerGroupDescribe(consumerGroupIds);
+        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(groupIdToConsumerGroupDescribes.values());//这边只取value
+        JSONArray result = JSONObject.parseArray(JsonObject);
+        return result;
     }
 
     @GetMapping(value = "/getConsumerGroupDescribe")
