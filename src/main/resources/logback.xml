@@ -64,9 +64,10 @@
 		</root>
 	</springProfile>
 
-	<springProfile name="prod">
+	<springProfile name="pro">
 		<!-- 日志输出级别 -->
 		<root level="INFO">
+			<appender-ref ref="STDOUT" />
 			<appender-ref ref="INFO_FILE" />
 			<appender-ref ref="ERROR_FILE" />
 		</root>

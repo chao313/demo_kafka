@@ -4,4 +4,4 @@ server:
 spring:
   name: demo-kafka
   profiles:
-    active: dev
+    active: pro
