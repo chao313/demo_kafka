@@ -48,6 +48,13 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
     /**
      * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
      */
+    public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer, TopicPartition topicPartition) {
+        return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topicPartition);
+    }
+
+    /**
+     * 构造函数(直接注入 kafkaConsumer 和 需要 assign的topic)
+     */
     public static <K, V> ConsumerHavGroupAssignService<K, V> getInstance(KafkaConsumer<K, V> kafkaConsumer, String topic, int partition) {
         return new ConsumerHavGroupAssignService<K, V>(kafkaConsumer, topic, partition);
     }
@@ -56,6 +63,11 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         super(kafkaConsumer);
         Collection<TopicPartition> topicPartitionsByTopic = super.getTopicPartitionsByTopic(topic);
         super.getConsumer().assign(topicPartitionsByTopic);
+    }
+
+    ConsumerHavGroupAssignService(KafkaConsumer<K, V> kafkaConsumer, TopicPartition topicPartition) {
+        super(kafkaConsumer);
+        super.getConsumer().assign(Arrays.asList(topicPartition));
     }
 
 
@@ -184,6 +196,62 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
         Set<TopicPartition> partitionToBeResume = this.getPartitionAssigned();
         this.getConsumer().resume(partitionToBeResume);
         return partitionToBeResume;
+    }
+
+    /**
+     * 获取record的最早的没有过期的Record (根据 TopicPartition)
+     */
+    public ConsumerRecord<K, V> getEarliestRecord(TopicPartition topicPartition) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        super.consumer.poll(1000);
+        super.consumer.seek(topicPartition, earliestPartitionOffset);//调整到最新
+        ConsumerRecords<K, V> records = super.consumer.poll(1000);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 获取record的最后的的没有过期的偏移量(根据 TopicPartition)
+     */
+    public ConsumerRecord<K, V> getLatestRecord(TopicPartition topicPartition) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        super.consumer.poll(1000);
+        Long lastPartitionOffset = this.getLastPartitionOffset(topicPartition);
+        Long offset = earliestPartitionOffset;//默认为最新
+        if (lastPartitionOffset > earliestPartitionOffset) {
+            offset = lastPartitionOffset - 1;//移动到前一个
+        }
+        super.consumer.seek(topicPartition, offset);//调整到最后
+        ConsumerRecords<K, V> records = super.consumer.poll(1000);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 根据 Offset Record
+     */
+    public ConsumerRecord<K, V> getRecordByOffset(TopicPartition topicPartition, Long offset) {
+        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
+        Long lastPartitionOffset = this.getLastPartitionOffset(topicPartition);
+
+        if (offset < earliestPartitionOffset) {
+            throw new RuntimeException("偏移量小于最小值:" + earliestPartitionOffset);
+        }
+
+        if (offset > lastPartitionOffset) {
+            throw new RuntimeException("偏移量大于最大值" + lastPartitionOffset);
+        }
+
+        super.consumer.seek(topicPartition, offset - 1);//调整到最后
+        ConsumerRecords<K, V> records = super.consumer.poll(0);
+        if (records.records(topicPartition).size() > 0) {
+            return records.records(topicPartition).get(0);
+        }
+        return null;
     }
 
 }

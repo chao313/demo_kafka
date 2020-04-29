@@ -238,7 +238,7 @@ public class KafkaConsumerCommonService<K, V> {
     ) {
 
 
-        Map<String, Integer> resultMap = new HashMap<>();
+        Map<String, Long> resultMap = new HashMap<>();
         FastDateFormat fastDateFormat = FastDateFormat.getInstance(level.format);
 
 
@@ -324,13 +324,13 @@ public class KafkaConsumerCommonService<K, V> {
                         /**
                          * 如果存在就 +1
                          */
-                        Integer sum = resultMap.get(dateStr) + 1;
+                        Long sum = resultMap.get(dateStr) + 1;
                         resultMap.put(dateStr, sum);
                     } else {
                         /**
                          * 如果不存在就 赋值 0
                          */
-                        resultMap.put(dateStr, new Integer(1));
+                        resultMap.put(dateStr, new Long(1));
                     }
                 }
             }
@@ -351,17 +351,19 @@ public class KafkaConsumerCommonService<K, V> {
     }
 
     public enum LevelSimple {
-        YEAR("yyyy"),
-        MONTH("yyyyMM"),
-        DAY("yyyyMMdd"),
-        HOUR("yyyyMMddHH"),
-        MINUTES("yyyyMMddHHmm"),
-        SECONDS("yyyyMMddHHmmss"),
-        MILLISECOND("yyyyMMddHHmmssS");
+        YEAR("yyyy", "yyyy"),
+        MONTH("yyyyMM", "yyyy-MM"),
+        DAY("yyyyMMdd", "yyyy-MM-dd"),
+        HOUR("yyyyMMddHH", "yyyy-MM-dd HH"),
+        MINUTES("yyyyMMddHHmm", "yyyy-MM-dd HH:mm"),
+        SECONDS("yyyyMMddHHmmss", "yyyy-MM-dd HH:mm:ss"),
+        MILLISECOND("yyyyMMddHHmmssS", "yyyy-MM-dd HH:mm:ss.S");
         private String format;
+        private String toFormat;
 
-        LevelSimple(String format) {
+        LevelSimple(String format, String toFormat) {
             this.format = format;
+            this.toFormat = toFormat;
         }
     }
 
@@ -384,27 +386,36 @@ public class KafkaConsumerCommonService<K, V> {
          */
 
 
-        Map<String, Integer> resultMap = new HashMap<>();
+        Map<String, Long> resultMap = new HashMap<>();
         FastDateFormat fastDateFormat = FastDateFormat.getInstance(levelSimple.format);
+        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.toFormat);
 
         /**
          * 获取一个消费者实例
          */
         ConsumerFactory<String, String> consumerFactory
-                = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+                = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$(
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
+                ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"));
         /**
          * 根据时间来限制范围
          */
         ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = consumerFactory.getConsumerHavGroupAssignService(topicPartition);
+
         /**获取最早的时间*/
-        ConsumerRecord<String, String> earliestRecord = consumerNoGroupService.getEarliestRecord(topicPartition);
+        ConsumerRecord<String, String> earliestRecord = consumerHavGroupAssignService.getEarliestRecord(topicPartition);
         /**获取最晚的时间*/
-        ConsumerRecord<String, String> latestRecord = consumerNoGroupService.getLatestRecord(topicPartition);
+        ConsumerRecord<String, String> latestRecord = consumerHavGroupAssignService.getLatestRecord(topicPartition);
 
         if (null != timeStart && earliestRecord.timestamp() > timeStart) {
             /**
              * 选择出范围小的时间
              */
+            timeStart = earliestRecord.timestamp();
+        } else if (null == timeStart) {
             timeStart = earliestRecord.timestamp();
         }
 
@@ -413,43 +424,69 @@ public class KafkaConsumerCommonService<K, V> {
              * 选择出范围小的时间
              */
             timeEnd = latestRecord.timestamp();
+        } else if (null == timeEnd) {
+            timeEnd = latestRecord.timestamp();
         }
 
-        Integer timeStartInt = Integer.valueOf(fastDateFormat.format(timeStart));//开始的时间 -> 用作循环
-        Integer timeEndInt = Integer.valueOf(fastDateFormat.format(timeEnd));//结束的时间 ->用作循环
+        //(指定区间)最开始的 offset
+        Long startOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeStart);
+        //(指定区间)最晚的 offset
+        Long endOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeEnd);
 
-        Map<Integer, Long> timeToOffset = new HashMap<>();
-        for (int i = timeStartInt; i < timeEndInt; i++) {
+
+        Long timeStartInt = Long.valueOf(fastDateFormat.format(timeStart));//开始的时间 -> 用作循环
+        Long timeEndInt = Long.valueOf(fastDateFormat.format(timeEnd));//结束的时间 ->用作循环
+
+        Map<Long, Long> timeToOffset = new HashMap<>();
+        for (Long i = timeStartInt; i < timeEndInt; i++) {
+            /**
+             * 从格式化的前一个开始计算 但是不算 全部向前移动一位
+             */
             OffsetAndTimestamp first
                     = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i)).getTime());
-            OffsetAndTimestamp send
+            OffsetAndTimestamp second
                     = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i + 1)).getTime());
-            /**
-             * 获取时间节点的 偏移量
-             */
-            timeToOffset.put(i, offsetAndTimestamp.offset());
-        }
-        timeToOffset.put(timeStartInt - 1, earliestRecord.offset());//补全开始的偏移量
-        timeToOffset.put(timeEndInt + 1, latestRecord.offset());//补全开始的偏移量
 
-        timeToOffset.forEach((time, offset) -> {
-            if (time == timeStartInt - 1) {
+            if (i == timeStartInt) {
+                /**
+                 * 如果是第一个 计算开始到第一个的数量
+                 */
+                timeToOffset.put(i, second.offset() - startOffset);
 
+            } else if (i == timeEndInt) {
+                /**
+                 * 如果是最后一个 计算开始到第一个的数量
+                 */
+                timeToOffset.put(i, endOffset - startOffset);
+
+            } else {
+                /**
+                 * 获取时间节点的 偏移量
+                 */
+                timeToOffset.put(i, second.offset() - first.offset());
             }
-        });
+
+
+        }
+        for (Map.Entry<Long, Long> entry : timeToOffset.entrySet()) {
+            Long time = entry.getKey();
+            Long offset = entry.getValue();
+            resultMap.put(fastDateToFormat.format(fastDateFormat.parse(String.valueOf(time)).getTime()), offset);
+        }
+
 
         /**
          * 排序
          */
         resultMap = this.sortHashMap(resultMap);
 
-        EChartsVo builder = EChartsVo.builder("msg消费图", "msg消费", "bar");
+        EChartsVo builder = EChartsVo.builder("msg图", "msg", "bar");
 
         builder.addXAxisData(resultMap.keySet());//添加x轴数据
 
         builder.addSeriesData(resultMap.values());//添加x轴数据
 
-        instance.close();
+        consumerNoGroupService.getConsumer().close();
         return builder.end();
     }
 
@@ -486,52 +523,27 @@ public class KafkaConsumerCommonService<K, V> {
         return records.records(topicPartition);
     }
 
-    private Map<String, Integer> sortHashMap(Map<String, Integer> map) {
+    private Map<String, Long> sortHashMap(Map<String, Long> map) {
         //從HashMap中恢復entry集合，得到全部的鍵值對集合
-        Set<Map.Entry<String, Integer>> entey = map.entrySet();
+        Set<Map.Entry<String, Long>> entey = map.entrySet();
         //將Set集合轉為List集合，為了實用工具類的排序方法
-        List<Map.Entry<String, Integer>> list = new ArrayList<Map.Entry<String, Integer>>(entey);
+        List<Map.Entry<String, Long>> list = new ArrayList<Map.Entry<String, Long>>(entey);
         //使用Collections工具類對list進行排序
-        Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
+        Collections.sort(list, new Comparator<Map.Entry<String, Long>>() {
             @Override
-            public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+            public int compare(Map.Entry<String, Long> o1, Map.Entry<String, Long> o2) {
                 //按照age倒敘排列
                 return o1.getKey().compareTo(o2.getKey());
             }
         });
         //創建一個HashMap的子類LinkedHashMap集合
-        LinkedHashMap<String, Integer> linkedHashMap = new LinkedHashMap<String, Integer>();
+        LinkedHashMap<String, Long> linkedHashMap = new LinkedHashMap<>();
         //將list中的數據存入LinkedHashMap中
-        for (Map.Entry<String, Integer> entry : list) {
+        for (Map.Entry<String, Long> entry : list) {
             linkedHashMap.put(entry.getKey(), entry.getValue());
         }
         return linkedHashMap;
     }
 
-    /**
-     * @param map
-     * @return
-     */
-    private List<Map.Entry<Integer, String>> sortHashMapToList(Map<Integer, String> map) {
-        //從HashMap中恢復entry集合，得到全部的鍵值對集合
-        Set<Map.Entry<Integer, String>> entey = map.entrySet();
-        //將Set集合轉為List集合，為了實用工具類的排序方法
-        List<Map.Entry<Integer, String>> list = new ArrayList<Map.Entry<String, Integer>>(entey);
-        //使用Collections工具類對list進行排序
-        Collections.sort(list, new Comparator<Map.Entry<Integer, String>>() {
-            @Override
-            public int compare(Map.Entry<Integer, String> o1, Map.Entry<Integer, String> o2) {
-                //按照age倒敘排列
-                return o1.getKey().compareTo(o2.getKey());
-            }
-        });
-        //創建一個HashMap的子類LinkedHashMap集合
-        List<Map.Entry<Integer, String>> result = new ArrayList<>();
-        //將list中的數據存入LinkedHashMap中
-        for (Map.Entry<Integer, String> entry : list) {
-            result.add(entry);
-        }
-        return result;
-    }
 
 }

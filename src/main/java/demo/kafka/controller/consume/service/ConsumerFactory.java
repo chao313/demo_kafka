@@ -2,6 +2,7 @@ package demo.kafka.controller.consume.service;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 
 import java.util.Collection;
 import java.util.Map;
@@ -39,6 +40,25 @@ public class ConsumerFactory<K, V> {
      */
     public ConsumerHavGroupAssignService<K, V> getConsumerHavGroupAssignService(String topic) {
         return ConsumerHavGroupAssignService.getInstance(this.kafkaConsumer, topic);
+    }
+
+    /**
+     * 获取 分配 的 ConsumerService
+     *
+     * @return
+     */
+    public ConsumerHavGroupAssignService<K, V> getConsumerHavGroupAssignService(TopicPartition topicPartition) {
+        return ConsumerHavGroupAssignService.getInstance(this.kafkaConsumer, topicPartition);
+    }
+
+
+    /**
+     * 获取 分配 的 ConsumerService
+     *
+     * @return
+     */
+    public ConsumerHavGroupAssignService<K, V> getConsumerHavGroupAssignService(KafkaConsumer<K, V> kafkaConsumer, String topic, int partition) {
+        return ConsumerHavGroupAssignService.getInstance(this.kafkaConsumer, topic, partition);
     }
 
     /**

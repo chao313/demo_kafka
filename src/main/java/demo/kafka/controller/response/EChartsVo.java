@@ -28,7 +28,7 @@ public class EChartsVo {
     public class Series {
         String name;
         String type;
-        Collection<Integer> data;
+        Collection<Long> data;
     }
 
     @Data
@@ -78,7 +78,7 @@ public class EChartsVo {
     /**
      * 添加seriesData
      */
-    public EChartsVo addSeriesData(Collection<Integer> data) {
+    public EChartsVo addSeriesData(Collection<Long> data) {
         this.series.data = data;
         return this;
     }

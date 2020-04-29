@@ -48,7 +48,7 @@ public class AdminController {
             throws ExecutionException, InterruptedException {
 
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService =   consumerFactory.getConsumerNoGroupService();
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
 
         AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
 
@@ -104,6 +104,68 @@ public class AdminController {
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
     }
+
+    @ApiOperation(value = "获取消费偏移量和真实的偏移量(提供分区)")
+    @GetMapping(value = "/getConsumerGroupOffsetsAndRealOffsetByTopicAndPartition")
+    public Object getConsumerGroupOffsetsAndRealOffsetByTopicAndPartition(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @RequestParam(name = "group", defaultValue = "common_imp_db_test")
+                    String group,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition
+    )
+            throws ExecutionException, InterruptedException {
+
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+
+        AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
+
+
+        Collection<TopicPartition> allTopicPartitions = Arrays.asList(new TopicPartition(topic, partition));
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+        for (TopicPartition topicPartition : allTopicPartitions) {
+            metadataMap.putAll(adminConsumerGroupsService
+                    .getConsumerGroupOffsets(group, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(topicPartition))));
+        }
+        Map<TopicPartition, OffsetAndMetadata> metadataResultMap = new HashMap<>();
+        metadataMap.forEach((topicPartition, offsetAndMetadata) -> {
+            if (null != offsetAndMetadata) {
+                metadataResultMap.put(topicPartition, offsetAndMetadata);
+            }
+        });
+        metadataMap.clear();
+        metadataMap.putAll(metadataResultMap);
+
+        Map<TopicPartition, Long> beginningOffsets
+                = consumerNoGroupService.getConsumer().beginningOffsets(metadataMap.keySet());
+        Map<TopicPartition, Long> endOffsets
+                = consumerNoGroupService.getConsumer().endOffsets(metadataMap.keySet());
+
+        /**
+         * 处理结果
+         */
+        Map<TopicPartition, ConsumerGroupOffsetsAndRealOffset> resultOffsetMap = new HashMap<>();//结果
+        metadataMap.keySet().forEach(topicPartition -> {
+            ConsumerGroupOffsetsAndRealOffset consumerGroupOffsetsAndRealOffset = new ConsumerGroupOffsetsAndRealOffset();
+            consumerGroupOffsetsAndRealOffset.setEndOffset(endOffsets.get(topicPartition));
+            consumerGroupOffsetsAndRealOffset.setStartOffset(beginningOffsets.get(topicPartition));
+            consumerGroupOffsetsAndRealOffset.setOffsetAndMetadata(metadataMap.get(topicPartition));
+            consumerGroupOffsetsAndRealOffset.setTopic(topicPartition.topic());
+            consumerGroupOffsetsAndRealOffset.setPartition(topicPartition.partition());
+            resultOffsetMap.put(topicPartition, consumerGroupOffsetsAndRealOffset);
+        });
+        log.info("listConsumerGroupsResult:{}", resultOffsetMap);
+        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(resultOffsetMap);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+    }
+
 
 }
 
