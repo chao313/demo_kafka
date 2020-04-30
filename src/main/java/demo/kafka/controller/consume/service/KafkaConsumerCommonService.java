@@ -1,9 +1,11 @@
 package demo.kafka.controller.consume.service;
 
 import demo.kafka.controller.response.EChartsVo;
+import demo.kafka.controller.response.LineEChartsVo;
 import demo.kafka.util.MapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.PartitionInfo;
@@ -340,7 +342,7 @@ public class KafkaConsumerCommonService<K, V> {
          */
         resultMap = this.sortHashMap(resultMap);
 
-        EChartsVo builder = EChartsVo.builder("msg消费图", "msg消费", "bar");
+        EChartsVo builder = EChartsVo.builder("bar");
 
         builder.addXAxisData(resultMap.keySet());//添加x轴数据
 
@@ -350,20 +352,23 @@ public class KafkaConsumerCommonService<K, V> {
         return builder.end();
     }
 
+
     public enum LevelSimple {
-        YEAR("yyyy", "yyyy"),
-        MONTH("yyyyMM", "yyyy-MM"),
-        DAY("yyyyMMdd", "yyyy-MM-dd"),
-        HOUR("yyyyMMddHH", "yyyy-MM-dd HH"),
-        MINUTES("yyyyMMddHHmm", "yyyy-MM-dd HH:mm"),
-        SECONDS("yyyyMMddHHmmss", "yyyy-MM-dd HH:mm:ss"),
-        MILLISECOND("yyyyMMddHHmmssS", "yyyy-MM-dd HH:mm:ss.S");
+        YEAR("yyyy", "yyyy", Calendar.YEAR),
+        MONTH("yyyyMM", "yyyy-MM", Calendar.MONTH),
+        DAY("yyyyMMdd", "yyyy-MM-dd", Calendar.DAY_OF_MONTH),
+        HOUR("yyyyMMddHH", "yyyy-MM-dd HH", Calendar.HOUR_OF_DAY),
+        MINUTES("yyyyMMddHHmm", "yyyy-MM-dd HH:mm", Calendar.SECOND),
+        SECONDS("yyyyMMddHHmmss", "yyyy-MM-dd HH:mm:ss", Calendar.MILLISECOND),
+        MILLISECOND("yyyyMMddHHmmssS", "yyyy-MM-dd HH:mm:ss.S", Calendar.ZONE_OFFSET);
         private String format;
         private String toFormat;
+        private Integer field;
 
-        LevelSimple(String format, String toFormat) {
+        LevelSimple(String format, String toFormat, Integer field) {
             this.format = format;
             this.toFormat = toFormat;
+            this.field = field;
         }
     }
 
@@ -378,18 +383,13 @@ public class KafkaConsumerCommonService<K, V> {
                                             LevelSimple levelSimple //画图的级别
 
     ) throws ParseException {
-
-        /**
-         * 参数有
-         * 开始的时间
-         * 结束的时间
-         */
-
-
-        Map<String, Long> resultMap = new HashMap<>();
-        FastDateFormat fastDateFormat = FastDateFormat.getInstance(levelSimple.format);
         FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.toFormat);
-
+        if (null != timeStart && null != timeEnd && timeStart > timeEnd) {
+            throw new RuntimeException("选择的start日期不能大于end日期:"
+                    + "start:" + fastDateToFormat.format(new Date(timeStart))
+                    + "end  :" + fastDateToFormat.format(new Date(timeEnd))
+            );
+        }
         /**
          * 获取一个消费者实例
          */
@@ -428,59 +428,242 @@ public class KafkaConsumerCommonService<K, V> {
             timeEnd = latestRecord.timestamp();
         }
 
-        //(指定区间)最开始的 offset
-        Long startOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeStart);
-        //(指定区间)最晚的 offset
+        /**
+         * !!!!开始和结束的区间！！！
+         */
+        Long beginOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeStart);
         Long endOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeEnd);
+        //
+
+        //这里已经算好了 开始和结束的时机 下面就是累计相加
+
+        Date timeStartDate = new Date(timeStart);
+        Date timeEndDate = new Date(timeEnd);
 
 
-        Long timeStartInt = Long.valueOf(fastDateFormat.format(timeStart));//开始的时间 -> 用作循环
-        Long timeEndInt = Long.valueOf(fastDateFormat.format(timeEnd));//结束的时间 ->用作循环
+        Date firstNode = DateUtils.ceiling(timeStartDate, levelSimple.field);//有效的第一个节点
+        Date endNode = DateUtils.truncate(timeEndDate, levelSimple.field);//有效的最后一个节点
 
-        Map<Long, Long> timeToOffset = new HashMap<>();
-        for (Long i = timeStartInt; i < timeEndInt; i++) {
+        Calendar calendarStart = Calendar.getInstance();
+        calendarStart.setTime(firstNode);
+        Calendar calendarEnd = Calendar.getInstance();
+        calendarEnd.setTime(endNode);
+
+        /**
+         * 记录 beforeNode 和  afterNode 的差值， 并附在 before 的可以上
+         */
+        Map<String, Long> resultMap = new HashMap<>();
+
+
+        if (endNode.after(firstNode)) {
             /**
-             * 从格式化的前一个开始计算 但是不算 全部向前移动一位
+             * 如果最后的节点 > 最新的节点(正常)
              */
-            OffsetAndTimestamp first
-                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i)).getTime());
-            OffsetAndTimestamp second
-                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, fastDateFormat.parse(String.valueOf(i + 1)).getTime());
+            /**
+             * 补全第一个的数据
+             */
+            String keyFirst = fastDateToFormat.format(DateUtils.truncate(timeStartDate, levelSimple.field));//key取第一个节点
+            Long afterFirstNode = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
+            resultMap.put(keyFirst, afterFirstNode - beginOffset);
 
-            if (i == timeStartInt) {
-                /**
-                 * 如果是第一个 计算开始到第一个的数量
-                 */
-                timeToOffset.put(i, second.offset() - startOffset);
-
-            } else if (i == timeEndInt) {
-                /**
-                 * 如果是最后一个 计算开始到第一个的数量
-                 */
-                timeToOffset.put(i, endOffset - startOffset);
-
-            } else {
-                /**
-                 * 获取时间节点的 偏移量
-                 */
-                timeToOffset.put(i, second.offset() - first.offset());
+            /**
+             * 补全中间的节点
+             */
+            while (calendarStart.before(calendarEnd)) {
+                String key = fastDateToFormat.format(calendarStart.getTime());
+                Long beforeNode = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
+                /** 遍历 移动 直到和calendarEnd相同 */
+                calendarStart.add(levelSimple.field, 1);//移到到下一个节点
+                Long afterNode = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
+                resultMap.put(key, afterNode - beforeNode);
             }
-
-
+            /**
+             * 补全最后的数据
+             */
+            String lastKey = fastDateToFormat.format(calendarEnd.getTime());
+            Long beforeNode = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
+            resultMap.put(lastKey, endOffset - beforeNode);
+        } else if (endNode.before(firstNode)) {
+            /**
+             * 如果  endNode 在firstNode之前的（说明取值在节点之间）
+             * -> 取提供发 end - first 归于 小的节点(endNode)
+             * 类似 ___|__o___o___|___
+             */
+            String key = fastDateToFormat.format(DateUtils.truncate(timeEndDate, levelSimple.field));
+            resultMap.put(key, endOffset - beginOffset);
+        } else if (endNode.compareTo(firstNode) == 0) {
+            /**
+             * 如果  endNode 和 firstNode相等 （代表分别取前后的节点，这里的是两个节点）
+             * ->  取值中间节点(大归大，小归小)
+             * 类似 ____o____|____o_____
+             */
+            Long middleNodeOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, endNode.getTime());
+            String firstKey = fastDateToFormat.format(DateUtils.truncate(timeStartDate, levelSimple.field));
+            String endKey = fastDateToFormat.format(DateUtils.ceiling(timeEndDate, levelSimple.field));//取
+            resultMap.put(firstKey, middleNodeOffset - beginOffset);
+            resultMap.put(endKey, endOffset - middleNodeOffset);
         }
-        for (Map.Entry<Long, Long> entry : timeToOffset.entrySet()) {
-            Long time = entry.getKey();
-            Long offset = entry.getValue();
-            resultMap.put(fastDateToFormat.format(fastDateFormat.parse(String.valueOf(time)).getTime()), offset);
-        }
-
-
         /**
          * 排序
          */
         resultMap = this.sortHashMap(resultMap);
 
-        EChartsVo builder = EChartsVo.builder("msg图", "msg", "bar");
+        EChartsVo builder = EChartsVo.builder("bar");
+
+        builder.addXAxisData(resultMap.keySet());//添加x轴数据
+
+        builder.addSeriesData(resultMap.values());//添加x轴数据
+
+        consumerNoGroupService.getConsumer().close();
+        return builder.end();
+    }
+
+    /**
+     * 获取简单级别的画图(折线图)
+     * 这里以时间来作为区分点！！！
+     */
+    public LineEChartsVo getRecordLineECharts(String bootstrap_servers,
+                                              TopicPartition topicPartition,
+                                              Long timeStart,
+                                              Long timeEnd,
+                                              LevelSimple levelSimple //画图的级别
+
+    ) throws ParseException {
+//        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.toFormat);
+        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.MINUTES.toFormat);
+        FastDateFormat fastMINUTESDateToFormat = FastDateFormat.getInstance(levelSimple.MINUTES.toFormat);//格式化 收尾使用
+        if (null != timeStart && null != timeEnd && timeStart > timeEnd) {
+            throw new RuntimeException("选择的start日期不能大于end日期:"
+                    + "start:" + fastDateToFormat.format(new Date(timeStart))
+                    + "end  :" + fastDateToFormat.format(new Date(timeEnd))
+            );
+        }
+        /**
+         * 获取一个消费者实例
+         */
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$(
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
+                ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1"));
+        /**
+         * 根据时间来限制范围
+         */
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = consumerFactory.getConsumerHavGroupAssignService(topicPartition);
+
+        /**获取最早的时间*/
+        ConsumerRecord<String, String> earliestRecord = consumerHavGroupAssignService.getEarliestRecord(topicPartition);
+        /**获取最晚的时间*/
+        ConsumerRecord<String, String> latestRecord = consumerHavGroupAssignService.getLatestRecord(topicPartition);
+
+        if (null != timeStart && earliestRecord.timestamp() > timeStart) {
+            /**
+             * 选择出范围小的时间
+             */
+            timeStart = earliestRecord.timestamp();
+        } else if (null == timeStart) {
+            timeStart = earliestRecord.timestamp();
+        }
+
+        if (null != timeEnd && latestRecord.timestamp() < timeEnd) {
+            /**
+             * 选择出范围小的时间
+             */
+            timeEnd = latestRecord.timestamp();
+        } else if (null == timeEnd) {
+            timeEnd = latestRecord.timestamp();
+        }
+
+        /**
+         * !!!!开始和结束的区间！！！
+         */
+        Long beginOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeStart);
+        Long endOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, timeEnd);
+        //
+
+        //这里已经算好了 开始和结束的时机 下面就是累计相加
+
+        Date timeStartDate = new Date(timeStart);
+        Date timeEndDate = new Date(timeEnd);
+
+
+        Date firstNode = DateUtils.ceiling(timeStartDate, levelSimple.field);//有效的第一个节点
+        Date endNode = DateUtils.truncate(timeEndDate, levelSimple.field);//有效的最后一个节点
+
+        Calendar calendarStart = Calendar.getInstance();
+        calendarStart.setTime(firstNode);
+        Calendar calendarEnd = Calendar.getInstance();
+        calendarEnd.setTime(endNode);
+
+        /**
+         * 记录 beforeNode 和  afterNode 的差值， 并附在 before 的可以上
+         */
+        Map<String, Long> resultMap = new HashMap<>();
+
+
+        if (endNode.after(firstNode)) {
+            /**
+             * 补全第一个的数据
+             */
+            String keyBeforeFirst = fastMINUTESDateToFormat.format(new Date(timeStart));//key取第一个节点
+            resultMap.put(keyBeforeFirst, beginOffset);
+            /**
+             * 补全中间的节点
+             */
+            while (!calendarStart.after(calendarEnd)) {
+                String key = fastDateToFormat.format(calendarStart.getTime());
+                Long node = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
+                resultMap.put(key, node);
+                /** 遍历 移动 直到和calendarEnd相同 */
+                calendarStart.add(levelSimple.field, 1);//移到到下一个节点
+            }
+
+            /**
+             * 补全最后一个的数据
+             */
+            String keyAfterEnd = fastMINUTESDateToFormat.format(new Date(timeEnd));//key取第一个节点
+            resultMap.put(keyAfterEnd, endOffset);
+        } else if (endNode.before(firstNode)) {
+            /**
+             * 如果  endNode 在firstNode之前的（说明取值在节点之间）
+             * -> 取提供发 end - first 归于 小的节点(endNode)
+             * 类似 ___|__o___o___|___
+             */
+            /**
+             * 补全第一个的数据
+             */
+            String keyBeforeFirst = fastMINUTESDateToFormat.format(new Date(timeStart));//key取第一个节点
+            resultMap.put(keyBeforeFirst, beginOffset);
+            /**
+             * 补全最后一个的数据
+             */
+            String keyAfterEnd = fastMINUTESDateToFormat.format(new Date(timeEnd));//key取第一个节点
+            resultMap.put(keyAfterEnd, endOffset);
+        } else if (endNode.compareTo(firstNode) == 0) {
+            /**
+             * 如果  endNode 和 firstNode相等 （代表分别取前后的节点，这里的是两个节点）
+             * ->  取值中间节点(大归大，小归小)
+             * 类似 ____o____|____o_____
+             */
+            /** 补全第一个的数据*/
+            String keyBeforeFirst = fastMINUTESDateToFormat.format(new Date(timeStart));//key取第一个节点
+            resultMap.put(keyBeforeFirst, beginOffset);
+            /**补全最后一个的数据*/
+            String keyAfterEnd = fastMINUTESDateToFormat.format(new Date(timeEnd));//key取第一个节点
+            resultMap.put(keyAfterEnd, endOffset);
+            /**补全中间节点*/
+            Long middleNodeOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, endNode.getTime());
+            String key = fastDateToFormat.format(endNode.getTime());
+            resultMap.put(key, middleNodeOffset);
+        }
+        /**
+         * 排序
+         */
+        resultMap = this.sortHashMap(resultMap);
+
+        LineEChartsVo builder = LineEChartsVo.builder();
 
         builder.addXAxisData(resultMap.keySet());//添加x轴数据
 
@@ -508,12 +691,10 @@ public class KafkaConsumerCommonService<K, V> {
          * 分配 topicPartition
          */
         instance.assign(Arrays.asList(topicPartition));
-
         /**
          * 设置偏移量
          */
         instance.seek(topicPartition, offset);
-
         /**
          * 获取一条记录
          */

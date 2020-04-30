@@ -38,6 +38,7 @@ public class EChartsVo {
 
     @Data
     public class Tooltip {
+        private String trigger = "axis";
     }
 
     @Data
@@ -56,10 +57,8 @@ public class EChartsVo {
     private YAxis yAxis = new YAxis();
     private Series series = new Series();
 
-    public static EChartsVo builder(String title, String seriesName, String seriesType) {
+    public static EChartsVo builder(String seriesType) {
         EChartsVo eChartsVo = new EChartsVo();
-        eChartsVo.title.text = title;
-        eChartsVo.series.name = seriesName;
         eChartsVo.series.type = seriesType;
         return eChartsVo;
     }

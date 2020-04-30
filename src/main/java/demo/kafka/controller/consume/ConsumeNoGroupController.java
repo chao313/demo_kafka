@@ -5,12 +5,17 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
+import demo.kafka.controller.consume.service.ConsumerHavGroupAssignService;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
+import demo.kafka.controller.consume.service.KafkaConsumerCommonService;
+import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
+import demo.kafka.controller.response.TopicPartitionEffectOffsetVo;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
@@ -20,10 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @Slf4j
@@ -144,6 +146,41 @@ public class ConsumeNoGroupController {
         String JsonObject = new Gson().toJson(partitionOffsetBeforeTimestamp);
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
+    }
+
+    /**
+     * 获取partition的详细的信息
+     */
+    @ApiOperation(value = "获取 partition 的有效的Offset(开始结束)")
+    @GetMapping(value = "/getTopicPartitionEffectOffset")
+    public Object getTopicPartitionEffectOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition
+
+    ) {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = consumerFactory.getConsumerHavGroupAssignService(topic, partition);
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        Long earliestOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(topicPartition);
+        Long lastOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
+
+
+        TopicPartitionEffectOffsetVo vo = new TopicPartitionEffectOffsetVo();
+        vo.setTopic(topic);
+        vo.setPartition(partition);
+        vo.setEarliestOffset(earliestOffset);
+        vo.setLastOffset(lastOffset);
+        String JsonObject = new Gson().toJson(vo);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
     }
 
 

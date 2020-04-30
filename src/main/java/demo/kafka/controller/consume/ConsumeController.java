@@ -8,6 +8,7 @@ import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
 import demo.kafka.controller.response.EChartsVo;
+import demo.kafka.controller.response.LineEChartsVo;
 import demo.kafka.controller.response.OffsetRecordResponse;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -526,6 +527,55 @@ public class ConsumeController {
             timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
         }
         EChartsVo recordECharts = consumerCommonService.getRecordSimpleECharts(bootstrap_servers,
+                topicPartition,
+                timeStartTimeStamp,
+                timeEndTimeStamp,
+                KafkaConsumerCommonService.LevelSimple.valueOf(level.toUpperCase()));
+        String JsonObject = new Gson().toJson(recordECharts);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据
+     */
+    @ApiOperation(value = "获取指定的offset(开始结束范围)的数据（简单的，没有key和value的过滤）")
+    @GetMapping(value = "/getRecordLineEChartsByTopicPartitionOffset")
+    public Object getRecordLineEChartsByTopicPartitionOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd,
+            @ApiParam(value = "画图的级别")
+            @RequestParam(name = "level", defaultValue = "DAY")
+                    String level
+    ) throws ParseException {
+        TopicPartition topicPartition = new TopicPartition(topic, partition);
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+        }
+        LineEChartsVo recordECharts = consumerCommonService.getRecordLineECharts(bootstrap_servers,
                 topicPartition,
                 timeStartTimeStamp,
                 timeEndTimeStamp,

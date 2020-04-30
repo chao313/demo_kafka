@@ -15,7 +15,6 @@ public class MsgData {
 	@JSONField(name="OrgUrl")
     private String orgUrl = "";
 	
-	
     public String getFileName() {
         return fileName;
     }

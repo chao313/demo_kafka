@@ -202,9 +202,8 @@ public class ConsumerHavGroupAssignService<K, V> extends ConsumerNoGroupService<
      * 获取record的最早的没有过期的Record (根据 TopicPartition)
      */
     public ConsumerRecord<K, V> getEarliestRecord(TopicPartition topicPartition) {
-        Long earliestPartitionOffset = this.getEarliestPartitionOffset(topicPartition);
         super.consumer.poll(1000);
-        super.consumer.seek(topicPartition, earliestPartitionOffset);//调整到最新
+        super.consumer.seekToBeginning(Arrays.asList(topicPartition));
         ConsumerRecords<K, V> records = super.consumer.poll(1000);
         if (records.records(topicPartition).size() > 0) {
             return records.records(topicPartition).get(0);
