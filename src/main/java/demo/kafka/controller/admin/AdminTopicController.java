@@ -13,11 +13,14 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.Config;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -145,6 +148,43 @@ public class AdminTopicController {
         JSONObject result = JSONObject.parseObject(JsonObject);
         log.info("获取 TopicConfigs 结果:{}", result);
         return result;
+    }
+
+    @ApiOperation(value = "清除指定的 Topic(先删除后创建)")
+    @DeleteMapping(value = "/clearTopic")
+    public Object clearTopic(
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要删除的 Topic ")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic
+    ) throws Exception {
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
+        TopicDescription topicDescription = adminTopicService.getTopicDescription(topic);
+        AdminConfigsService adminConfigsService = AdminFactory.getAdminConfigsService(bootstrap_servers);
+        Config topicConfigs = adminConfigsService.getTopicConfigs(topic);
+        boolean bool = adminTopicService.deleteTopic(topic);
+        Thread.sleep(10000);//等待确认
+        boolean result = adminTopicService.addTopic(topicDescription.name(),
+                topicDescription.partitions().size(),
+                Short.valueOf("-1"),
+                this.transform(topicConfigs.entries()));
+        log.info("clear topic:{}", result);
+        return bool;
+    }
+
+    /**
+     * 配置转换
+     *
+     * @return
+     */
+    private Map<String, String> transform(Collection<ConfigEntry> configEntries) {
+        Map<String, String> map = new HashMap<>();
+        configEntries.stream().forEach(configEntry -> {
+            map.put(configEntry.name(), configEntry.value());
+        });
+        return map;
     }
 
 }

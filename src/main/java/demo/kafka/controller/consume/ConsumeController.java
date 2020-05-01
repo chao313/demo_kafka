@@ -215,6 +215,74 @@ public class ConsumeController {
     }
 
     /**
+     * 获取每个分区的 最新和最早的offset
+     * 1.加上正则(修改为包含)
+     */
+    @ApiOperation(value = "获取每个分区的 最新和最早的offset(精确查询)")
+    @GetMapping(value = "/getTopicPartitionAndRealOffsetListByTopicRegex")
+    public Object getTopicPartitionAndRealOffsetListByTopicRegex(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "topicRegex")
+            @RequestParam(name = "topicRegex", defaultValue = "")
+                    String topicRegex
+    ) {
+
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
+
+        Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
+
+        /**
+         * 过滤包含
+         */
+        List<TopicPartition> filterCollect = new ArrayList<>();
+        if (StringUtils.isNotBlank(topicRegex)) {
+            filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
+                return topicPartition.topic().matches(topicRegex);
+            }).collect(Collectors.toList());
+        } else {
+            filterCollect.addAll(allTopicPartitions);
+        }
+
+        /**
+         * 获取最早和最晚的offset
+         */
+        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
+        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
+
+
+        filterCollect.forEach(topicPartition -> {
+            ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
+            vo.setTopic(topicPartition.topic());
+            vo.setPartition(topicPartition.partition());
+            vo.setEarliestOffset(beginningOffsets.get(topicPartition));
+            vo.setLastOffset(endOffsets.get(topicPartition));
+            vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
+            consumerTopicAndPartitionsAndOffsets.add(vo);
+        });
+        /**
+         * 排序
+         */
+        Collections.sort(consumerTopicAndPartitionsAndOffsets, new Comparator<ConsumerTopicAndPartitionsAndOffset>() {
+            @Override
+            public int compare(ConsumerTopicAndPartitionsAndOffset o1, ConsumerTopicAndPartitionsAndOffset o2) {
+
+                if (0 != o1.getTopic().compareTo(o2.getTopic())) {
+                    return o1.getTopic().compareTo(o2.getTopic());
+                } else {
+                    return o1.getPartition() - o2.getPartition();
+                }
+            }
+        });
+        consumerFactory.getKafkaConsumer().close();
+        return consumerTopicAndPartitionsAndOffsets;
+    }
+
+
+    /**
      * 获取partition的详细的信息
      */
     @ApiOperation(value = "获取 partition 详情")
