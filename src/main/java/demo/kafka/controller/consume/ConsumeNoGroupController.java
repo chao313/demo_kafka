@@ -9,6 +9,7 @@ import demo.kafka.controller.consume.service.ConsumerHavGroupAssignService;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.consume.service.KafkaConsumerCommonService;
 import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
+import demo.kafka.controller.response.ConsumerTopicOffset;
 import demo.kafka.controller.response.TopicPartitionEffectOffsetVo;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
@@ -177,6 +178,47 @@ public class ConsumeNoGroupController {
         vo.setPartition(partition);
         vo.setEarliestOffset(earliestOffset);
         vo.setLastOffset(lastOffset);
+        String JsonObject = new Gson().toJson(vo);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+    }
+
+    /**
+     * 获取topic的详细的信息
+     */
+    @ApiOperation(value = "获取 topic 的有效的Offset(开始结束)")
+    @GetMapping(value = "/getTopicEffectOffset")
+    public Object getTopicEffectOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @RequestParam(name = "partition", defaultValue = "0")
+                    int partition
+
+    ) {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService
+                = consumerFactory.getConsumerHavGroupAssignService(topic);
+        Map<TopicPartition, Long> earliestPartitionOffset = consumerHavGroupAssignService.getEarliestPartitionOffset(Arrays.asList(topic));
+        Map<TopicPartition, Long> lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(Arrays.asList(topic));
+
+        Collection<TopicPartition> topicPartitionsByTopic = consumerHavGroupAssignService.getTopicPartitionsByTopic(topic);
+        Long sum = new Long(0);
+        Long total = new Long(0);
+        for (TopicPartition topicPartition : topicPartitionsByTopic) {
+            sum += lastPartitionOffset.get(topicPartition) - earliestPartitionOffset.get(topicPartition);
+            total += lastPartitionOffset.get(topicPartition);
+        }
+
+        ConsumerTopicOffset vo = new ConsumerTopicOffset();
+        vo.setTopic(topic);
+        vo.setPartitions(topicPartitionsByTopic.size());
+        vo.setSum(sum);
+        vo.setTotal(total);
         String JsonObject = new Gson().toJson(vo);
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;

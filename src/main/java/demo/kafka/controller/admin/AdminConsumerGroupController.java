@@ -42,6 +42,18 @@ public class AdminConsumerGroupController {
         return consumerGroupIds;
     }
 
+    @GetMapping(value = "/getConsumerGroupSize")
+    public Object getConsumerGroupSize(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers
+    ) throws ExecutionException, InterruptedException {
+        AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
+        Collection<String> consumerGroupIds = adminConsumerGroupsService.getConsumerGroupIds();
+        log.info("consumerGroupIds:{}", consumerGroupIds);
+        return consumerGroupIds.size();
+    }
+
 
     /**
      * 获取全部的描述

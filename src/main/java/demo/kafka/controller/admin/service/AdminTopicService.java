@@ -58,9 +58,17 @@ public class AdminTopicService extends AdminService {
     /**
      * 获取topic的描述
      */
-    public TopicDescription getTopicDescription(String name) throws ExecutionException, InterruptedException {
-        Map<String, TopicDescription> topicToTopicDescriptionMap = this.describeTopic(Arrays.asList(name));
-        return topicToTopicDescriptionMap.get(name);
+    public TopicDescription getTopicDescription(String topic) throws ExecutionException, InterruptedException {
+        Map<String, TopicDescription> topicToTopicDescriptionMap = this.describeTopic(Arrays.asList(topic));
+        return topicToTopicDescriptionMap.get(topic);
+    }
+
+    /**
+     * 获取topic的描述(集合)
+     */
+    public Collection<TopicDescription> getTopicDescription(Collection<String> topics) throws ExecutionException, InterruptedException {
+        Map<String, TopicDescription> topicToTopicDescriptionMap = this.describeTopic(topics);
+        return topicToTopicDescriptionMap.values();
     }
 
 

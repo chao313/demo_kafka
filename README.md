@@ -18,7 +18,8 @@
    * [x] 查看集群的controller（单个）
 2. broker
    * [x] 查看所有的brokers(list)
-   * 查看每个broker的Topics整体信息(目前似乎只有topic数量)
+   * [x] 查看每个broker的Topics整体信息(topic数量)
+   * [x] 查看每个broker的consumer整体信息(consumer数量)
 3. topic
    * [x] 查看broker所有的topics(list)
    * [x] 删除topic
@@ -26,7 +27,7 @@
    * [x] 查看每个topic的consumer
    * 查看每个topic的partition概览，数量概览
    * 针对每个topic的配置进行CRUD
-   * [x]topic数据的快速清空(就是删除再创建)
+   * [x] topic数据的快速清空(就是删除再创建)
    * topic数据的复制（默认全数据，支持百分比，因为包含了多个Partition，使用百分比最好，数字默认转换为百分比）
      * 自身复制到自身
      * 复制到其他的topic（partition）

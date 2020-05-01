@@ -18,10 +18,7 @@ import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -66,6 +63,20 @@ public class AdminTopicController {
         return topicNames;
     }
 
+
+    @ApiOperation(value = "获取 topic 的数量")
+    @GetMapping(value = "/getTopicSize")
+    public Object getTopicSize(
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers
+    ) throws Exception {
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
+        Set<String> topicNames = adminTopicService.getTopicNames();
+        log.info("获取 topicNames :{}", topicNames);
+        return topicNames.size();
+    }
+
     /**
      * 添加包含过滤
      *
@@ -74,7 +85,7 @@ public class AdminTopicController {
      * @return
      * @throws Exception
      */
-    @ApiOperation(value = "获取 topic 的的名称")
+    @ApiOperation(value = "获取 topic 的描述")
     @GetMapping(value = "/getTopicsResults")
     public Object getTopicsResults(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
@@ -112,6 +123,33 @@ public class AdminTopicController {
         TopicDescription topicDescription = adminTopicService.getTopicDescription(topic);
         String JsonObject = new Gson().toJson(topicDescription);
         JSONObject result = JSONObject.parseObject(JsonObject);
+        log.info("获取topic结果:{}", result);
+        return result;
+    }
+
+    @ApiOperation(value = "获取全部的 TopicDescription ")
+    @GetMapping(value = "/getAllTopicDescription")
+    public Object getAllTopicDescription(
+            @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "topicContain")
+            @RequestParam(name = "topicContain", defaultValue = "")
+                    String topicContain
+    ) throws Exception {
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
+        Collection<String> topics = adminTopicService.getTopicNames();
+        /**
+         * 过滤topic
+         */
+        if (StringUtils.isNotBlank(topicContain)) {
+            topics = adminTopicService.getTopicNames().stream().filter(topicName -> {
+                return topicName.contains(topicContain);
+            }).collect(Collectors.toList());
+        }
+        Collection<TopicDescription> topicDescriptions = adminTopicService.getTopicDescription(topics);
+        String JsonObject = new Gson().toJson(topicDescriptions);
+        JSONArray result = JSONObject.parseArray(JsonObject);
         log.info("获取topic结果:{}", result);
         return result;
     }

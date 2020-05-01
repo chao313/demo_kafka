@@ -4,12 +4,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.service.AdminFactory;
+import demo.kafka.controller.admin.service.AdminTopicService;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
-import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
-import demo.kafka.controller.response.EChartsVo;
-import demo.kafka.controller.response.LineEChartsVo;
-import demo.kafka.controller.response.OffsetRecordResponse;
+import demo.kafka.controller.response.*;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -17,10 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -159,59 +154,76 @@ public class ConsumeController {
             @ApiParam(value = "topicContain")
             @RequestParam(name = "topicContain", defaultValue = "")
                     String topicContain
-    ) {
+    ) throws ExecutionException, InterruptedException {
 
+        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets
+                = this.getConsumerTopicAndPartitionsAndOffset(bootstrap_servers, topicContain);
 
-        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
-        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
-        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
+        return consumerTopicAndPartitionsAndOffsets;
+    }
 
-        Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
+    /**
+     * 获取全部分区的 最新和最早的offset
+     * 1.加上正则(修改为包含)
+     * 参考{@link #getTopicPartitionAndRealOffsetList(String, String)} 就是集合
+     */
+    @ApiOperation(value = "获取全部分区的 最新和最早的offset")
+    @GetMapping(value = "/getTopicRealOffsetList")
+    public Object getTopicRealOffsetList(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "topicContain")
+            @RequestParam(name = "topicContain", defaultValue = "")
+                    String topicContain
+    ) throws ExecutionException, InterruptedException {
 
-        /**
-         * 过滤包含
-         */
-        List<TopicPartition> filterCollect = new ArrayList<>();
-        if (StringUtils.isNotBlank(topicContain)) {
-            filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
-                return topicPartition.topic().contains(topicContain);
-            }).collect(Collectors.toList());
-        } else {
-            filterCollect.addAll(allTopicPartitions);
-        }
+        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets
+                = this.getConsumerTopicAndPartitionsAndOffset(bootstrap_servers, topicContain);
 
-        /**
-         * 获取最早和最晚的offset
-         */
-        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
-        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
+        Map<String, ConsumerTopicOffset> resultMap = new HashMap<>();
+        consumerTopicAndPartitionsAndOffsets.forEach(vo -> {
+            if (resultMap.containsKey(vo.getTopic())) {
+                ConsumerTopicOffset consumerTopicOffset = resultMap.get(vo.getTopic());
+                consumerTopicOffset.setPartitions(consumerTopicOffset.getPartitions() + 1);
+                consumerTopicOffset.setSum(consumerTopicOffset.getSum() + vo.getSum());
+                consumerTopicOffset.setTotal(consumerTopicOffset.getTotal() + vo.getLastOffset());
+                String earliestTimestampOld = consumerTopicOffset.getEarliestTimestamp();
+                String earliestTimestampNew = vo.getEarliestTimestamp();
+                if (StringUtils.isNotBlank(earliestTimestampNew) && StringUtils.isNotBlank(earliestTimestampOld)) {
+                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampNew.compareTo(earliestTimestampOld) > 0 ? earliestTimestampOld : earliestTimestampNew);
+                } else if (StringUtils.isBlank(earliestTimestampNew)) {
+                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampOld);
+                } else if (StringUtils.isBlank(earliestTimestampOld)) {
+                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampNew);
+                }
+                resultMap.put(vo.getTopic(), consumerTopicOffset);
 
-
-        filterCollect.forEach(topicPartition -> {
-            ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
-            vo.setTopic(topicPartition.topic());
-            vo.setPartition(topicPartition.partition());
-            vo.setEarliestOffset(beginningOffsets.get(topicPartition));
-            vo.setLastOffset(endOffsets.get(topicPartition));
-            vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
-            consumerTopicAndPartitionsAndOffsets.add(vo);
+            } else {
+                ConsumerTopicOffset consumerTopicOffset = new ConsumerTopicOffset();
+                consumerTopicOffset.setTopic(vo.getTopic());
+                consumerTopicOffset.setEarliestTimestamp(vo.getEarliestTimestamp());
+                consumerTopicOffset.setSum(vo.getSum());
+                consumerTopicOffset.setPartitions(1);
+                consumerTopicOffset.setTotal(vo.getLastOffset());
+                resultMap.put(consumerTopicOffset.getTopic(), consumerTopicOffset);
+            }
         });
+
+        Collection<ConsumerTopicOffset> resultSet = resultMap.values();
+        List<ConsumerTopicOffset> resultList = new ArrayList<>(resultSet);
         /**
          * 排序
          */
-        Collections.sort(consumerTopicAndPartitionsAndOffsets, new Comparator<ConsumerTopicAndPartitionsAndOffset>() {
+        Collections.sort(resultList, new Comparator<ConsumerTopicOffset>() {
             @Override
-            public int compare(ConsumerTopicAndPartitionsAndOffset o1, ConsumerTopicAndPartitionsAndOffset o2) {
-
-                if (0 != o1.getTopic().compareTo(o2.getTopic())) {
-                    return o1.getTopic().compareTo(o2.getTopic());
-                } else {
-                    return o1.getPartition() - o2.getPartition();
-                }
+            public int compare(ConsumerTopicOffset o1, ConsumerTopicOffset o2) {
+                return o1.getTopic().compareTo(o2.getTopic());
             }
         });
-        consumerFactory.getKafkaConsumer().close();
-        return consumerTopicAndPartitionsAndOffsets;
+
+        return resultList;
+
     }
 
     /**
@@ -699,6 +711,77 @@ public class ConsumeController {
         instance.getConsumer().poll(0);
         instance.getConsumer().close();
         return "调整结束";
+    }
+
+    /**
+     * 抽取出来的函数
+     *
+     * @param bootstrap_servers
+     * @param topicContain
+     * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    private List<ConsumerTopicAndPartitionsAndOffset> getConsumerTopicAndPartitionsAndOffset(String bootstrap_servers, String topicContain) throws ExecutionException, InterruptedException {
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss.S");
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
+
+        AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
+        Collection<String> topics = adminTopicService.getTopicNames();
+        Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getTopicPartitionsByTopic(topics);
+        /**
+         * 过滤包含
+         */
+        List<TopicPartition> filterCollect = new ArrayList<>();
+        if (StringUtils.isNotBlank(topicContain)) {
+            filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
+                return topicPartition.topic().contains(topicContain);
+            }).collect(Collectors.toList());
+        } else {
+            filterCollect.addAll(allTopicPartitions);
+        }
+
+        /**
+         * 获取最早和最晚的offset
+         */
+        Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
+        Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
+        /**获取全部的最新和最开始的时间戳*/
+        Map<TopicPartition, OffsetAndTimestamp>
+                beginningTimestampMap = consumerNoGroupService.getConsumer().offsetsForTimes(beginningOffsets);
+
+        //!!!!! 无法获取最新的时间戳
+        filterCollect.forEach(topicPartition -> {
+            ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
+            vo.setTopic(topicPartition.topic());
+            vo.setPartition(topicPartition.partition());
+            vo.setEarliestOffset(beginningOffsets.get(topicPartition));
+            vo.setLastOffset(endOffsets.get(topicPartition));
+            vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
+            if (null != beginningTimestampMap.get(topicPartition)) {
+                long timestamp = beginningTimestampMap.get(topicPartition).timestamp();
+                vo.setEarliestTimestamp(fastDateFormat.format(timestamp));
+            }
+            consumerTopicAndPartitionsAndOffsets.add(vo);
+        });
+        /**
+         * 排序
+         */
+        Collections.sort(consumerTopicAndPartitionsAndOffsets, new Comparator<ConsumerTopicAndPartitionsAndOffset>() {
+            @Override
+            public int compare(ConsumerTopicAndPartitionsAndOffset o1, ConsumerTopicAndPartitionsAndOffset o2) {
+
+                if (0 != o1.getTopic().compareTo(o2.getTopic())) {
+                    return o1.getTopic().compareTo(o2.getTopic());
+                } else {
+                    return o1.getPartition() - o2.getPartition();
+                }
+            }
+        });
+        consumerFactory.getKafkaConsumer().close();
+        return consumerTopicAndPartitionsAndOffsets;
     }
 
 
