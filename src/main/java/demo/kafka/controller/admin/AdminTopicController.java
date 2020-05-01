@@ -11,6 +11,7 @@ import demo.kafka.controller.admin.service.AdminTopicService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequestMapping(value = "/AdminTopicController")
@@ -61,15 +63,32 @@ public class AdminTopicController {
         return topicNames;
     }
 
+    /**
+     * 添加包含过滤
+     *
+     * @param bootstrap_servers
+     * @param topicContain
+     * @return
+     * @throws Exception
+     */
     @ApiOperation(value = "获取 topic 的的名称")
     @GetMapping(value = "/getTopicsResults")
     public Object getTopicsResults(
             @ApiParam(value = "kafka地址", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers
+                    String bootstrap_servers,
+            @ApiParam(value = "topicContain")
+            @RequestParam(name = "topicContain", defaultValue = "")
+                    String topicContain
+
     ) throws Exception {
         AdminTopicService adminTopicService = AdminFactory.getAdminTopicService(bootstrap_servers);
         Collection<TopicListing> topicsResults = adminTopicService.getTopicsResults();
+        if (StringUtils.isNotBlank(topicContain)) {
+            topicsResults = topicsResults.stream().filter(topicListing -> {
+                return topicListing.name().contains(topicContain);
+            }).collect(Collectors.toList());
+        }
         String JsonObject = new Gson().toJson(topicsResults);
         JSONArray result = JSONObject.parseArray(JsonObject);
         log.info("获取 topicsResults 结果:{}", result);

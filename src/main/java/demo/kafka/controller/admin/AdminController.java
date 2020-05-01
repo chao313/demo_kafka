@@ -1,6 +1,7 @@
 package demo.kafka.controller.admin;
 
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.GsonBuilder;
 import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
@@ -13,6 +14,8 @@ import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -21,10 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -102,6 +102,78 @@ public class AdminController {
         log.info("listConsumerGroupsResult:{}", resultOffsetMap);
         String JsonObject = new GsonBuilder().serializeNulls().create().toJson(resultOffsetMap);
         JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+    }
+
+    /**
+     * @param bootstrap_servers
+     * @param topic
+     * @param groupNameContain
+     * @return
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @ApiOperation(value = "获取订阅 topic 的 消费者（全部的）")
+    @GetMapping(value = "/getConsumerGroupByTopicAndGroupNameContain")
+    public Object getConsumerGroupByTopicAndGroupNameContain(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "topic")
+            @RequestParam(name = "topic")
+                    String topic,
+            @ApiParam(value = "groupNameContain")
+            @RequestParam(name = "groupNameContain", defaultValue = "")
+                    String groupNameContain
+    )
+            throws ExecutionException, InterruptedException {
+        Set<String> resultGroupIds = new HashSet<>();//结果
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        AdminConsumerGroupsService adminConsumerGroupsService = AdminFactory.getAdminConsumerGroupsService(bootstrap_servers);
+
+        Collection<TopicPartition> topicPartitions = consumerNoGroupService.getTopicPartitionsByTopic(topic);//获取所有的TopicPartition
+        Collection<String> consumerGroupIds = adminConsumerGroupsService.getConsumerGroupIds();//查询所有的 consumer;
+
+        /**过滤 group */
+        Set<String> filterGroups = new HashSet<>();
+        if (StringUtils.isNotBlank(groupNameContain)) {
+            consumerGroupIds.forEach(consumerGroupId -> {
+                /**包含就是添加*/
+                if (consumerGroupId.contains(groupNameContain)) {
+                    filterGroups.add(consumerGroupId);
+                }
+            });
+        } else {
+            filterGroups.addAll(consumerGroupIds);
+        }
+
+
+        Map<TopicPartition, OffsetAndMetadata> metadataMap = new HashMap<>();
+        /**
+         * 过滤所有的 partition 和 groupId 去尝试是否存在偏移量
+         */
+        for (TopicPartition partition : topicPartitions) {
+            for (String groupId : filterGroups) {
+                Map<TopicPartition, OffsetAndMetadata> consumerGroupOffsets = adminConsumerGroupsService
+                        .getConsumerGroupOffsets(groupId, new ListConsumerGroupOffsetsOptions().topicPartitions(Arrays.asList(partition)));
+                consumerGroupOffsets.forEach((tp, consumerGroupOffset) -> {
+                    if (null != consumerGroupOffset) {
+                        /**不为空，代表和订阅了这个Topic*/
+                        resultGroupIds.add(groupId);
+                    }
+                });
+
+            }
+        }
+        /**
+         * 获取最终的数据
+         */
+        Map<String, ConsumerGroupDescription> consumerGroupDescribe
+                = adminConsumerGroupsService.getConsumerGroupDescribe(resultGroupIds);
+
+        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(consumerGroupDescribe.values());
+        JSONArray result = JSONObject.parseArray(JsonObject);
         return result;
     }
 

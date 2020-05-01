@@ -148,7 +148,7 @@ public class ConsumeController {
 
     /**
      * 获取每个分区的 最新和最早的offset
-     * 1.加上正则
+     * 1.加上正则(修改为包含)
      */
     @ApiOperation(value = "获取每个分区的 最新和最早的offset")
     @GetMapping(value = "/getTopicPartitionAndRealOffsetList")
@@ -156,9 +156,9 @@ public class ConsumeController {
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
                     String bootstrap_servers,
-            @ApiParam(value = "topic_pattern")
-            @RequestParam(name = "topic_pattern", defaultValue = ".*")
-                    String topic_pattern
+            @ApiParam(value = "topicContain")
+            @RequestParam(name = "topicContain", defaultValue = "")
+                    String topicContain
     ) {
 
 
@@ -169,11 +169,16 @@ public class ConsumeController {
         Collection<TopicPartition> allTopicPartitions = consumerNoGroupService.getAllTopicPartitions();
 
         /**
-         * 过滤正则
+         * 过滤包含
          */
-        List<TopicPartition> filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
-            return topicPartition.topic().matches(topic_pattern);
-        }).collect(Collectors.toList());
+        List<TopicPartition> filterCollect = new ArrayList<>();
+        if (StringUtils.isNotBlank(topicContain)) {
+            filterCollect = allTopicPartitions.stream().filter(topicPartition -> {
+                return topicPartition.topic().contains(topicContain);
+            }).collect(Collectors.toList());
+        } else {
+            filterCollect.addAll(allTopicPartitions);
+        }
 
         /**
          * 获取最早和最晚的offset
