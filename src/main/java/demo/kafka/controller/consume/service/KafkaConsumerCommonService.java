@@ -358,9 +358,9 @@ public class KafkaConsumerCommonService<K, V> {
         MONTH("yyyyMM", "yyyy-MM", Calendar.MONTH),
         DAY("yyyyMMdd", "yyyy-MM-dd", Calendar.DAY_OF_MONTH),
         HOUR("yyyyMMddHH", "yyyy-MM-dd HH", Calendar.HOUR_OF_DAY),
-        MINUTES("yyyyMMddHHmm", "yyyy-MM-dd HH:mm", Calendar.SECOND),
-        SECONDS("yyyyMMddHHmmss", "yyyy-MM-dd HH:mm:ss", Calendar.MILLISECOND),
-        MILLISECOND("yyyyMMddHHmmssS", "yyyy-MM-dd HH:mm:ss.S", Calendar.ZONE_OFFSET);
+        MINUTES("yyyyMMddHHmm", "yyyy-MM-dd HH:mm", Calendar.MINUTE),
+        SECONDS("yyyyMMddHHmmss", "yyyy-MM-dd HH:mm:ss", Calendar.SECOND),
+        MILLISECOND("yyyyMMddHHmmssS", "yyyy-MM-dd HH:mm:ss.S", Calendar.MILLISECOND);
         private String format;
         private String toFormat;
         private Integer field;
@@ -499,7 +499,7 @@ public class KafkaConsumerCommonService<K, V> {
              */
             Long middleNodeOffset = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, endNode.getTime());
             String firstKey = fastDateToFormat.format(DateUtils.truncate(timeStartDate, levelSimple.field));
-            String endKey = fastDateToFormat.format(DateUtils.ceiling(timeEndDate, levelSimple.field));//取
+            String endKey = fastDateToFormat.format(endNode);//取
             resultMap.put(firstKey, middleNodeOffset - beginOffset);
             resultMap.put(endKey, endOffset - middleNodeOffset);
         }
@@ -530,8 +530,8 @@ public class KafkaConsumerCommonService<K, V> {
 
     ) throws ParseException {
 //        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.toFormat);
-        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.MINUTES.toFormat);
-        FastDateFormat fastMINUTESDateToFormat = FastDateFormat.getInstance(levelSimple.MINUTES.toFormat);//格式化 收尾使用
+        FastDateFormat fastDateToFormat = FastDateFormat.getInstance(levelSimple.SECONDS.toFormat);
+        FastDateFormat fastMINUTESDateToFormat = FastDateFormat.getInstance(levelSimple.SECONDS.toFormat);//格式化 收尾使用
         if (null != timeStart && null != timeEnd && timeStart > timeEnd) {
             throw new RuntimeException("选择的start日期不能大于end日期:"
                     + "start:" + fastDateToFormat.format(new Date(timeStart))
