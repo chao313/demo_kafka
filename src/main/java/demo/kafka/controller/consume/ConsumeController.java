@@ -17,6 +17,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -611,8 +612,55 @@ public class ConsumeController {
         if (StringUtils.isNotBlank(timeEnd)) {
             timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
         }
-        EChartsVo recordECharts = consumerCommonService.getRecordSimpleECharts(bootstrap_servers,
+        EChartsVo recordECharts = consumerCommonService.getRecordTopicPartitionSimpleECharts(bootstrap_servers,
                 topicPartition,
+                timeStartTimeStamp,
+                timeEndTimeStamp,
+                KafkaConsumerCommonService.LevelSimple.valueOf(level.toUpperCase()));
+        String JsonObject = new Gson().toJson(recordECharts);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据
+     */
+    @ApiOperation(value = "(Topic级别的)获取指定的offset(开始结束范围)的数据（简单的，没有key和value的过滤）")
+    @GetMapping(value = "/getRecordTopicSimpleEChartsByTopicOffset")
+    public Object getRecordTopicSimpleEChartsByTopicOffset(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd,
+            @ApiParam(value = "画图的级别")
+            @RequestParam(name = "level", defaultValue = "DAY")
+                    String level
+    ) throws ParseException {
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        Collection<TopicPartition> topicPartitionsByTopic = consumerFactory.getConsumerNoGroupService().getTopicPartitionsByTopic(topic);
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+        }
+        EChartsVo recordECharts = consumerCommonService.getRecordTopicSimpleECharts(bootstrap_servers,
+                topicPartitionsByTopic,
                 timeStartTimeStamp,
                 timeEndTimeStamp,
                 KafkaConsumerCommonService.LevelSimple.valueOf(level.toUpperCase()));
