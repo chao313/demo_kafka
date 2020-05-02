@@ -9,6 +9,7 @@ import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.*;
 import demo.kafka.util.MapUtil;
+import io.netty.util.internal.ConcurrentSet;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -713,6 +715,69 @@ public class ConsumeController {
                 timeStartTimeStamp,
                 timeEndTimeStamp,
                 KafkaConsumerCommonService.LevelSimple.valueOf(level.toUpperCase()));
+        String JsonObject = new Gson().toJson(recordECharts);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据 (整个topic的)
+     */
+    @ApiOperation(value = "获取指定的offset(开始结束范围)的数据（简单的，没有key和value的过滤）(topic级别的)")
+    @GetMapping(value = "/getRecordLineEChartsByTopic")
+    public Object getRecordLineEChartsByTopic(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd,
+            @ApiParam(value = "画图的级别")
+            @RequestParam(name = "level", defaultValue = "DAY")
+                    String level
+    ) throws ParseException {
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        Collection<TopicPartition> topicPartitions = consumerNoGroupService.getTopicPartitionsByTopic(topic);
+        /**补全需要插入的节点*/
+        Set<Long> timeStamps = ConcurrentHashMap.newKeySet(10);
+
+        for (TopicPartition topicPartition : topicPartitions) {/**获取最早的时间*/
+            OffsetAndTimestamp earliestRecordOffsetAndTimestamp = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, 0L);
+            /**获取最晚的时间*/
+            OffsetAndTimestamp latestRecordOffsetAndTimestamp = consumerNoGroupService.getLastPartitionOffsetAndTimestamp(topicPartition);
+            if (null != earliestRecordOffsetAndTimestamp) {
+                timeStamps.add(earliestRecordOffsetAndTimestamp.timestamp());
+            }
+            if (null != latestRecordOffsetAndTimestamp) {
+                timeStamps.add(latestRecordOffsetAndTimestamp.timestamp());
+            }
+        }
+
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+        }
+        LineEChartsVo recordECharts = consumerCommonService.getRecordLineECharts(bootstrap_servers,
+                topicPartitions,
+                timeStartTimeStamp,
+                timeEndTimeStamp,
+                KafkaConsumerCommonService.LevelSimple.valueOf(level.toUpperCase()), timeStamps);
         String JsonObject = new Gson().toJson(recordECharts);
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;

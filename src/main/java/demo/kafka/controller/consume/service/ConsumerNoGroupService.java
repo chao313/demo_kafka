@@ -1,8 +1,6 @@
 package demo.kafka.controller.consume.service;
 
 import demo.kafka.controller.consume.service.base.ConsumerService;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
@@ -198,6 +196,8 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
     /**
      * 根据 offset 查询 OffsetAndTimestamp(二分)
      * ！！！ 这里会主动减1 -> endOffsets 返回的是下一个的偏移量
+     * <p>
+     * 这个会阻塞调用 {@link KafkaConsumerCommonService#getOffsetAndTimestampByOffset(String, TopicPartition, Long)} ()}
      *
      * @param topicPartition
      * @param lastPartitionOffset
@@ -241,6 +241,15 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
         Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
                 = super.consumer.offsetsForTimes(timestampsToSearch);
         return topicPartitionOffsetAndTimestampMap.get(topicPartition).offset();
+    }
+
+    /**
+     * 获取 topicPartition 的指定时间戳之后的第一个 offset (集合操作-加速性能)
+     */
+    public Map<TopicPartition, OffsetAndTimestamp> getFirstOffsetAfterTimestamp(Map<TopicPartition, Long> timestampsToSearch) {
+        Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
+                = super.consumer.offsetsForTimes(timestampsToSearch);
+        return topicPartitionOffsetAndTimestampMap;
     }
 
 }

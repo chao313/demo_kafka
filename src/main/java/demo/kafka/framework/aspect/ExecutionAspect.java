@@ -39,8 +39,6 @@ public class ExecutionAspect {
 //        logger.info("第一步【执行Around：拦截AOP的当前执行对象】joinPoint.getThis() - > {}", joinPoint.getThis());//demo.spring.boot.demospringboot.controller.pub.FrameworkController@25c6ab3
 
 
-
-
         Response response = new Response<>();
         try {
             response.setCode(Code.System.OK);
@@ -53,7 +51,7 @@ public class ExecutionAspect {
             response.setCode(Code.System.FAIL);
             response.setMsg(e.toString());
             response.addException(e);
-            logger.error("[getPicStationVoByLimitWeight ]FAIL path:{}", e.getMessage(), e);
+            logger.error("[]FAIL path:{}", e.getMessage(), e);
         }
         return response;
         //这里的return的必须和拦截的方法的返回值一样
