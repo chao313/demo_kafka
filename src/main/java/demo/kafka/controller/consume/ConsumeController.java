@@ -494,82 +494,7 @@ public class ConsumeController {
     }
 
 
-    /**
-     * 获取指定的offset(开始结束范围)的数据
-     */
-    @ApiOperation(value = "获取指定的Topic的数据(Topic级别的)")
-    @GetMapping(value = "/getRecordByTopic")
-    public Object getRecordByTopic(
-            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
-            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
-                    String bootstrap_servers,
-            @ApiParam(value = "需要查询的 topic")
-            @RequestParam(name = "topic", defaultValue = "Test")
-                    String topic,
-            @ApiParam(value = "key的正则")
-            @RequestParam(name = "keyRegex", defaultValue = "")
-                    String keyRegex,
-            @ApiParam(value = "value的正则")
-            @RequestParam(name = "valueRegex", defaultValue = "")
-                    String valueRegex,
-            @ApiParam(value = "消息start的时间")
-            @RequestParam(name = "timeStart", defaultValue = "")
-                    String timeStart,
-            @ApiParam(value = "消息end的时间")
-            @RequestParam(name = "timeEnd", defaultValue = "")
-                    String timeEnd
-    ) throws ParseException {
-        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
-        /**获取全部的 topicPartition*/
-        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
-        Collection<TopicPartition> topicPartitions
-                = consumerFactory.getConsumerNoGroupService().getTopicPartitionsByTopic(topic);
-
-        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
-        Long timeStartTimeStamp = null;
-        Long timeEndTimeStamp = null;
-        if (StringUtils.isNotBlank(timeStart)) {
-            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
-        }
-        if (StringUtils.isNotBlank(timeEnd)) {
-            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
-            /**
-             * 这里是区间 -> :xx:xx:38 其实应该是39截止 -> 多加1秒
-             */
-            timeEndTimeStamp = DateUtils.addSeconds(new Date(timeEndTimeStamp), 1).getTime();
-        }
-        List<ConsumerRecord<String, String>> result = new ArrayList<>();
-        Long finalTimeStartTimeStamp = timeStartTimeStamp;
-        Long finalTimeEndTimeStamp = timeEndTimeStamp;
-        topicPartitions.parallelStream().forEach(topicPartition -> {
-            List<ConsumerRecord<String, String>> records
-                    = consumerCommonService.getRecord(bootstrap_servers,
-                    topicPartition,
-                    keyRegex,
-                    valueRegex,
-                    finalTimeStartTimeStamp,
-                    finalTimeEndTimeStamp);
-            result.addAll(records);
-        });
-
-        /**
-         * 排序
-         */
-        Collections.sort(result, new Comparator<ConsumerRecord>() {
-            @Override
-            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                return Long.valueOf(o2.timestamp() - o1.timestamp()).intValue();
-            }
-        });
-        String JsonObject = new Gson().toJson(result);
-        JSONArray resultJson = JSONObject.parseArray(JsonObject);
-        return resultJson;
-    }
-
-    /**
-     * 获取指定的offset(开始结束范围)的数据
-     */
-    @ApiOperation(value = "获取指定的offset(开始结束范围)的数据")
+    @ApiOperation(value = "获取柱状图(Partition级别)")
     @GetMapping(value = "/getRecordEChartsByTopicPartitionOffset")
     public Object getRecordEChartsByTopicPartitionOffset(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
@@ -646,6 +571,157 @@ public class ConsumeController {
 
 
         String JsonObject = new Gson().toJson(recordECharts);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
+
+
+    }
+
+    /**
+     * 获取指定的offset(开始结束范围)的数据
+     */
+    @ApiOperation(value = "获取指定的Topic的数据(Topic级别的)")
+    @GetMapping(value = "/getRecordByTopic")
+    public Object getRecordByTopic(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "key的正则")
+            @RequestParam(name = "keyRegex", defaultValue = "")
+                    String keyRegex,
+            @ApiParam(value = "value的正则")
+            @RequestParam(name = "valueRegex", defaultValue = "")
+                    String valueRegex,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd
+    ) throws ParseException {
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        /**获取全部的 topicPartition*/
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        Collection<TopicPartition> topicPartitions
+                = consumerFactory.getConsumerNoGroupService().getTopicPartitionsByTopic(topic);
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+            /**
+             * 这里是区间 -> :xx:xx:38 其实应该是39截止 -> 多加1秒
+             */
+            timeEndTimeStamp = DateUtils.addSeconds(new Date(timeEndTimeStamp), 1).getTime();
+        }
+        List<ConsumerRecord<String, String>> result = new ArrayList<>();
+        Long finalTimeStartTimeStamp = timeStartTimeStamp;
+        Long finalTimeEndTimeStamp = timeEndTimeStamp;
+        topicPartitions.parallelStream().forEach(topicPartition -> {
+            List<ConsumerRecord<String, String>> records
+                    = consumerCommonService.getRecord(bootstrap_servers,
+                    topicPartition,
+                    keyRegex,
+                    valueRegex,
+                    finalTimeStartTimeStamp,
+                    finalTimeEndTimeStamp);
+            result.addAll(records);
+        });
+
+        /**
+         * 排序
+         */
+        Collections.sort(result, new Comparator<ConsumerRecord>() {
+            @Override
+            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                return Long.valueOf(o2.timestamp() - o1.timestamp()).intValue();
+            }
+        });
+        String JsonObject = new Gson().toJson(result);
+        JSONArray resultJson = JSONObject.parseArray(JsonObject);
+        return resultJson;
+    }
+
+
+    @ApiOperation(value = "获取柱状图(topic级别)")
+    @GetMapping(value = "/getRecordEChartsByTopic")
+    public Object getRecordEChartsByTopic(
+            @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
+            @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
+                    String bootstrap_servers,
+            @ApiParam(value = "需要查询的 topic")
+            @RequestParam(name = "topic", defaultValue = "Test")
+                    String topic,
+            @ApiParam(value = "key的正则")
+            @RequestParam(name = "keyRegex", defaultValue = "")
+                    String keyRegex,
+            @ApiParam(value = "value的正则")
+            @RequestParam(name = "valueRegex", defaultValue = "")
+                    String valueRegex,
+            @ApiParam(value = "消息start的时间")
+            @RequestParam(name = "timeStart", defaultValue = "")
+                    String timeStart,
+            @ApiParam(value = "消息end的时间")
+            @RequestParam(name = "timeEnd", defaultValue = "")
+                    String timeEnd,
+            @ApiParam(value = "画图的级别")
+            @RequestParam(name = "level", defaultValue = "DAY")
+                    String level
+    ) throws ParseException {
+        KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
+        ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
+        Collection<TopicPartition> topicPartitions = consumerFactory.getConsumerNoGroupService().getTopicPartitionsByTopic(topic);
+
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+        }
+
+        Long finalTimeStartTimeStamp = timeStartTimeStamp;
+        Long finalTimeEndTimeStamp = timeEndTimeStamp;
+        Map<String, Long> resultMap = new ConcurrentHashMap<>();//线程安全
+        Map<String, Long> finalResultMap = resultMap;
+        topicPartitions.parallelStream().forEach(topicPartition -> {
+            Map<String, Long> resultTmp = consumerCommonService.getRecordEChartsMap(
+                    bootstrap_servers,
+                    topicPartition,
+                    keyRegex,
+                    valueRegex,
+                    finalTimeStartTimeStamp,
+                    finalTimeEndTimeStamp,
+                    KafkaConsumerCommonService.Level.valueOf(level.toUpperCase()));
+            if (null != resultTmp) {
+                for (Map.Entry<String, Long> entry : resultTmp.entrySet()) {
+                    String key = entry.getKey();
+                    Long value = entry.getValue();
+                    if (finalResultMap.containsKey(key)) {
+                        Long old = finalResultMap.get(key);
+                        finalResultMap.put(key, old + value);
+                    } else {
+                        finalResultMap.put(key, value);
+                    }
+                }
+            }
+        });
+        //排序
+        Map map = consumerCommonService.sortHashMap(finalResultMap);
+        EChartsVo builder = EChartsVo.builder("bar");
+        builder.addXAxisData(map.keySet());//添加x轴数据
+        builder.addSeriesData(map.values());//添加x轴数据
+        String JsonObject = new Gson().toJson(builder.end());
         JSONObject result = JSONObject.parseObject(JsonObject);
         return result;
 
