@@ -15,6 +15,7 @@ import scala.collection.immutable.HashMapBuilder;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -385,15 +386,21 @@ public class KafkaConsumerCommonService<K, V> {
     ) throws ParseException {
         Map<String, Long> resultMap = this.getRecordTopicPartitionSimpleMap(bootstrap_servers, topicPartition, timeStart, timeEnd, levelSimple);
         /**
-         * 排序
+         * 排序 移除0的数据
          */
         resultMap = this.sortHashMap(resultMap);
+        Map<String, Long> result = new HashMap<>();
+        resultMap.forEach((key, value) -> {
+            if (value != 0) {
+                result.put(key, value);
+            }
+        });
 
         EChartsVo builder = EChartsVo.builder("bar");
 
-        builder.addXAxisData(resultMap.keySet());//添加x轴数据
+        builder.addXAxisData(result.keySet());//添加x轴数据
 
-        builder.addSeriesData(resultMap.values());//添加x轴数据
+        builder.addSeriesData(result.values());//添加x轴数据
 
         return builder.end();
     }
@@ -409,32 +416,45 @@ public class KafkaConsumerCommonService<K, V> {
                                                  LevelSimple levelSimple //画图的级别
 
     ) throws ParseException {
-        Map<String, Long> resultMap = new HashMap<>();
+        Map<String, Long> resultMap = new ConcurrentHashMap<>();
         /**遍历所有的结果，相同就相加，不同就添加 **/
-        for (TopicPartition topicPartition : topicPartitions) {
-            Map<String, Long> resultTmp = this.getRecordTopicPartitionSimpleMap(bootstrap_servers, topicPartition, timeStart, timeEnd, levelSimple);
-            for (Map.Entry<String, Long> entry : resultTmp.entrySet()) {
-                String key = entry.getKey();
-                Long value = entry.getValue();
-                if (resultMap.containsKey(key)) {
-                    Long old = resultMap.get(key);
-                    resultMap.put(key, old + value);
-                } else {
-                    resultMap.put(key, value);
+        /**现在改为并发执行*/
+        Map<String, Long> finalResultMap = resultMap;
+        topicPartitions.parallelStream().forEach(topicPartition -> {
+            Map<String, Long> resultTmp = null;
+            try {
+                resultTmp = this.getRecordTopicPartitionSimpleMap(bootstrap_servers, topicPartition, timeStart, timeEnd, levelSimple);
+                for (Map.Entry<String, Long> entry : resultTmp.entrySet()) {
+                    String key = entry.getKey();
+                    Long value = entry.getValue();
+                    if (finalResultMap.containsKey(key)) {
+                        Long old = finalResultMap.get(key);
+                        finalResultMap.put(key, old + value);
+                    } else {
+                        finalResultMap.put(key, value);
+                    }
                 }
+            } catch (ParseException e) {
+                log.info("e:{}", e.toString(), e);
             }
+        });
 
-        }
         /**
-         * 排序
+         * 排序 移除0的数据
          */
         resultMap = this.sortHashMap(resultMap);
+        Map<String, Long> result = new HashMap<>();
+        resultMap.forEach((key, value) -> {
+            if (value != 0) {
+                result.put(key, value);
+            }
+        });
 
         EChartsVo builder = EChartsVo.builder("bar");
 
-        builder.addXAxisData(resultMap.keySet());//添加x轴数据
+        builder.addXAxisData(result.keySet());//添加x轴数据
 
-        builder.addSeriesData(resultMap.values());//添加x轴数据
+        builder.addSeriesData(result.values());//添加x轴数据
 
         return builder.end();
     }
@@ -475,26 +495,30 @@ public class KafkaConsumerCommonService<K, V> {
                 = consumerFactory.getConsumerHavGroupAssignService(topicPartition);
 
         /**获取最早的时间*/
-        ConsumerRecord<String, String> earliestRecord = consumerHavGroupAssignService.getEarliestRecord(topicPartition);
+        OffsetAndTimestamp earliestRecordOffsetAndTimestamp = consumerHavGroupAssignService.getFirstPartitionOffsetAfterTimestamp(topicPartition, 0L);
         /**获取最晚的时间*/
-        ConsumerRecord<String, String> latestRecord = consumerHavGroupAssignService.getLatestRecord(topicPartition);
+        OffsetAndTimestamp latestRecordOffsetAndTimestamp = consumerHavGroupAssignService.getLastPartitionOffsetAndTimestamp(topicPartition);
 
-        if (null != timeStart && earliestRecord.timestamp() > timeStart) {
+//        if (earliestRecordOffsetAndTimestamp == null) {
+//            return resultMap;
+//        }
+
+        if (null != timeStart && earliestRecordOffsetAndTimestamp.timestamp() > timeStart) {
             /**
              * 选择出范围小的时间
              */
-            timeStart = earliestRecord.timestamp();
+            timeStart = earliestRecordOffsetAndTimestamp.timestamp();
         } else if (null == timeStart) {
-            timeStart = earliestRecord.timestamp();
+            timeStart = earliestRecordOffsetAndTimestamp.timestamp();
         }
 
-        if (null != timeEnd && latestRecord.timestamp() < timeEnd) {
+        if (null != timeEnd && latestRecordOffsetAndTimestamp.timestamp() < timeEnd) {
             /**
              * 选择出范围小的时间
              */
-            timeEnd = latestRecord.timestamp();
+            timeEnd = latestRecordOffsetAndTimestamp.timestamp();
         } else if (null == timeEnd) {
-            timeEnd = latestRecord.timestamp();
+            timeEnd = latestRecordOffsetAndTimestamp.timestamp();
         }
 
         /**
@@ -686,30 +710,30 @@ public class KafkaConsumerCommonService<K, V> {
                 = consumerFactory.getConsumerHavGroupAssignService(topicPartition);
 
         /**获取最早的时间*/
-        ConsumerRecord<String, String> earliestRecord = consumerHavGroupAssignService.getEarliestRecord(topicPartition);
+        OffsetAndTimestamp earliestRecordOffsetAndTimestamp = consumerHavGroupAssignService.getFirstPartitionOffsetAfterTimestamp(topicPartition, 0L);
         /**获取最晚的时间*/
-        ConsumerRecord<String, String> latestRecord = consumerHavGroupAssignService.getLatestRecord(topicPartition);
+        OffsetAndTimestamp latestRecordOffsetAndTimestamp = consumerHavGroupAssignService.getLastPartitionOffsetAndTimestamp(topicPartition);
 
-        if (earliestRecord == null) {
+        if (earliestRecordOffsetAndTimestamp == null) {
             return resultMap;
         }
 
-        if (null != timeStart && earliestRecord.timestamp() > timeStart) {
+        if (null != timeStart && earliestRecordOffsetAndTimestamp.timestamp() > timeStart) {
             /**
              * 选择出范围小的时间
              */
-            timeStart = earliestRecord.timestamp();
+            timeStart = earliestRecordOffsetAndTimestamp.timestamp();
         } else if (null == timeStart) {
-            timeStart = earliestRecord.timestamp();
+            timeStart = earliestRecordOffsetAndTimestamp.timestamp();
         }
 
-        if (null != timeEnd && latestRecord.timestamp() < timeEnd) {
+        if (null != timeEnd && latestRecordOffsetAndTimestamp.timestamp() < timeEnd) {
             /**
              * 选择出范围小的时间
              */
-            timeEnd = latestRecord.timestamp();
+            timeEnd = latestRecordOffsetAndTimestamp.timestamp();
         } else if (null == timeEnd) {
-            timeEnd = latestRecord.timestamp();
+            timeEnd = latestRecordOffsetAndTimestamp.timestamp();
         }
 
         /**
@@ -761,7 +785,7 @@ public class KafkaConsumerCommonService<K, V> {
              */
             String lastKey = fastDateToFormat.format(calendarEnd.getTime());
             Long beforeNode = consumerNoGroupService.getFirstOffsetAfterTimestamp(topicPartition, calendarStart.getTime().getTime());
-            resultMap.put(lastKey, endOffset - beforeNode);
+            resultMap.put(lastKey, endOffset - beforeNode + 1);
         } else if (endNode.before(firstNode)) {
             /**
              * 如果  endNode 在firstNode之前的（说明取值在节点之间）
@@ -769,7 +793,7 @@ public class KafkaConsumerCommonService<K, V> {
              * 类似 ___|__o___o___|___
              */
             String key = fastDateToFormat.format(DateUtils.truncate(timeEndDate, levelSimple.field));
-            resultMap.put(key, endOffset - beginOffset);
+            resultMap.put(key, endOffset - beginOffset + 1);
         } else if (endNode.compareTo(firstNode) == 0) {
             /**
              * 如果  endNode 和 firstNode相等 （代表分别取前后的节点，这里的是两个节点）
@@ -780,7 +804,7 @@ public class KafkaConsumerCommonService<K, V> {
             String firstKey = fastDateToFormat.format(DateUtils.truncate(timeStartDate, levelSimple.field));
             String endKey = fastDateToFormat.format(endNode);//取
             resultMap.put(firstKey, middleNodeOffset - beginOffset);
-            resultMap.put(endKey, endOffset - middleNodeOffset);
+            resultMap.put(endKey, endOffset - middleNodeOffset + 1);
         }
         consumerNoGroupService.getConsumer().close();
         return resultMap;

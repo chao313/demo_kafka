@@ -175,6 +175,64 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
     }
 
     /**
+     * 获取 topicPartition 的指定时间第一个 OffsetAndTimestamp(直接查询>0即可)
+     */
+    public OffsetAndTimestamp getFirstPartitionOffsetAndTimestamp(TopicPartition topicPartition) {
+        Map<TopicPartition, Long> timestampsToSearch = new HashMap<>();
+        timestampsToSearch.put(topicPartition, 0L);
+        Map<TopicPartition, OffsetAndTimestamp> topicPartitionOffsetAndTimestampMap
+                = super.consumer.offsetsForTimes(timestampsToSearch);
+        return topicPartitionOffsetAndTimestampMap.get(topicPartition);
+    }
+
+    /**
+     * 获取 topicPartition 的指定时间最后的(用二分法) OffsetAndTimestamp
+     */
+    public OffsetAndTimestamp getLastPartitionOffsetAndTimestamp(TopicPartition topicPartition) {
+        Long lastPartitionOffset = this.getLastPartitionOffset(topicPartition);
+        OffsetAndTimestamp offsetAndTimestamp = this.getOffsetAndTimestampByOffset(topicPartition, lastPartitionOffset - 1);
+        return offsetAndTimestamp;
+
+    }
+
+    /**
+     * 根据 offset 查询 OffsetAndTimestamp(二分)
+     * ！！！ 这里会主动减1 -> endOffsets 返回的是下一个的偏移量
+     *
+     * @param topicPartition
+     * @param lastPartitionOffset
+     * @return
+     */
+    public OffsetAndTimestamp getOffsetAndTimestampByOffset(TopicPartition topicPartition, Long lastPartitionOffset) {
+        OffsetAndTimestamp firstPartitionOffsetAndTimestamp = this.getFirstPartitionOffsetAndTimestamp(topicPartition);
+        if (null == firstPartitionOffsetAndTimestamp) {
+            /**如果第一个就为null,代表没有最后*/
+            return null;
+        }
+        /**获取最后一个offset*/
+        Long endTime = new Date().getTime();//最新的时间
+        Long startTime = firstPartitionOffsetAndTimestamp.timestamp();
+        OffsetAndTimestamp offsetAndTimestamp = null;
+        do {
+            Long middle = (endTime + startTime) / 2;
+            offsetAndTimestamp = this.getFirstPartitionOffsetAfterTimestamp(topicPartition, middle);
+            if (null == offsetAndTimestamp) {
+                /**如过offsetAndTimestamp 为null -> 在右分 */
+                endTime = middle;//左移
+
+            } else if (offsetAndTimestamp.offset() < lastPartitionOffset) {
+                /**如过offsetAndTimestamp < lastPartitionOffset  -> 在左分 */
+                startTime = middle;//右移
+            } else if (offsetAndTimestamp.offset() >= lastPartitionOffset) {
+                /**如果 == 就退出 */
+                break;
+            }
+        } while (true);
+
+        return offsetAndTimestamp;
+    }
+
+    /**
      * 获取 topicPartition 的指定时间戳之后的第一个 offset
      */
     public Long getFirstOffsetAfterTimestamp(TopicPartition topicPartition, Long timestamp) {
