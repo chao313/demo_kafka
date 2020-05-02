@@ -115,7 +115,15 @@ public class KafkaConsumerCommonService<K, V> {
                                                           Long timeEnd
 
     ) {
-
+        /** 记录原始的数据*/
+        Long timeStartOriginal = null;
+        if (null != timeStart) {
+            timeStartOriginal = new Long(timeStart);
+        }
+        Long timeEndOriginal = null;
+        if (null != timeEnd) {
+            timeEndOriginal = new Long(timeEnd);
+        }
 
         /**
          * 获取一个消费者实例 (设置一次性读取出全部的record)
@@ -138,6 +146,7 @@ public class KafkaConsumerCommonService<K, V> {
             }
         }
         if (null != timeEnd) {
+            /**根据指定的 结束时间获取偏移量 */
             OffsetAndTimestamp firstPartitionOffsetAfterEndTimestamp
                     = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeEnd);
             if (null != firstPartitionOffsetAfterEndTimestamp) {
@@ -183,11 +192,154 @@ public class KafkaConsumerCommonService<K, V> {
                     flag = false;
                     break;
                 }
-                if (keyRegexFlag && valueRegexFlag && record.offset() < endOffset) {
+                if (keyRegexFlag && valueRegexFlag && record.offset() <= endOffset) {
+                    boolean timeStartFlag = false,
+                            timeEndFlag = false;
                     /**
                      * 全部符合要求
+                     * 加上时间判断 为空 或者 < timeEnd >  timeStart
                      */
-                    result.add(record);
+                    if (null == timeEndOriginal || (null != timeEndOriginal && record.timestamp() <= timeEndOriginal)) {
+                        timeEndFlag = true;
+                    }
+                    if (null == timeStartOriginal || (null != timeStartOriginal && record.timestamp() >= timeStartOriginal)) {
+                        timeStartFlag = true;
+                    }
+                    if (timeStartFlag && timeEndFlag) {
+                        result.add(record);
+                    }
+                }
+            }
+        } while (records.count() != 0 && flag == true);
+        instance.close();
+        return result;
+    }
+
+    /**
+     * 获取 指定offset的 指定数量的 record
+     */
+    public List<ConsumerRecord<String, String>> getRecord(String bootstrap_servers,
+                                                          TopicPartition topicPartition,
+                                                          String keyRegex,
+                                                          String valueRegex,
+                                                          Long timeStart,
+                                                          Long timeEnd
+
+    ) {
+        /** 记录原始的数据*/
+        Long timeStartOriginal = null;
+        if (null != timeStart) {
+            timeStartOriginal = new Long(timeStart);
+        }
+        Long timeEndOriginal = null;
+        if (null != timeEnd) {
+            timeEndOriginal = new Long(timeEnd);
+        }
+        List<ConsumerRecord<String, String>> result = new ArrayList<>();
+        /**
+         * 获取一个消费者实例 (设置一次性读取出全部的record)
+         */
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(bootstrap_servers,
+                MapUtil.$()
+        );
+        ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
+        /**获取Partition最早的时间*/
+        OffsetAndTimestamp earliestRecordOffsetAndTimestamp = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, 0L);
+        /**获取Partition最新的时间*/
+        OffsetAndTimestamp latestRecordOffsetAndTimestamp = consumerNoGroupService.getLastPartitionOffsetAndTimestamp(topicPartition);
+
+        if (null == earliestRecordOffsetAndTimestamp) {
+            /**开始为null 无需继续*/
+            return result;
+        }
+        /**
+         * 根据时间来限制范围
+         */
+        if (null != timeStart) {
+            /**如果开始不为null*/
+            OffsetAndTimestamp firstPartitionOffsetAfterStartTimestamp
+                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeStart);
+            /**比较取范围小的*/
+            if (null != firstPartitionOffsetAfterStartTimestamp && firstPartitionOffsetAfterStartTimestamp.timestamp() > earliestRecordOffsetAndTimestamp.timestamp()) {
+                timeStart = firstPartitionOffsetAfterStartTimestamp.timestamp();
+            } else {
+                timeStart = earliestRecordOffsetAndTimestamp.timestamp();
+            }
+        } else {
+            /**为null , 取最开始*/
+            timeStart = earliestRecordOffsetAndTimestamp.timestamp();
+        }
+        if (null != timeEnd) {
+            OffsetAndTimestamp firstPartitionOffsetAfterEndTimestamp
+                    = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeEnd);
+            /**比较取范围小的*/
+            if (null != firstPartitionOffsetAfterEndTimestamp && firstPartitionOffsetAfterEndTimestamp.timestamp() < latestRecordOffsetAndTimestamp.timestamp()) {
+                timeEnd = firstPartitionOffsetAfterEndTimestamp.timestamp();
+            } else {
+                timeEnd = latestRecordOffsetAndTimestamp.timestamp();
+            }
+        } else {
+            /**为null , 取最新*/
+            timeEnd = latestRecordOffsetAndTimestamp.timestamp();
+        }
+
+        /**!!!准备好开始和结尾 ， 开始计算*/
+        OffsetAndTimestamp startOffset = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeStart);
+        OffsetAndTimestamp endOffset = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeEnd);
+
+
+        KafkaConsumer<String, String> instance = consumerFactory.getKafkaConsumer();
+        /**分配 topicPartition*/
+        instance.assign(Arrays.asList(topicPartition));
+        /**设置偏移量*/
+        instance.seek(topicPartition, startOffset.offset());
+        /**获取记录*/
+        ConsumerRecords<String, String> records;
+        boolean flag = true;
+        do {
+            records = instance.poll(1000);
+            log.info("再次poll:records.count():{}", records.count());
+
+            for (ConsumerRecord<String, String> record : records.records(topicPartition)) {
+                boolean keyRegexFlag = false,
+                        valueRegexFlag = false;
+                if (StringUtils.isBlank(keyRegex)) {
+                    keyRegexFlag = true;
+                } else {
+                    String key = record.key();
+                    keyRegexFlag = key.matches(keyRegex);
+                }
+                if (StringUtils.isBlank(valueRegex)) {
+                    valueRegexFlag = true;
+                } else {
+                    String value = record.value();
+                    valueRegexFlag = value.matches(valueRegex);
+                }
+                if (record.offset() > endOffset.offset()) {
+                    /**
+                     * 如果超出范围就截止
+                     */
+                    log.info("截止:");
+                    flag = false;
+                    break;
+                }
+                if (keyRegexFlag && valueRegexFlag && record.offset() <= endOffset.offset()) {
+                    boolean timeStartFlag = false,
+                            timeEndFlag = false;
+                    /**
+                     * 全部符合要求
+                     * 加上时间判断 为空 或者 < timeEnd >  timeStart
+                     */
+                    if (null == timeEndOriginal || (null != timeEndOriginal && record.timestamp() <= timeEndOriginal)) {
+                        timeEndFlag = true;
+                    }
+                    if (null == timeStartOriginal || (null != timeStartOriginal && record.timestamp() >= timeStartOriginal)) {
+                        timeStartFlag = true;
+                    }
+                    if (timeStartFlag && timeEndFlag) {
+                        result.add(record);
+                    }
                 }
             }
         } while (records.count() != 0 && flag == true);
