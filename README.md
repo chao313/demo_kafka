@@ -25,7 +25,9 @@
    * [x] 删除topic
    * [x] 新增topic
    * [x] 查看每个topic的consumer
-   * 查看每个topic的partition概览，数量概览
+   * [x] 查看每个topic的partition概览，数量概览
+   * [x] 查看每个topic有效offset
+   * [x] 查看每个topic总共offset
    * 针对每个topic的配置进行CRUD
    * [x] topic数据的快速清空(就是删除再创建)
    * topic数据的复制（默认全数据，支持百分比，因为包含了多个Partition，使用百分比最好，数字默认转换为百分比）
@@ -33,17 +35,13 @@
      * 复制到其他的topic（partition）
      * clone成另外一个topic
    * topic级别数据检索（多条件，默认全Partition和指定Partition）
-     * 按key检索(支持正则)
-     * 按value检索(支持正则)
-     * 按offset检索
-     * 按keySize检索
-     * 按valueSize检索
-     * 按timestamp检索(支持格化)  
+     * [x] 按key检索(支持正则)
+     * [x] 按value检索(支持正则)
+     * [x] 按timestamp检索(支持格化)  
      * 按timestampType检索(目前只有两个创建时间和生成时间类型)  
 4. partition
    * [x] 查看topic的所有partition(list)
    *  新增partition
-   * 查看partition的consumer列表
    * partition数据复制
      * 自身复制到自身
      * 复制到其他的partition
@@ -57,10 +55,10 @@
    * [x] consumer的list
    * [x] consumer的删除
    * 模拟consumer的消费(采用websocket模式)
-   * 单个consumer的成员信息
-   * 单个consumer的订阅topic的list
-   * 单个consumer的订阅的每个topic的具体的offset
-   * 单个consumer的订阅的每个topic的offset的seek
+   * [x] 单个consumer的成员信息
+   * [x] 单个consumer的订阅topic的list
+   * [x] 单个consumer的订阅的每个topic的具体的offset
+   * [x] 单个consumer的订阅的每个topic的offset的seek
 6. producer(注意字符串的转义，目标为转成BASE64)
    * [x] 发送指定Topic的消息
    * [x] 发送指定Partition的消息
