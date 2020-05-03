@@ -12,10 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.PartitionInfo;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Properties;
@@ -188,7 +185,7 @@ public class ProduceController {
      * ??????
      */
     @ApiOperation(value = "同步! 发送立刻得到结果", notes = "可以获得msg的所在topic,分区,时间戳,偏移量,序列号的key和value的size")
-    @GetMapping(value = "/sendSync")
+    @RequestMapping(value = "/sendSync", method = {RequestMethod.GET, RequestMethod.POST})
     public Object sendSync(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
@@ -217,7 +214,7 @@ public class ProduceController {
      * 发送->忘记
      */
     @ApiOperation(value = "发送->忘记")
-    @GetMapping(value = "/sendForget")
+    @RequestMapping(value = "/sendForget", method = {RequestMethod.GET, RequestMethod.POST})
     public Object SendForget(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
@@ -243,7 +240,7 @@ public class ProduceController {
 
 
     @ApiOperation(value = "异步! 发送等待回调")
-    @GetMapping(value = "/sendAsync")
+    @RequestMapping(value = "/sendAsync", method = {RequestMethod.GET, RequestMethod.POST})
     public Object sendAsync(
             @ApiParam(value = "kafka", allowableValues = Bootstrap.allowableValues)
             @RequestParam(name = "bootstrap.servers", defaultValue = "10.202.16.136:9092")
