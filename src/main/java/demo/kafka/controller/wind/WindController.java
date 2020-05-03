@@ -7,12 +7,14 @@ import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.produce.service.KafkaProduceSendSyncService;
 import demo.kafka.controller.produce.service.ProduceFactory;
 import demo.kafka.controller.response.RecordMetadataResponse;
+import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,7 +71,7 @@ public class WindController {
         this.vaild(bootstrap_servers, topic, partition, policyID, files);
         List<RecordMetadataResponse> recordMetadataResponses = new ArrayList<>();
         KafkaProduceSendSyncService<String, String> kafkaProduceSendSyncService =
-                ProduceFactory.getProducerInstance(bootstrap_servers)
+                ProduceFactory.getProducerInstance(bootstrap_servers, MapUtil.$(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, "1073741824"))
                         .getKafkaProduceSendSyncService();
         for (MultipartFile file : files) {/**生成请求*/
             KafkaMsgRequest kafkaMsgRequest = ProducerUpload.generateKafkaRequestMsg(policyID, topic, file.getOriginalFilename(), file.getBytes());
