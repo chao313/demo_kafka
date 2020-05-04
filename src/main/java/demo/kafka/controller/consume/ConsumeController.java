@@ -519,23 +519,33 @@ public class ConsumeController {
             @RequestParam(value = "pageSize", defaultValue = "10", required = false)
                     Integer pageSize
     ) {
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss.S");
         PageInfo pageInfo = null;
         if (StringUtils.isNotBlank(scrollId)) {
+            log.info("开始取值:{}", fastDateFormat.format(new Date()));
             Object value = redisTemplate.opsForValue().get(scrollId);
+            log.info("结束取值:{}", fastDateFormat.format(new Date()));
             if (null != value && value instanceof List) {
                 List result = (List) value;
                 int end = pageNum * pageSize;
                 if (pageNum * pageSize > result.size()) {
                     end = result.size();
                 }
+                log.info("开始截取:{}", fastDateFormat.format(new Date()));
                 List list = result.subList((pageNum - 1) * pageSize, end);
+                log.info("结束截取:{}", fastDateFormat.format(new Date()));
                 Page page = new Page(pageNum, pageSize, false);
                 page.setTotal(result.size());
                 page.setOrderBy(scrollId);
                 page.addAll(list);
                 pageInfo = new PageInfo(page);
                 /**更新有效时间*/
-                redisTemplate.opsForValue().set(scrollId, result, 5, TimeUnit.MINUTES);
+                log.info("开始设值:{}", fastDateFormat.format(new Date()));
+                /**
+                 * 优化超时时间的设置 原来是 redisTemplate.opsForValue().set(uuid, changeResult, 5, TimeUnit.MINUTES);
+                 */
+                redisTemplate.expire(scrollId, 5, TimeUnit.MINUTES);
+                log.info("结束设值:{}", fastDateFormat.format(new Date()));
             } else {
                 throw new RuntimeException("scrollID已经失效,请点击查询按键，重新查询");
             }
@@ -700,6 +710,7 @@ public class ConsumeController {
         List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
         String uuid = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set(uuid, changeResult, 5, TimeUnit.MINUTES);
+
         return this.getRecordByScrollId(uuid, 1, 10);
     }
 
