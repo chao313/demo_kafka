@@ -131,6 +131,24 @@
             <artifactId>pagehelper</artifactId>
             <version>4.1.6</version>
         </dependency>
+        <!--内嵌redis-->
+        <dependency>
+            <groupId>com.github.kstyrc</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>0.6</version>
+        </dependency>
+
+        <!--
+          redis依赖
+          需要在application加上
+          @EnableCaching
+         -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-redis</artifactId>
+            <version>1.4.2.RELEASE</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -11,20 +11,18 @@ import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.*;
 import demo.kafka.util.MapUtil;
-import io.netty.util.internal.ConcurrentSet;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.ConsumerGroupState;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,6 +33,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -45,6 +44,9 @@ public class ConsumeController {
 
     @Autowired
     private HttpSession session;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     /**
@@ -493,11 +495,11 @@ public class ConsumeController {
                     return Long.valueOf(o2.offset() - o1.offset()).intValue();
                 }
             });
+            List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
             String uuid = UUID.randomUUID().toString();
-
-            session.setAttribute(uuid, consumerRecords);//存入Seession
-
+            redisTemplate.opsForValue().set(uuid, changeResult, 5, TimeUnit.MINUTES);
             return this.getRecordByScrollId(uuid, 1, 10);
+
 
 //            String JsonObject = new Gson().toJson(consumerRecords);
 //            JSONArray result = JSONObject.parseArray(JsonObject);
@@ -516,10 +518,10 @@ public class ConsumeController {
                     Integer pageNum,
             @RequestParam(value = "pageSize", defaultValue = "10", required = false)
                     Integer pageSize
-    ){
+    ) {
         PageInfo pageInfo = null;
         if (StringUtils.isNotBlank(scrollId)) {
-            Object value = session.getAttribute(scrollId);
+            Object value = redisTemplate.opsForValue().get(scrollId);
             if (null != value && value instanceof List) {
                 List result = (List) value;
                 int end = pageNum * pageSize;
@@ -532,6 +534,8 @@ public class ConsumeController {
                 page.setOrderBy(scrollId);
                 page.addAll(list);
                 pageInfo = new PageInfo(page);
+                /**更新有效时间*/
+                redisTemplate.opsForValue().set(scrollId, result, 5, TimeUnit.MINUTES);
             } else {
                 throw new RuntimeException("scrollID已经失效,请点击查询按键，重新查询");
             }
