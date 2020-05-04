@@ -696,14 +696,11 @@ public class ConsumeController {
                 return Long.valueOf(o2.timestamp() - o1.timestamp()).intValue();
             }
         });
+
+        List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
         String uuid = UUID.randomUUID().toString();
-
-        session.setAttribute(uuid, result);//存入Seession
-
+        redisTemplate.opsForValue().set(uuid, changeResult, 5, TimeUnit.MINUTES);
         return this.getRecordByScrollId(uuid, 1, 10);
-//        String JsonObject = new Gson().toJson(result);
-//        JSONArray resultJson = JSONObject.parseArray(JsonObject);
-//        return resultJson;
     }
 
 

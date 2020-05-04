@@ -18,13 +18,11 @@ package demo.kafka.controller.response;
 
 import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.record.TimestampType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A key/value pair to be received from Kafka. This also consists of a topic name and
