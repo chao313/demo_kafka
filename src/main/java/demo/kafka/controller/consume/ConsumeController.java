@@ -2,6 +2,8 @@ package demo.kafka.controller.consume;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
 import demo.kafka.controller.admin.service.AdminFactory;
 import demo.kafka.controller.admin.service.AdminTopicService;
@@ -13,6 +15,7 @@ import io.netty.util.internal.ConcurrentSet;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.Session;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -21,11 +24,13 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +42,9 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/ConsumeController")
 @RestController
 public class ConsumeController {
+
+    @Autowired
+    private HttpSession session;
 
 
     /**
@@ -482,15 +490,49 @@ public class ConsumeController {
             Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
                 @Override
                 public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
+                    return Long.valueOf(o1.offset() - o2.offset()).intValue();
                 }
             });
-            String JsonObject = new Gson().toJson(consumerRecords);
-            JSONArray result = JSONObject.parseArray(JsonObject);
-            return result;
+            String uuid = UUID.randomUUID().toString();
+
+            session.setAttribute(uuid, consumerRecords);//存入Seession
+
+            return this.getRecordByScrollId(uuid, 1, 10);
+
+//            String JsonObject = new Gson().toJson(consumerRecords);
+//            JSONArray result = JSONObject.parseArray(JsonObject);
+//            return result;
         }
 
 
+    }
+
+    @ApiOperation(value = "根据ScrollId获取数据")
+    @GetMapping(value = "/getRecordByScrollId")
+    public Object getRecordByScrollId(
+            @RequestParam(name = "scrollId", defaultValue = "")
+                    String scrollId,
+            @RequestParam(value = "pageNum", defaultValue = "1", required = false)
+                    Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false)
+                    Integer pageSize
+    ) throws ParseException {
+        PageInfo pageInfo = null;
+        if (StringUtils.isNotBlank(scrollId)) {
+            Object value = session.getAttribute(scrollId);
+            if (null != value && value instanceof List) {
+                List result = (List) value;
+                List list = result.subList((pageNum - 1) * pageSize, pageNum * pageSize);
+                Page page = new Page(pageNum, pageSize, false);
+                page.setTotal(result.size());
+                page.setOrderBy(scrollId);
+                page.addAll(list);
+                pageInfo = new PageInfo(page);
+            }
+        }
+        String JsonObject = new Gson().toJson(pageInfo);
+        JSONObject result = JSONObject.parseObject(JsonObject);
+        return result;
     }
 
 
