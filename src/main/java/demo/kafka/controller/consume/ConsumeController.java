@@ -490,7 +490,7 @@ public class ConsumeController {
             Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
                 @Override
                 public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                    return Long.valueOf(o1.offset() - o2.offset()).intValue();
+                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
                 }
             });
             String uuid = UUID.randomUUID().toString();
@@ -516,18 +516,24 @@ public class ConsumeController {
                     Integer pageNum,
             @RequestParam(value = "pageSize", defaultValue = "10", required = false)
                     Integer pageSize
-    ) throws ParseException {
+    ){
         PageInfo pageInfo = null;
         if (StringUtils.isNotBlank(scrollId)) {
             Object value = session.getAttribute(scrollId);
             if (null != value && value instanceof List) {
                 List result = (List) value;
-                List list = result.subList((pageNum - 1) * pageSize, pageNum * pageSize);
+                int end = pageNum * pageSize;
+                if (pageNum * pageSize > result.size()) {
+                    end = result.size();
+                }
+                List list = result.subList((pageNum - 1) * pageSize, end);
                 Page page = new Page(pageNum, pageSize, false);
                 page.setTotal(result.size());
                 page.setOrderBy(scrollId);
                 page.addAll(list);
                 pageInfo = new PageInfo(page);
+            } else {
+                throw new RuntimeException("scrollID已经失效,请点击查询按键，重新查询");
             }
         }
         String JsonObject = new Gson().toJson(pageInfo);
@@ -686,9 +692,14 @@ public class ConsumeController {
                 return Long.valueOf(o2.timestamp() - o1.timestamp()).intValue();
             }
         });
-        String JsonObject = new Gson().toJson(result);
-        JSONArray resultJson = JSONObject.parseArray(JsonObject);
-        return resultJson;
+        String uuid = UUID.randomUUID().toString();
+
+        session.setAttribute(uuid, result);//存入Seession
+
+        return this.getRecordByScrollId(uuid, 1, 10);
+//        String JsonObject = new Gson().toJson(result);
+//        JSONArray resultJson = JSONObject.parseArray(JsonObject);
+//        return resultJson;
     }
 
 
