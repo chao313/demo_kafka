@@ -64,6 +64,40 @@
    * [x] 发送指定Partition的消息
    * [x] 需要支持上传文件，按行上传
    * [x] 需要支持上传多个文件，转码后上传
+   
+---
+
+图片:
+集群管理
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/集群管理.png)
+配置查看
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/配置查看.png)
+Topic列表
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Topic列表.png)
+topic级别的简单查看
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/topic级别的简单查看.png)
+Consumer的偏移量挑拨
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Consumer的偏移量挑拨.png)
+Partition列表
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Partition列表.png)
+更新Patition数量
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/更新Patition数量.png)
+Partition简单查看
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Partition简单查看.png)
+Partition的高级查看
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Partition的高级查看.png)
+Produce发送
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/Produce发送.png)
+消费者列表
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/消费者列表.png)
+关系图
+![image](https://raw.githubusercontent.com/chao313/demo_kafka/master/src/main/resources/doc/kafka-admin-produce-consumer关系图.png)
+
+
+
+
+
+   
 
 
 
