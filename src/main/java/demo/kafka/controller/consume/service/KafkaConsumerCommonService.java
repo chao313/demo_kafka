@@ -2,6 +2,7 @@ package demo.kafka.controller.consume.service;
 
 import demo.kafka.controller.response.EChartsVo;
 import demo.kafka.controller.response.LineEChartsVo;
+import demo.kafka.controller.response.RecordParallel;
 import demo.kafka.util.MapUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -155,11 +156,35 @@ public class KafkaConsumerCommonService<K, V> {
                 }
             }
         }
+        List<ConsumerRecord<String, String>> list = Collections.synchronizedList(new ArrayList<>());
+        List<RecordParallel> recordParallels
+                = RecordParallel.generate(bootstrap_servers, topicPartition, startOffset, endOffset, keyRegex, valueRegex, timeStartOriginal, timeEndOriginal, 10000);
+
+        recordParallels.parallelStream().forEach(recordParallel -> {
+            List<ConsumerRecord<String, String>> resultTmp = this.getRecordParallel(recordParallel);
+            list.addAll(resultTmp);
+        });
+
+        return list;
+    }
+
+    /**
+     * 用于处理批处理
+     */
+    private List<ConsumerRecord<String, String>> getRecordParallel(RecordParallel recordParallel
+    ) {
+        /**
+         * 获取一个消费者实例 (设置一次性读取出全部的record)
+         */
+        ConsumerFactory<String, String> consumerFactory
+                = ConsumerFactory.getInstance(recordParallel.bootstrap_servers,
+                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(recordParallel.endOffset - recordParallel.startOffset))
+        );
         KafkaConsumer<String, String> instance = consumerFactory.getKafkaConsumer();
         /**分配 topicPartition*/
-        instance.assign(Arrays.asList(topicPartition));
+        instance.assign(Arrays.asList(recordParallel.topicPartition));
         /**设置偏移量*/
-        instance.seek(topicPartition, startOffset);
+        instance.seek(recordParallel.topicPartition, recordParallel.startOffset);
         /**获取记录*/
         List<ConsumerRecord<String, String>> result = new ArrayList<>();
         /**获取记录*/
@@ -169,22 +194,22 @@ public class KafkaConsumerCommonService<K, V> {
             records = instance.poll(1000);
             log.info("再次poll:records.count():{}", records.count());
 
-            for (ConsumerRecord<String, String> record : records.records(topicPartition)) {
+            for (ConsumerRecord<String, String> record : records.records(recordParallel.topicPartition)) {
                 boolean keyRegexFlag = false,
                         valueRegexFlag = false;
-                if (StringUtils.isBlank(keyRegex)) {
+                if (StringUtils.isBlank(recordParallel.keyRegex)) {
                     keyRegexFlag = true;
                 } else {
                     String key = record.key();
-                    keyRegexFlag = key.matches(keyRegex);
+                    keyRegexFlag = key.matches(recordParallel.keyRegex);
                 }
-                if (StringUtils.isBlank(valueRegex)) {
+                if (StringUtils.isBlank(recordParallel.valueRegex)) {
                     valueRegexFlag = true;
                 } else {
                     String value = record.value();
-                    valueRegexFlag = value.matches(valueRegex);
+                    valueRegexFlag = value.matches(recordParallel.valueRegex);
                 }
-                if (record.offset() > endOffset) {
+                if (record.offset() > recordParallel.endOffset) {
                     /**
                      * 如果超出范围就截止
                      */
@@ -192,17 +217,17 @@ public class KafkaConsumerCommonService<K, V> {
                     flag = false;
                     break;
                 }
-                if (keyRegexFlag && valueRegexFlag && record.offset() <= endOffset) {
+                if (keyRegexFlag && valueRegexFlag && record.offset() <= recordParallel.endOffset) {
                     boolean timeStartFlag = false,
                             timeEndFlag = false;
                     /**
                      * 全部符合要求
                      * 加上时间判断 为空 或者 < timeEnd >  timeStart
                      */
-                    if (null == timeEndOriginal || (null != timeEndOriginal && record.timestamp() <= timeEndOriginal)) {
+                    if (null == recordParallel.timeEndOriginal || (null != recordParallel.timeEndOriginal && record.timestamp() <= recordParallel.timeEndOriginal)) {
                         timeEndFlag = true;
                     }
-                    if (null == timeStartOriginal || (null != timeStartOriginal && record.timestamp() >= timeStartOriginal)) {
+                    if (null == recordParallel.timeStartOriginal || (null != recordParallel.timeStartOriginal && record.timestamp() >= recordParallel.timeStartOriginal)) {
                         timeStartFlag = true;
                     }
                     if (timeStartFlag && timeEndFlag) {
