@@ -176,13 +176,23 @@ public class KafkaConsumerCommonService<K, V> {
                     keyRegexFlag = true;
                 } else {
                     String key = record.key();
-                    keyRegexFlag = key.matches(keyRegex);
+                    /**key加入判操作*/
+                    if (StringUtils.isBlank(key)) {
+                        keyRegexFlag = false;
+                    } else {
+                        keyRegexFlag = key.matches(keyRegex);
+                    }
                 }
                 if (StringUtils.isBlank(valueRegex)) {
                     valueRegexFlag = true;
                 } else {
                     String value = record.value();
-                    valueRegexFlag = value.matches(valueRegex);
+                    /**value加入判操作*/
+                    if (StringUtils.isBlank(value)) {
+                        valueRegexFlag = false;
+                    } else {
+                        valueRegexFlag = value.matches(valueRegex);
+                    }
                 }
                 if (record.offset() > endOffset) {
                     /**
@@ -308,13 +318,23 @@ public class KafkaConsumerCommonService<K, V> {
                     keyRegexFlag = true;
                 } else {
                     String key = record.key();
-                    keyRegexFlag = key.matches(keyRegex);
+                    /**key加入判操作*/
+                    if (StringUtils.isBlank(key)) {
+                        keyRegexFlag = false;
+                    } else {
+                        keyRegexFlag = key.matches(keyRegex);
+                    }
                 }
                 if (StringUtils.isBlank(valueRegex)) {
                     valueRegexFlag = true;
                 } else {
                     String value = record.value();
-                    valueRegexFlag = value.matches(valueRegex);
+                    /**value加入判操作*/
+                    if (StringUtils.isBlank(value)) {
+                        valueRegexFlag = false;
+                    } else {
+                        valueRegexFlag = value.matches(valueRegex);
+                    }
                 }
                 if (record.offset() > endOffset.offset()) {
                     /**
@@ -441,20 +461,22 @@ public class KafkaConsumerCommonService<K, V> {
                 if (StringUtils.isBlank(keyRegex)) {
                     keyRegexFlag = true;
                 } else {
-                    if (StringUtils.isBlank(record.key())) {
+                    String key = record.key();
+                    /**key加入判操作*/
+                    if (StringUtils.isBlank(key)) {
                         keyRegexFlag = false;
                     } else {
-                        String key = record.key();
                         keyRegexFlag = key.matches(keyRegex);
                     }
                 }
                 if (StringUtils.isBlank(valueRegex)) {
                     valueRegexFlag = true;
                 } else {
-                    if (StringUtils.isBlank(record.value())) {
+                    String value = record.value();
+                    /**value加入判操作*/
+                    if (StringUtils.isBlank(value)) {
                         valueRegexFlag = false;
                     } else {
-                        String value = record.value();
                         valueRegexFlag = value.matches(valueRegex);
                     }
                 }
@@ -589,13 +611,23 @@ public class KafkaConsumerCommonService<K, V> {
                     keyRegexFlag = true;
                 } else {
                     String key = record.key();
-                    keyRegexFlag = key.matches(keyRegex);
+                    /**key加入判操作*/
+                    if (StringUtils.isBlank(key)) {
+                        keyRegexFlag = false;
+                    } else {
+                        keyRegexFlag = key.matches(keyRegex);
+                    }
                 }
                 if (StringUtils.isBlank(valueRegex)) {
                     valueRegexFlag = true;
                 } else {
                     String value = record.value();
-                    valueRegexFlag = value.matches(valueRegex);
+                    /**value加入判操作*/
+                    if (StringUtils.isBlank(value)) {
+                        valueRegexFlag = false;
+                    } else {
+                        valueRegexFlag = value.matches(valueRegex);
+                    }
                 }
                 if (record.offset() > endOffset.offset()) {
                     /**

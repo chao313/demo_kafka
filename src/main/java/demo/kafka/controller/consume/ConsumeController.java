@@ -495,7 +495,9 @@ public class ConsumeController {
                     return Long.valueOf(o2.offset() - o1.offset()).intValue();
                 }
             });
+            log.info("consumerRecords的数量:{}",consumerRecords.size());
             List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
+            log.info("changeResult的数量:{}",changeResult.size());
             String uuid = UUID.randomUUID().toString();
             redisTemplate.opsForList().leftPushAll(uuid, changeResult);
             return this.getRecordByScrollId(uuid, 1, 10);

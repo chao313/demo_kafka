@@ -1,0 +1,6 @@
+jarpack="demo-kafka-0.0.1-SNAPSHOT.jar"
+jarpath="/usr/local/"
+Xbootclasspath="resources"
+path="/usr/local/jdk1.8.0_201/bin"
+JAVA_OPTS="-Xloggc:log/gc1.log -XX:+PrintGCTimeStamps -verbose.gc -XX:+PrintGCDetails -XX:+UseCompressedOops -Xmx500M"
+sys_after=" --spring.profiles.active=prod"
