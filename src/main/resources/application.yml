@@ -9,5 +9,6 @@ spring:
 ##是否启动本地redis
 redis:
   local:
-    active: true
+    active: false
     maxheap: 200m
+    port: 6379
