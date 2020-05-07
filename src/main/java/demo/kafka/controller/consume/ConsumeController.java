@@ -495,9 +495,9 @@ public class ConsumeController {
                     return Long.valueOf(o2.offset() - o1.offset()).intValue();
                 }
             });
-            log.info("consumerRecords的数量:{}",consumerRecords.size());
+            log.info("consumerRecords的数量:{}", consumerRecords.size());
             List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
-            log.info("changeResult的数量:{}",changeResult.size());
+            log.info("changeResult的数量:{}", changeResult.size());
             String uuid = UUID.randomUUID().toString();
             redisTemplate.opsForList().leftPushAll(uuid, changeResult);
             return this.getRecordByScrollId(uuid, 1, 10);
@@ -1064,11 +1064,10 @@ public class ConsumeController {
          */
         Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
         Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
-        /**获取全部的最新和最开始的时间戳*/
-        Map<TopicPartition, OffsetAndTimestamp>
-                beginningTimestampMap = consumerNoGroupService.getConsumer().offsetsForTimes(beginningOffsets);
 
-        //!!!!! 无法获取最新的时间戳
+        Map<TopicPartition, OffsetAndTimestamp>
+                beginningTimestampMap = new HashMap<>();
+
         filterCollect.forEach(topicPartition -> {
             ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
             vo.setTopic(topicPartition.topic());
@@ -1076,10 +1075,6 @@ public class ConsumeController {
             vo.setEarliestOffset(beginningOffsets.get(topicPartition));
             vo.setLastOffset(endOffsets.get(topicPartition));
             vo.setSum(vo.getLastOffset() - vo.getEarliestOffset());
-            if (null != beginningTimestampMap.get(topicPartition)) {
-                long timestamp = beginningTimestampMap.get(topicPartition).timestamp();
-                vo.setEarliestTimestamp(fastDateFormat.format(timestamp));
-            }
             consumerTopicAndPartitionsAndOffsets.add(vo);
         });
         /**
