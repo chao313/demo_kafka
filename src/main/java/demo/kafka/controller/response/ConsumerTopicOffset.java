@@ -3,13 +3,14 @@ package demo.kafka.controller.response;
 import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * 辅助集合全部的 partition的数据
  */
 @Data
-public class ConsumerTopicOffset {
+public class ConsumerTopicOffset implements Serializable {
     private String topic;//topic
     private int partitions;//partition的数量
     private Long sum;//目前有效的 offset的数量

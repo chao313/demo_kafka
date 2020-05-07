@@ -46,7 +46,11 @@ public class ConsumeController {
     private HttpSession session;
 
     @Autowired
-    private RedisTemplate<String, LocalConsumerRecord<String, String>> redisTemplate;
+    private RedisTemplate<String, LocalConsumerRecord<String, String>> redisTemplateLocalConsumerRecord;
+    @Autowired
+    private RedisTemplate<String, ConsumerTopicOffset> redisTemplateConsumerTopicOffset;
+    @Autowired
+    private RedisTemplate<String, ConsumerTopicOffset> redisTemplate;
 
 
     /**
@@ -202,21 +206,11 @@ public class ConsumeController {
                 consumerTopicOffset.setPartitions(consumerTopicOffset.getPartitions() + 1);
                 consumerTopicOffset.setSum(consumerTopicOffset.getSum() + vo.getSum());
                 consumerTopicOffset.setTotal(consumerTopicOffset.getTotal() + vo.getLastOffset());
-                String earliestTimestampOld = consumerTopicOffset.getEarliestTimestamp();
-                String earliestTimestampNew = vo.getEarliestTimestamp();
-                if (StringUtils.isNotBlank(earliestTimestampNew) && StringUtils.isNotBlank(earliestTimestampOld)) {
-                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampNew.compareTo(earliestTimestampOld) > 0 ? earliestTimestampOld : earliestTimestampNew);
-                } else if (StringUtils.isBlank(earliestTimestampNew)) {
-                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampOld);
-                } else if (StringUtils.isBlank(earliestTimestampOld)) {
-                    consumerTopicOffset.setEarliestTimestamp(earliestTimestampNew);
-                }
                 resultMap.put(vo.getTopic(), consumerTopicOffset);
 
             } else {
                 ConsumerTopicOffset consumerTopicOffset = new ConsumerTopicOffset();
                 consumerTopicOffset.setTopic(vo.getTopic());
-                consumerTopicOffset.setEarliestTimestamp(vo.getEarliestTimestamp());
                 consumerTopicOffset.setSum(vo.getSum());
                 consumerTopicOffset.setPartitions(1);
                 consumerTopicOffset.setTotal(vo.getLastOffset());
@@ -236,8 +230,9 @@ public class ConsumeController {
             }
         });
 
-        return resultList;
-
+        String uuid = UUID.randomUUID().toString();
+        redisTemplateConsumerTopicOffset.opsForList().leftPushAll(uuid, resultList);
+        return this.getRecordByScrollId(uuid, 1, 20);
     }
 
     /**
@@ -499,7 +494,7 @@ public class ConsumeController {
             List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
             log.info("changeResult的数量:{}", changeResult.size());
             String uuid = UUID.randomUUID().toString();
-            redisTemplate.opsForList().leftPushAll(uuid, changeResult);
+            redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
             return this.getRecordByScrollId(uuid, 1, 10);
         }
 
@@ -516,7 +511,6 @@ public class ConsumeController {
             @RequestParam(value = "pageSize", defaultValue = "10", required = false)
                     Integer pageSize
     ) {
-        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss.S");
         PageInfo pageInfo = null;
         if (StringUtils.isNotBlank(scrollId)) {
             Long size = redisTemplate.opsForList().size(scrollId);
@@ -696,7 +690,7 @@ public class ConsumeController {
         });
         List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
         String uuid = UUID.randomUUID().toString();
-        redisTemplate.opsForList().leftPushAll(uuid, changeResult);
+        redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
         return this.getRecordByScrollId(uuid, 1, 10);
     }
 
@@ -1039,7 +1033,6 @@ public class ConsumeController {
      * @throws InterruptedException
      */
     private List<ConsumerTopicAndPartitionsAndOffset> getConsumerTopicAndPartitionsAndOffset(String bootstrap_servers, String topicContain) throws ExecutionException, InterruptedException {
-        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss.S");
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
         List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets = new ArrayList<>();
@@ -1058,15 +1051,11 @@ public class ConsumeController {
         } else {
             filterCollect.addAll(allTopicPartitions);
         }
-
         /**
          * 获取最早和最晚的offset
          */
         Map<TopicPartition, Long> beginningOffsets = consumerNoGroupService.getConsumer().beginningOffsets(filterCollect);
         Map<TopicPartition, Long> endOffsets = consumerNoGroupService.getConsumer().endOffsets(filterCollect);
-
-        Map<TopicPartition, OffsetAndTimestamp>
-                beginningTimestampMap = new HashMap<>();
 
         filterCollect.forEach(topicPartition -> {
             ConsumerTopicAndPartitionsAndOffset vo = new ConsumerTopicAndPartitionsAndOffset();
