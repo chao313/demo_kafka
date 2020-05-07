@@ -1,7 +1,6 @@
 package demo.kafka.controller.admin;
 
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.GsonBuilder;
 import demo.kafka.controller.admin.service.AdminConsumerGroupsService;
@@ -10,6 +9,7 @@ import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
 import demo.kafka.controller.response.ConsumerGroupOffsetsAndRealOffset;
+import demo.kafka.service.RedisService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -19,6 +19,8 @@ import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,6 +37,11 @@ import java.util.concurrent.ExecutionException;
 @RestController
 public class AdminController {
 
+    @Autowired
+    private RedisTemplate<String, JSONObject> redisTemplateJSONObject;
+
+    @Autowired
+    private RedisService redisService;
 
     @ApiOperation(value = "获取消费偏移量和真实的偏移量")
     @GetMapping(value = "/getConsumerGroupOffsetsAndRealOffset")
@@ -44,8 +51,7 @@ public class AdminController {
                     String bootstrap_servers,
             @RequestParam(name = "group", defaultValue = "common_imp_db_test")
                     String group
-    )
-            throws ExecutionException, InterruptedException {
+    ) throws ExecutionException, InterruptedException {
 
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerNoGroupService<String, String> consumerNoGroupService = consumerFactory.getConsumerNoGroupService();
@@ -172,9 +178,17 @@ public class AdminController {
         Map<String, ConsumerGroupDescription> consumerGroupDescribe
                 = adminConsumerGroupsService.getConsumerGroupDescribe(resultGroupIds);
 
-        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(consumerGroupDescribe.values());
-        JSONArray result = JSONObject.parseArray(JsonObject);
-        return result;
+
+        List<JSONObject> results = new ArrayList<>();
+        consumerGroupDescribe.values().forEach(resultGroupNameConsumer -> {
+            String JsonObject = new GsonBuilder().serializeNulls().create().toJson(resultGroupNameConsumer);
+            JSONObject jsonObject = JSONObject.parseObject(JsonObject);
+            results.add(jsonObject);
+        });
+
+        String uuid = UUID.randomUUID().toString();
+        redisTemplateJSONObject.opsForList().leftPushAll(uuid, results);
+        return redisService.getRecordByScrollId(uuid, 1, 20);
     }
 
     @ApiOperation(value = "获取消费偏移量和真实的偏移量(提供分区)")

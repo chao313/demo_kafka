@@ -3,10 +3,11 @@ package demo.kafka.controller.response;
 import lombok.Data;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class ConsumerTopicAndPartitionsAndOffset {
+public class ConsumerTopicAndPartitionsAndOffset implements Serializable {
     private String topic;//topic
     private int partition;
     private Long earliestOffset;//最早有效的 offset

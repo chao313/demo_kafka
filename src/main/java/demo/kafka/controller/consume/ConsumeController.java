@@ -10,6 +10,7 @@ import demo.kafka.controller.admin.service.AdminTopicService;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.*;
 import demo.kafka.controller.response.*;
+import demo.kafka.service.RedisService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -46,11 +47,16 @@ public class ConsumeController {
     private HttpSession session;
 
     @Autowired
+    private RedisService redisService;
+
+    @Autowired
     private RedisTemplate<String, LocalConsumerRecord<String, String>> redisTemplateLocalConsumerRecord;
     @Autowired
     private RedisTemplate<String, ConsumerTopicOffset> redisTemplateConsumerTopicOffset;
     @Autowired
-    private RedisTemplate<String, ConsumerTopicOffset> redisTemplate;
+    private RedisTemplate<String, ConsumerTopicAndPartitionsAndOffset> redisTemplateConsumerTopicAndPartitionsAndOffset;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
 
     /**
@@ -129,20 +135,6 @@ public class ConsumeController {
     }
 
 
-//    @GetMapping(value = "/OffsetAndMetadata")
-//    public void OffsetAndMetadata() {
-//        KafkaConsumerService<String, String> consumerService = KafkaConsumerService.getProducerInstance(Bootstrap.HONE.getIp(), "test");
-//        consumerService.subscribe(Arrays.asList("Test11"));
-//        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-//        Set<TopicPartition> assignments = consumerService.assignment();
-//
-//        consumerService.poll(0);//必须要 poll一次才行(不然不会send到server端)
-//        assignments.forEach(assignment -> {
-//            OffsetAndMetadata offsetAndMetadata = consumerService.committed(assignment);
-//            log.info("offsetAndMetadata:{}", offsetAndMetadata);
-//        });
-//    }
-
     @GetMapping(value = "/OffsetAndMetadata")
     public void OffsetAndMetadata() {
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(Bootstrap.HONE.getIp(), "test");
@@ -176,8 +168,9 @@ public class ConsumeController {
 
         List<ConsumerTopicAndPartitionsAndOffset> consumerTopicAndPartitionsAndOffsets
                 = this.getConsumerTopicAndPartitionsAndOffset(bootstrap_servers, topicContain);
-
-        return consumerTopicAndPartitionsAndOffsets;
+        String uuid = UUID.randomUUID().toString();
+        redisTemplateConsumerTopicAndPartitionsAndOffset.opsForList().leftPushAll(uuid, consumerTopicAndPartitionsAndOffsets);
+        return redisService.getRecordByScrollId(uuid, 1, 20);
     }
 
     /**
@@ -232,7 +225,7 @@ public class ConsumeController {
 
         String uuid = UUID.randomUUID().toString();
         redisTemplateConsumerTopicOffset.opsForList().leftPushAll(uuid, resultList);
-        return this.getRecordByScrollId(uuid, 1, 20);
+        return redisService.getRecordByScrollId(uuid, 1, 20);
     }
 
     /**
@@ -495,47 +488,12 @@ public class ConsumeController {
             log.info("changeResult的数量:{}", changeResult.size());
             String uuid = UUID.randomUUID().toString();
             redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
-            return this.getRecordByScrollId(uuid, 1, 10);
+            return redisService.getRecordByScrollId(uuid, 1, 10);
         }
 
 
     }
 
-    @ApiOperation(value = "根据ScrollId获取数据")
-    @GetMapping(value = "/getRecordByScrollId")
-    public Object getRecordByScrollId(
-            @RequestParam(name = "scrollId", defaultValue = "")
-                    String scrollId,
-            @RequestParam(value = "pageNum", defaultValue = "1", required = false)
-                    Integer pageNum,
-            @RequestParam(value = "pageSize", defaultValue = "10", required = false)
-                    Integer pageSize
-    ) {
-        PageInfo pageInfo = null;
-        if (StringUtils.isNotBlank(scrollId)) {
-            Long size = redisTemplate.opsForList().size(scrollId);
-            Long end = Long.valueOf(pageNum * pageSize) - 1;
-            if (pageNum * pageSize > size) {
-                end = size;
-            }
-            List list = redisTemplate.opsForList().range(scrollId, (pageNum - 1) * pageSize, end);
-            Page page = new Page(pageNum, pageSize, false);
-            page.setTotal(size);
-            page.setOrderBy(scrollId);
-            page.addAll(list);
-            pageInfo = new PageInfo(page);
-            /**
-             * 更新有效时间
-             * 优化超时时间的设置 原来是 redisTemplate.opsForValue().set(uuid, changeResult, 5, TimeUnit.MINUTES);
-             */
-            redisTemplate.expire(scrollId, 5, TimeUnit.MINUTES);
-        } else {
-            throw new RuntimeException("scrollID已经失效,请点击查询按键，重新查询");
-        }
-        String JsonObject = new Gson().toJson(pageInfo);
-        JSONObject result = JSONObject.parseObject(JsonObject);
-        return result;
-    }
 
 
     @ApiOperation(value = "获取柱状图(Partition级别)")
@@ -691,7 +649,7 @@ public class ConsumeController {
         List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
         String uuid = UUID.randomUUID().toString();
         redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
-        return this.getRecordByScrollId(uuid, 1, 10);
+        return redisService.getRecordByScrollId(uuid, 1, 10);
     }
 
 

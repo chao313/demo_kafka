@@ -10,6 +10,9 @@ import demo.kafka.controller.admin.service.AdminFactory;
 import demo.kafka.controller.admin.test.Bootstrap;
 import demo.kafka.controller.consume.service.ConsumerFactory;
 import demo.kafka.controller.consume.service.ConsumerNoGroupService;
+import demo.kafka.controller.response.ConsumerTopicAndPartitionsAndOffset;
+import demo.kafka.controller.response.ConsumerTopicOffset;
+import demo.kafka.service.RedisService;
 import demo.kafka.util.MapUtil;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -19,6 +22,8 @@ import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsOptions;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -28,6 +33,12 @@ import java.util.concurrent.ExecutionException;
 @RequestMapping(value = "/AdminConsumerGroupController")
 @RestController
 public class AdminConsumerGroupController {
+
+    @Autowired
+    private RedisTemplate<String, JSONObject> redisTemplateJSONObject;
+
+    @Autowired
+    private RedisService redisService;
 
 
     @GetMapping(value = "/getConsumerGroupIds")
@@ -134,9 +145,15 @@ public class AdminConsumerGroupController {
             resultGroupNameConsumers.addAll(filterGroupNameConsumers);
         }
 
-        String JsonObject = new GsonBuilder().serializeNulls().create().toJson(resultGroupNameConsumers);
-        JSONArray result = JSONObject.parseArray(JsonObject);
-        return result;
+        List<JSONObject> results = new ArrayList<>();
+        resultGroupNameConsumers.forEach(resultGroupNameConsumer -> {
+            String JsonObject = new GsonBuilder().serializeNulls().create().toJson(resultGroupNameConsumer);
+            JSONObject jsonObject = JSONObject.parseObject(JsonObject);
+            results.add(jsonObject);
+        });
+        String uuid = UUID.randomUUID().toString();
+        redisTemplateJSONObject.opsForList().leftPushAll(uuid, results);
+        return redisService.getRecordByScrollId(uuid, 1, 20);
     }
 
 
