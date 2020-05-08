@@ -115,6 +115,8 @@ public class KafkaConsumerCommonService<K, V> {
                                                           Long timeEnd
 
     ) {
+        /**获取记录*/
+        List<ConsumerRecord<String, String>> result = new ArrayList<>();
         /** 记录原始的数据*/
         Long timeStartOriginal = null;
         if (null != timeStart) {
@@ -130,7 +132,8 @@ public class KafkaConsumerCommonService<K, V> {
          */
         ConsumerFactory<String, String> consumerFactory
                 = ConsumerFactory.getInstance(bootstrap_servers,
-                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(endOffset - startOffset))
+                MapUtil.$(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, String.valueOf(endOffset - startOffset > 1 ?
+                        endOffset - startOffset : 1))
         );
         /**
          * 根据时间来限制范围
@@ -143,6 +146,9 @@ public class KafkaConsumerCommonService<K, V> {
                 if (firstPartitionOffsetAfterStartTimestamp.offset() > startOffset) {
                     startOffset = firstPartitionOffsetAfterStartTimestamp.offset();//取范围小的
                 }
+            } else {
+                /**根据startTime无法查询出偏移量 -> 这个查询无效！！！*/
+                return result;
             }
         }
         if (null != timeEnd) {
@@ -160,8 +166,6 @@ public class KafkaConsumerCommonService<K, V> {
         instance.assign(Arrays.asList(topicPartition));
         /**设置偏移量*/
         instance.seek(topicPartition, startOffset);
-        /**获取记录*/
-        List<ConsumerRecord<String, String>> result = new ArrayList<>();
         /**获取记录*/
         ConsumerRecords<String, String> records;
         boolean flag = true;
@@ -687,6 +691,18 @@ public class KafkaConsumerCommonService<K, V> {
         private String format;
         private String toFormat;
         private Integer field;
+
+        public String getFormat() {
+            return format;
+        }
+
+        public String getToFormat() {
+            return toFormat;
+        }
+
+        public Integer getField() {
+            return field;
+        }
 
         LevelSimple(String format, String toFormat, Integer field) {
             this.format = format;

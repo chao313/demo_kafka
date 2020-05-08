@@ -382,10 +382,10 @@ public class ConsumeController {
                     int partition,
             @ApiParam(value = "开始的offset")
             @RequestParam(name = "startOffset", defaultValue = "0")
-                    int startOffset,
+                    long startOffset,
             @ApiParam(value = "结束的offset")
             @RequestParam(name = "endOffset", defaultValue = "0")
-                    int endOffset,
+                    long endOffset,
             @ApiParam(value = "key的正则")
             @RequestParam(name = "keyRegex", defaultValue = "")
                     String keyRegex,
@@ -397,7 +397,16 @@ public class ConsumeController {
                     String timeStart,
             @ApiParam(value = "消息end的时间")
             @RequestParam(name = "timeEnd", defaultValue = "")
-                    String timeEnd
+                    String timeEnd,
+            @ApiParam(value = "快速查询数量")
+            @RequestParam(name = "quickNumber", defaultValue = "")
+                    String quickNumber,
+            @ApiParam(value = "快速查询时间")
+            @RequestParam(name = "quickTime", defaultValue = "")
+                    String quickTime,
+            @ApiParam(value = "快速查询时间的级别")
+            @RequestParam(name = "quickTimeLevel", defaultValue = "DAY")
+                    String quickTimeLevel
     ) throws ParseException {
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         ConsumerHavGroupAssignService<String, String> consumerHavGroupAssignService =
@@ -408,7 +417,7 @@ public class ConsumeController {
         Long lastPartitionOffset = consumerHavGroupAssignService.getLastPartitionOffset(topicPartition);
         KafkaConsumerCommonService consumerCommonService = new KafkaConsumerCommonService();
 
-        if (endOffset <= startOffset) {
+        if (endOffset < startOffset) {
             throw new RuntimeException("endOffset应该>startOffset");
         }
 
@@ -420,80 +429,73 @@ public class ConsumeController {
             throw new RuntimeException("endOffset 应该<最新的offset:" + lastPartitionOffset);
         }
 
-        if (topic.equalsIgnoreCase(KafkaConsumerCommonService.__consumer_offsets)) {
-            /**
-             * __consumer_offsets 专享
+        if (StringUtils.isNotBlank(quickNumber)) {
+            /**只有在快速查询数量不为空的情况下，才会判断offset*/
+            Long quickNumberInt = Long.valueOf(quickNumber);//查询数量
+            /**本质是取最后一条向前的N条,最后一条有效offset-N 和 最开始的比较,选择大的
              */
-
-            List<ConsumerRecord<byte[], byte[]>> records
-                    = consumerCommonService.getRecord(bootstrap_servers, topicPartition, startOffset, endOffset - startOffset,
-                    MapUtil.$(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer",
-                            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer")
-            );
-
-
-            List<ConsumerRecord<byte[], byte[]>> consumerRecords = new ArrayList<>();
-            consumerRecords.addAll(records);
-            /**
-             * 排序
-             */
-            Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
-                @Override
-                public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
-                }
-            });
-
-            List<OffsetRecordResponse> list = OffsetRecordResponse.getList(consumerRecords);
-
-            String JsonObject = new Gson().toJson(list);
-            JSONArray result = JSONObject.parseArray(JsonObject);
-            return result;
-        } else {
-            FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
-            Long timeStartTimeStamp = null;
-            Long timeEndTimeStamp = null;
-            if (StringUtils.isNotBlank(timeStart)) {
-                timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
-            }
-            if (StringUtils.isNotBlank(timeEnd)) {
-                timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
-                /**
-                 * 这里是区间 -> :xx:xx:38 其实应该是39截止 -> 多加1秒
-                 */
-                timeEndTimeStamp = DateUtils.addSeconds(new Date(timeEndTimeStamp), 1).getTime();
-            }
-            List<ConsumerRecord<String, String>> records
-                    = consumerCommonService.getRecord(bootstrap_servers,
-                    topicPartition,
-                    startOffset,
-                    endOffset,
-                    keyRegex,
-                    valueRegex,
-                    timeStartTimeStamp,
-                    timeEndTimeStamp);
-            List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
-            consumerRecords.addAll(records);
-            /**
-             * 排序
-             */
-            Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
-                @Override
-                public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                    return Long.valueOf(o2.offset() - o1.offset()).intValue();
-                }
-            });
-            log.info("consumerRecords的数量:{}", consumerRecords.size());
-            List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
-            log.info("changeResult的数量:{}", changeResult.size());
-            String uuid = UUID.randomUUID().toString();
-            redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
-            return redisService.getRecordByScrollId(uuid, 1, 10);
+            Long targetOffset = lastPartitionOffset - quickNumberInt;//目标offset
+            startOffset = startOffset > targetOffset ? startOffset : targetOffset;
+            endOffset = lastPartitionOffset;//因为对实时性要求高 -> 这里需要endOffset重新赋值
         }
+        /**判断时间*/
+
+
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+        Long timeStartTimeStamp = null;
+        Long timeEndTimeStamp = null;
+        if (StringUtils.isNotBlank(timeStart)) {
+            timeStartTimeStamp = fastDateFormat.parse(timeStart).getTime();
+        }
+        if (StringUtils.isNotBlank(timeEnd)) {
+            timeEndTimeStamp = fastDateFormat.parse(timeEnd).getTime();
+            /**
+             * 这里是区间 -> :xx:xx:38 其实应该是39截止 -> 多加1秒
+             */
+            timeEndTimeStamp = DateUtils.addSeconds(new Date(timeEndTimeStamp), 1).getTime();
+        }
+
+        if (StringUtils.isNotBlank(quickTime)) {
+            /**只有在快速查询时间不为空的情况下，才会变更时间*/
+            Date now = new Date();
+            timeEndTimeStamp = now.getTime();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(now);
+            KafkaConsumerCommonService.LevelSimple levelSimple = KafkaConsumerCommonService.LevelSimple.valueOf(quickTimeLevel.toUpperCase());
+            calendar.add(levelSimple.getField(), -Integer.valueOf(quickTime).intValue());//时间挑拨
+            timeStartTimeStamp = calendar.getTime().getTime();
+            endOffset = lastPartitionOffset;//因为对实时性要求高 -> 这里需要endOffset重新赋值:
+
+        }
+        List<ConsumerRecord<String, String>> records
+                = consumerCommonService.getRecord(bootstrap_servers,
+                topicPartition,
+                startOffset,
+                endOffset,
+                keyRegex,
+                valueRegex,
+                timeStartTimeStamp,
+                timeEndTimeStamp);
+        List<ConsumerRecord<String, String>> consumerRecords = new ArrayList<>();
+        consumerRecords.addAll(records);
+        /**
+         * 排序
+         */
+        Collections.sort(consumerRecords, new Comparator<ConsumerRecord>() {
+            @Override
+            public int compare(ConsumerRecord o1, ConsumerRecord o2) {
+                return Long.valueOf(o1.timestamp() - o2.timestamp()).intValue();
+            }
+        });
+        log.info("consumerRecords的数量:{}", consumerRecords.size());
+        List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(consumerRecords);
+        log.info("changeResult的数量:{}", changeResult.size());
+        String uuid = UUID.randomUUID().toString();
+        redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
+        return redisService.getRecordByScrollId(uuid, 1, 10);
 
 
     }
-
 
 
     @ApiOperation(value = "获取柱状图(Partition级别)")
