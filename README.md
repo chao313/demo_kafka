@@ -38,7 +38,9 @@
      * [x] 按key检索(支持正则)
      * [x] 按value检索(支持正则)
      * [x] 按timestamp检索(支持格化)  
-     * 按timestampType检索(目前只有两个创建时间和生成时间类型)  
+     * 按timestampType检索(目前只有两个创建时间和生成时间类型)
+     * [x] 按最新时间查询
+     * [x] 按最新数量排序(多个partition综合排序)
 4. partition
    * [x] 查看topic的所有partition(list)
    *  新增partition
@@ -50,7 +52,9 @@
      * [x] 按value检索(支持正则)
      * [x] 按offset检索
      * [x] 按timestamp检索(支持格化)  
-     * 按timestampType检索(目前只有两个创建时间和生成时间类型)    
+     * 按timestampType检索(目前只有两个创建时间和生成时间类型)
+     * [x] 按最新时间查询
+     * [x] 按最新数量排序
 5. consumer
    * [x] consumer的list
    * [x] consumer的删除
