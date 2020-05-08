@@ -672,7 +672,9 @@ public class ConsumeController {
         List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
         if (StringUtils.isNotBlank(quickNumber)) {
             /**获取全部分区的前N条，排序后获取前N条*/
-            changeResult = changeResult.subList(0, Integer.valueOf(quickNumber));
+            /**选择小的 -> 避免数组溢出*/
+            int size = Integer.valueOf(quickNumber) < changeResult.size() ? Integer.valueOf(quickNumber) : changeResult.size();
+            changeResult = changeResult.subList(0, size);
         }
         String uuid = UUID.randomUUID().toString();
         redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
