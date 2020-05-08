@@ -237,7 +237,8 @@ public class KafkaConsumerCommonService<K, V> {
                                                           String keyRegex,
                                                           String valueRegex,
                                                           Long timeStart,
-                                                          Long timeEnd
+                                                          Long timeEnd,
+                                                          String quickNumber
 
     ) {
         /** 记录原始的数据*/
@@ -275,10 +276,13 @@ public class KafkaConsumerCommonService<K, V> {
             OffsetAndTimestamp firstPartitionOffsetAfterStartTimestamp
                     = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeStart);
             /**比较取范围小的*/
-            if (null != firstPartitionOffsetAfterStartTimestamp && firstPartitionOffsetAfterStartTimestamp.timestamp() > earliestRecordOffsetAndTimestamp.timestamp()) {
-                timeStart = firstPartitionOffsetAfterStartTimestamp.timestamp();
+            if (null != firstPartitionOffsetAfterStartTimestamp) {
+                if (firstPartitionOffsetAfterStartTimestamp.timestamp() > earliestRecordOffsetAndTimestamp.timestamp()) {
+                    timeStart = firstPartitionOffsetAfterStartTimestamp.timestamp();
+                }
             } else {
-                timeStart = earliestRecordOffsetAndTimestamp.timestamp();
+                /**为null , 代表不在范围内*/
+                return result;
             }
         } else {
             /**为null , 取最开始*/
@@ -299,15 +303,28 @@ public class KafkaConsumerCommonService<K, V> {
         }
 
         /**!!!准备好开始和结尾 ， 开始计算*/
-        OffsetAndTimestamp startOffset = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeStart);
-        OffsetAndTimestamp endOffset = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeEnd);
+        OffsetAndTimestamp startOffsetOffsetAndTimestamp = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeStart);
+        OffsetAndTimestamp endOffsetOffsetAndTimestamp = consumerNoGroupService.getFirstPartitionOffsetAfterTimestamp(topicPartition, timeEnd);
 
+        Long startOffset = startOffsetOffsetAndTimestamp.offset();
+        Long endOffset = endOffsetOffsetAndTimestamp.offset();
+
+        if (StringUtils.isNotBlank(quickNumber)) {
+            /**只有在快速查询数量不为空的情况下，才会判断offset*/
+            Long quickNumberInt = Long.valueOf(quickNumber);//查询数量
+            /**本质是取最后一条向前的N条,最后一条有效offset-N 和 最开始的比较,选择大的
+             */
+            Long targetOffset = endOffsetOffsetAndTimestamp.offset() - quickNumberInt;//目标offset
+            startOffset = startOffset > targetOffset ? startOffset : targetOffset;
+            endOffset = endOffsetOffsetAndTimestamp.offset();//因为对实时性要求高 -> 这里需要endOffset重新赋值
+        }
+        /**判断时间*/
 
         KafkaConsumer<String, String> instance = consumerFactory.getKafkaConsumer();
         /**分配 topicPartition*/
         instance.assign(Arrays.asList(topicPartition));
         /**设置偏移量*/
-        instance.seek(topicPartition, startOffset.offset());
+        instance.seek(topicPartition, startOffset);
         /**获取记录*/
         ConsumerRecords<String, String> records;
         boolean flag = true;
@@ -340,7 +357,7 @@ public class KafkaConsumerCommonService<K, V> {
                         valueRegexFlag = value.matches(valueRegex);
                     }
                 }
-                if (record.offset() > endOffset.offset()) {
+                if (record.offset() > endOffset) {
                     /**
                      * 如果超出范围就截止
                      */
@@ -348,7 +365,7 @@ public class KafkaConsumerCommonService<K, V> {
                     flag = false;
                     break;
                 }
-                if (keyRegexFlag && valueRegexFlag && record.offset() <= endOffset.offset()) {
+                if (keyRegexFlag && valueRegexFlag && record.offset() <= endOffset) {
                     boolean timeStartFlag = false,
                             timeEndFlag = false;
                     /**

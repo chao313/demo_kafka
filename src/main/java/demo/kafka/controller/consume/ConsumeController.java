@@ -604,7 +604,16 @@ public class ConsumeController {
                     String timeStart,
             @ApiParam(value = "消息end的时间")
             @RequestParam(name = "timeEnd", defaultValue = "")
-                    String timeEnd
+                    String timeEnd,
+            @ApiParam(value = "快速查询数量")
+            @RequestParam(name = "quickNumber", defaultValue = "")
+                    String quickNumber,
+            @ApiParam(value = "快速查询时间")
+            @RequestParam(name = "quickTime", defaultValue = "")
+                    String quickTime,
+            @ApiParam(value = "快速查询时间的级别")
+            @RequestParam(name = "quickTimeLevel", defaultValue = "DAY")
+                    String quickTimeLevel
     ) throws ParseException {
         ConsumerFactory<String, String> consumerFactory = ConsumerFactory.getInstance(bootstrap_servers, MapUtil.$());
         /**获取全部的 topicPartition*/
@@ -625,6 +634,17 @@ public class ConsumeController {
              */
             timeEndTimeStamp = DateUtils.addSeconds(new Date(timeEndTimeStamp), 1).getTime();
         }
+        if (StringUtils.isNotBlank(quickTime)) {
+            /**只有在快速查询时间不为空的情况下，才会变更时间*/
+            Date now = new Date();
+            timeEndTimeStamp = now.getTime();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(now);
+            KafkaConsumerCommonService.LevelSimple levelSimple = KafkaConsumerCommonService.LevelSimple.valueOf(quickTimeLevel.toUpperCase());
+            calendar.add(levelSimple.getField(), -Integer.valueOf(quickTime).intValue());//时间挑拨
+            timeStartTimeStamp = calendar.getTime().getTime();
+        }
+
         List<ConsumerRecord<String, String>> result = new ArrayList<>();
         Long finalTimeStartTimeStamp = timeStartTimeStamp;
         Long finalTimeEndTimeStamp = timeEndTimeStamp;
@@ -635,7 +655,8 @@ public class ConsumeController {
                     keyRegex,
                     valueRegex,
                     finalTimeStartTimeStamp,
-                    finalTimeEndTimeStamp);
+                    finalTimeEndTimeStamp,
+                    quickNumber);
             result.addAll(records);
         });
 
@@ -645,10 +666,14 @@ public class ConsumeController {
         Collections.sort(result, new Comparator<ConsumerRecord>() {
             @Override
             public int compare(ConsumerRecord o1, ConsumerRecord o2) {
-                return Long.valueOf(o2.timestamp() - o1.timestamp()).intValue();
+                return Long.valueOf(o1.timestamp() - o2.timestamp()).intValue();
             }
         });
         List<LocalConsumerRecord<String, String>> changeResult = LocalConsumerRecord.change(result);
+        if (StringUtils.isNotBlank(quickNumber)) {
+            /**获取全部分区的前N条，排序后获取前N条*/
+            changeResult = changeResult.subList(0, Integer.valueOf(quickNumber));
+        }
         String uuid = UUID.randomUUID().toString();
         redisTemplateLocalConsumerRecord.opsForList().leftPushAll(uuid, changeResult);
         return redisService.getRecordByScrollId(uuid, 1, 10);
