@@ -14,13 +14,13 @@
 
 	<appender name="INFO_FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${LOG_HOME}/structure.info.log</file>
+		<file>${LOG_HOME}/application.info.log</file>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>INFO</level>
 		</filter>
 		<rollingPolicy
 			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/structure.info.log-%d{yyyy-MM-dd}-%i.log
+			<fileNamePattern>${LOG_HOME}/application.info.log-%d{yyyy-MM-dd}-%i.log
 			</fileNamePattern>
 			<MaxFileSize>100MB</MaxFileSize>
 			<maxHistory>20</maxHistory>
@@ -36,13 +36,13 @@
 
 	<appender name="ERROR_FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${LOG_HOME}/structure.error.log</file>
+		<file>${LOG_HOME}/application.error.log</file>
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
 			<level>ERROR</level>
 		</filter>
 		<rollingPolicy
 			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>${LOG_HOME}/structure.error.log-%d{yyyy-MM-dd}-%i.log
+			<fileNamePattern>${LOG_HOME}/application.error.log-%d{yyyy-MM-dd}-%i.log
 			</fileNamePattern>
 			<MaxFileSize>100MB</MaxFileSize>
 			<maxHistory>20</maxHistory>
