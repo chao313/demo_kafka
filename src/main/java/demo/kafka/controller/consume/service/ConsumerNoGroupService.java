@@ -1,6 +1,8 @@
 package demo.kafka.controller.consume.service;
 
 import demo.kafka.controller.consume.service.base.ConsumerService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.PartitionInfo;
@@ -17,6 +19,7 @@ import java.util.*;
  * @param <V>
  */
 
+@Slf4j
 public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
 
     ConsumerNoGroupService(KafkaConsumer<K, V> kafkaConsumer) {
@@ -198,12 +201,13 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
      * ！！！ 这里会主动减1 -> endOffsets 返回的是下一个的偏移量
      * <p>
      * 这个会阻塞调用 {@link KafkaConsumerCommonService#getOffsetAndTimestampByOffset(String, TopicPartition, Long)} ()}
-     *
+     * !!! 注意！：kafka无法精确到毫秒以下的
      * @param topicPartition
-     * @param lastPartitionOffset
+     * @param partitionOffset
      * @return
      */
-    public OffsetAndTimestamp getOffsetAndTimestampByOffset(TopicPartition topicPartition, Long lastPartitionOffset) {
+    public OffsetAndTimestamp getOffsetAndTimestampByOffset(TopicPartition topicPartition, Long partitionOffset) {
+        FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
         OffsetAndTimestamp firstPartitionOffsetAndTimestamp = this.getFirstPartitionOffsetAndTimestamp(topicPartition);
         if (null == firstPartitionOffsetAndTimestamp) {
             /**如果第一个就为null,代表没有最后*/
@@ -214,16 +218,25 @@ public class ConsumerNoGroupService<K, V> extends ConsumerService<K, V> {
         Long startTime = firstPartitionOffsetAndTimestamp.timestamp();
         OffsetAndTimestamp offsetAndTimestamp = null;
         do {
-            Long middle = (endTime + startTime) / 2;
-            offsetAndTimestamp = this.getFirstPartitionOffsetAfterTimestamp(topicPartition, middle);
+            Long middleTime = (endTime + startTime) / 2;
+//            log.info("二分法-startTime:{}-middle:{}-endTime:{}:offsetAndTimestamp:{}", startTime, middleTime, endTime, offsetAndTimestamp);
+            offsetAndTimestamp = this.getFirstPartitionOffsetAfterTimestamp(topicPartition, middleTime);
+            log.info("二分法-startTime:{}-middle:{}-endTime:{}:offsetAndTimestamp:{}", fastDateFormat.format(startTime), fastDateFormat.format(middleTime), fastDateFormat.format(endTime), offsetAndTimestamp);
             if (null == offsetAndTimestamp) {
                 /**如过offsetAndTimestamp 为null -> 在右分 */
-                endTime = middle;//左移
+                endTime = middleTime + 1;//左移
 
-            } else if (offsetAndTimestamp.offset() < lastPartitionOffset) {
+            } else if (offsetAndTimestamp.offset() < partitionOffset) {
                 /**如过offsetAndTimestamp < lastPartitionOffset  -> 在左分 */
-                startTime = middle;//右移
-            } else if (offsetAndTimestamp.offset() >= lastPartitionOffset) {
+                if (startTime == middleTime - 1) {
+                    /**当start和 middleTime 相差1的时候,并且此时偏移量仍然小于目标offset -> 可能1毫秒就有几百条！！！*/
+                    break;
+                }
+                startTime = middleTime - 1;//右移
+            } else if (offsetAndTimestamp.offset() > partitionOffset) {
+                endTime = middleTime + 1;//左移
+
+            } else if (offsetAndTimestamp.offset() == partitionOffset) {
                 /**如果 == 就退出 */
                 break;
             }
